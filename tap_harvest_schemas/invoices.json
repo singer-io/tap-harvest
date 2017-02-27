@@ -1,0 +1,96 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": ["null", "integer"]
+    },
+    "client_id": {
+      "type": ["null", "integer"]
+    },
+    "period_start": {
+      "type": ["null", "string"]
+    },
+    "period_end": {
+      "type": ["null", "string"]
+    },
+    "number": {
+      "type": ["null", "integer"]
+    },
+    "issued_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "due_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "amount": {
+      "type": ["null", "number"]
+    },
+    "currency": {
+      "type": ["null", "string"]
+    },
+    "state": {
+      "type": ["null", "string"]
+    },
+    "notes": {
+      "type": ["null", "string"]
+    },
+    "purchase_order": {
+      "type": ["null", "string"]
+    },
+    "due_amount": {
+      "type": ["null", "number"]
+    },
+    "due_at_human_format": {
+      "type": ["null", "string"]
+    },
+    "created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "tax": {
+      "type": ["null", "string"]
+    },
+    "tax_amount": {
+      "type": ["null", "number"]
+    },
+    "subject": {
+      "type": ["null", "string"]
+    },
+    "recurring_invoice_id": {
+      "type": ["null", "integer"]
+    },
+    "tax2": {
+      "type": ["null", "string"]
+    },
+    "tax2_amount": {
+      "type": ["null", "number"]
+    },
+    "client_key": {
+      "type": ["null", "string"]
+    },
+    "estimate_id": {
+      "type": ["null", "integer"]
+    },
+    "discount": {
+      "type": ["null", "string"]
+    },
+    "discount_amount": {
+      "type": ["null", "number"]
+    },
+    "retainer_id": {
+      "type": ["null", "id"]
+    },
+    "created_by_id": {
+      "type": ["null", "integer"]
+    },
+    "client_name": {
+      "type": ["null", "string"]
+    }
+  }
+}
