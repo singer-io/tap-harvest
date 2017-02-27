@@ -71,11 +71,24 @@ Author: Jordan Ryan (jordan@facetinteractive.com)
     You can provide JSON file that contains a date for the "commit" and
     "issues" endpoints to force the application to only fetch commits and
     issues newer than those dates. If you omit the file it will fetch all
-    commits and issues.
+    data.
 
     ```json
-    {"commits": "2017-01-17T20:32:05Z",
-     "issues":  "2017-01-17T20:32:05Z"}
+    {
+        "clients": "2000-01-01T00:00:00Z",
+        "contacts": "2000-01-01T00:00:00Z",
+        "invoices": "2000-01-01T00:00:00Z",
+        "invoice_item_categories": "2000-01-01T00:00:00Z",
+        "invoice_payments": "2000-01-01T00:00:00Z",
+        "expenses": "2000-01-01T00:00:00Z",
+        "expense_categories": "2000-01-01T00:00:00Z",
+        "projects": "2000-01-01T00:00:00Z",
+        "project_users": "2000-01-01T00:00:00Z",
+        "tasks": "2000-01-01T00:00:00Z",
+        "project_tasks": "2000-01-01T00:00:00Z",
+        "people": "2000-01-01T00:00:00Z",
+        "time_entries": "2000-01-01T00:00:00Z"
+    }
     ```
 
 6. Run the application
