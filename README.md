@@ -45,10 +45,10 @@ Author: Jordan Ryan (jordan@facetinteractive.com)
 
     ```json
     {
-        'access_token': 'YOURACCESSTOKEN',
-        'refresh_token': 'YOURREFRESHTOKEN',
-        'token_type': 'bearer',
-        'expires_in': 64799
+        "access_token": "YOURACCESSTOKEN",
+        "refresh_token": "YOURREFRESHTOKEN",
+        "token_type": "bearer",
+        "expires_in": 64799
     }
     ```
 
@@ -62,7 +62,7 @@ Author: Jordan Ryan (jordan@facetinteractive.com)
     ```json
     {"harvest_client_id": "YOURID",
      "harvest_client_secret": "YOURSECRET",
-    "harvest_refresh_token": "YOURREFRESHTOKEN"
+    "harvest_refresh_token": "YOURREFRESHTOKEN",
      "harvest_host": "https://YOURACCOUNT.harvestapp.com"}
     ```
 
