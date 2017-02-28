@@ -780,6 +780,7 @@ def sync_time_entries():
     days_since_sync = (datetime.utcnow() - last_sync).days
 
     harvest_updated_since = last_sync.strftime(HARVEST_DATE_FMT)
+    endpoint = sync_attributes["endpoint"]
     logger.info("Harvest %s tap hasn't been updated since: %s", endpoint, harvest_updated_since)
 
     params = {
@@ -788,7 +789,6 @@ def sync_time_entries():
         'updated_since': harvest_updated_since
     }
 
-    # @TODO - Re-enable this once technical debt has been resolved for two double-star arguments in the endpoint_detail
     persisted_count = sync_nested_records(sync_attributes, params)
 
     return persisted_count
