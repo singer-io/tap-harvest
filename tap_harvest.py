@@ -33,6 +33,7 @@ schemas = [
     'contacts',
     'invoices',
     'invoice_item_categories',
+    'invoice_messages',
     'invoice_payments',
     'expenses',
     'expense_categories',
@@ -61,6 +62,8 @@ endpoints = {
     "invoice_item_categories": "/invoice_item_categories",
     # Invoice Category Detail is for PUT only
     # "invoice_category_detail":  "/invoice_item_categories/{category_id}",
+    "invoice_messages": "/invoices/{invoice_id}/messages",
+    "invoice_message_detail": "/invoices/{invoice_id}/message/{message_id}",
     "invoice_payments": "/invoices/{invoice_id}/payments",
     "invoice_payment_detail": "/invoices/{invoice_id}/payments/{payment_id}",
 
@@ -393,11 +396,12 @@ def stream(method, data, entity_type=None, key_property=None):
         raise ValueError("Unknown method {}".format(method))
 
 
+# @TODO - Collapse sync_records, sync_nested_records, and sync_records_from_list into one def
 def sync_records(sync_attributes, params=None):
     schema = sync_attributes["schema"]
-    parent_endpoint = sync_attributes["parent_endpoint"]
-    parent_properties_in = sync_attributes["parent_properties_in"]
-    key_from_parent = sync_attributes["key_from_parent"]
+    # parent_endpoint = sync_attributes["parent_endpoint"]
+    # parent_properties_in = sync_attributes["parent_properties_in"]
+    # key_from_parent = sync_attributes["key_from_parent"]
     endpoint = sync_attributes["endpoint"]
     endpoint_detail = sync_attributes["endpoint_detail"]
     endpoint_detail_key = sync_attributes["endpoint_detail_key"]
@@ -448,6 +452,120 @@ def sync_records(sync_attributes, params=None):
             update_state(endpoint, modified_time)
 
         stream('state', state)
+
+    return persisted_count
+
+def sync_nested_records(sync_attributes, params=None):
+    schema = sync_attributes["schema"]
+    parent_endpoint = sync_attributes["parent_endpoint"]
+    parent_properties_in = sync_attributes["parent_properties_in"]
+    key_from_parent = sync_attributes["key_from_parent"]
+    endpoint = sync_attributes["endpoint"]
+    endpoint_detail = sync_attributes["endpoint_detail"]
+    endpoint_detail_key = sync_attributes["endpoint_detail_key"]
+    properties_in = sync_attributes["properties_in"]
+
+    last_sync = datetime.strptime(state[schema], DATETIME_FMT)
+    days_since_sync = (datetime.utcnow() - last_sync).days
+
+    logger.info("Syncing all %s", endpoint)
+    sync_schema(schema)
+
+    harvest_updated_since = last_sync.strftime(HARVEST_DATE_FMT)
+    logger.info("Harvest %s tap hasn't been updated since: %s", endpoint, harvest_updated_since)
+
+    params = params or {
+        'updated_since': harvest_updated_since
+    }
+
+    has_more = True
+    persisted_count = 0
+    while has_more:
+        resp = request(get_url(parent_endpoint), params=None)
+        # logger.info("Response from %s endpoint: %s", parent_endpoint, resp)
+        data = resp.json()
+        # logger.info("JSON Response from %s endpoint: %s", parent_endpoint, data)
+
+        # Get all time entries by user
+        for record in data:
+            # Records are inside of an object
+            record = record[parent_properties_in]
+            # logger.info("User Record: %s", record)
+            # Request the time entries using the key_from_parent, in this case user_id as a key
+            respb = request(get_url(endpoint, **{endpoint_detail_key: record[key_from_parent]}), params)
+
+            # Iterate through each record returned
+            # In time_entries case, each response is contained in a day_entry
+            for entry in respb.json():
+                # logger.info("Print the entry %s", entry)
+                entry = entry[properties_in]
+
+                if 'updated_at' in entry:
+                    modified_time = transform_timestamp(entry['updated_at'])
+                elif 'created_at' in entry:
+                    modified_time = transform_timestamp(entry['created_at'])
+                else:
+                    modified_time = None
+
+                if not modified_time or modified_time >= last_sync:
+                    stream('records', entry, schema)
+                    persisted_count += 1
+
+                update_state(endpoint, modified_time)
+
+        stream('state', state)
+        # No pagination, set has_more to False
+        has_more = False
+
+    return persisted_count
+
+
+def sync_records_from_list(sync_attributes, params=None):
+    schema = sync_attributes["schema"]
+    endpoint = sync_attributes["endpoint"]
+    properties_in = sync_attributes["properties_in"]
+
+    last_sync = datetime.strptime(state[schema], DATETIME_FMT)
+    days_since_sync = (datetime.utcnow() - last_sync).days
+
+    logger.info("Syncing all %s", endpoint)
+    sync_schema(schema)
+
+    harvest_updated_since = last_sync.strftime(HARVEST_DATE_FMT)
+    logger.info("Harvest %s tap hasn't been updated since: %s", endpoint, harvest_updated_since)
+
+    params = params or {
+        'updated_since': harvest_updated_since
+    }
+
+    has_more = True
+    persisted_count = 0
+    while has_more:
+        resp = request(get_url(endpoint), params)
+        # logger.info("Response from %s endpoint: %s", parent_endpoint, resp)
+        data = resp.json()
+        # logger.info("JSON Response from %s endpoint: %s", parent_endpoint, data)
+
+        for entry in data:
+            # logger.info("Print the entry %s", entry)
+            entry = entry[properties_in]
+
+            if 'updated_at' in entry:
+                modified_time = transform_timestamp(entry['updated_at'])
+            elif 'created_at' in entry:
+                modified_time = transform_timestamp(entry['created_at'])
+            else:
+                modified_time = None
+
+            if not modified_time or modified_time >= last_sync:
+                stream('records', entry, schema)
+                persisted_count += 1
+
+            update_state(endpoint, modified_time)
+
+        stream('state', state)
+        # No pagination, set has_more to False
+        has_more = False
 
     return persisted_count
 
@@ -510,49 +628,61 @@ def sync_expenses():
     return persisted_count
 
 
-# @TODO - Handle case when no detail endpoint is needed and all items from main list must be processed
 def sync_invoice_item_categories():
     sync_attributes = {
         "schema": "invoice_item_categories",
         "endpoint": "invoice_item_categories",
-        "endpoint_detail": "",
-        "endpoint_detail_key": "",
         "properties_in": "invoice_category"
     }
 
-    persisted_count = sync_records(sync_attributes)
+    persisted_count = sync_records_from_list(sync_attributes)
 
     return persisted_count
 
 
-# @TODO - Invoices endpoint sometimes contain objects that are either "invoice" or "invoices"
 # We have to solve for catching both types
 def sync_invoices():
     sync_attributes = {
         "schema": "invoices",
         "endpoint": "invoices",
-        "endpoint_detail": "invoice_detail",
-        "endpoint_detail_key": "invoice_id",
         "properties_in": "invoices"
     }
 
-    persisted_count = sync_records(sync_attributes)
+    persisted_count = sync_records_from_list(sync_attributes)
 
     return persisted_count
 
 
-# @TODO - Sync iteratively over invoices
+def sync_invoice_messages():
+    sync_attributes = {
+        "schema": "invoice_messages",
+        "parent_endpoint": "invoices",
+        "parent_properties_in": "invoices",
+        "key_from_parent": "id",
+        "endpoint": "invoice_messages",
+        "endpoint_detail": "",
+        "endpoint_detail_key": "invoice_id",
+        "properties_in": "message"
+    }
+
+    persisted_count = sync_nested_records(sync_attributes)
+
+    return persisted_count
+
+
 def sync_invoice_payments():
     sync_attributes = {
         "schema": "invoice_payments",
+        "parent_endpoint": "invoices",
+        "parent_properties_in": "invoices",
+        "key_from_parent": "id",
         "endpoint": "invoice_payments",
-        "endpoint_detail": "invoice_payment_detail",
-        "endpoint_detail_key": ["invoice_id",
-                                "payment_id"],
+        "endpoint_detail": "",
+        "endpoint_detail_key": "invoice_id",
         "properties_in": "payment"
     }
 
-    persisted_count = sync_records(sync_attributes)
+    persisted_count = sync_nested_records(sync_attributes)
 
     return persisted_count
 
@@ -599,34 +729,36 @@ def sync_projects():
     return persisted_count
 
 
-# @TODO - Sync iteratively over projects
 def sync_project_tasks():
     sync_attributes = {
         "schema": "project_tasks",
+        "parent_endpoint": "projects",
+        "parent_properties_in": "project",
+        "key_from_parent": "id",
         "endpoint": "project_tasks",
-        "endpoint_detail": "project_task_detail",
-        "endpoint_detail_key": ["project_id",
-                                "task_assignment_id"],
+        "endpoint_detail": "",
+        "endpoint_detail_key": "project_id",
         "properties_in": "task_assignment"
     }
 
-    persisted_count = sync_records(sync_attributes)
+    persisted_count = sync_nested_records(sync_attributes)
 
     return persisted_count
 
 
-# @TODO - Sync iteratively over projects
 def sync_project_users():
     sync_attributes = {
         "schema": "project_users",
+        "parent_endpoint": "projects",
+        "parent_properties_in": "project",
+        "key_from_parent": "id",
         "endpoint": "project_users",
-        "endpoint_detail": "project_users_detail",
-        "endpoint_detail_key": ["project_id",
-                                "user_assignment_id"],
+        "endpoint_detail": "",
+        "endpoint_detail_key": "project_id",
         "properties_in": "user_assignment"
     }
 
-    persisted_count = sync_records(sync_attributes)
+    persisted_count = sync_nested_records(sync_attributes)
 
     return persisted_count
 
@@ -643,23 +775,8 @@ def sync_time_entries():
         "properties_in": "day_entry"
     }
 
-    # @TODO - Re-enable this once technical debt has been resolved for two double-star arguments in the endpoint_detail
-    # persisted_count = sync_records(sync_attributes, params)
-
-    schema = sync_attributes["schema"]
-    parent_endpoint = sync_attributes["parent_endpoint"]
-    parent_properties_in = sync_attributes["parent_properties_in"]
-    key_from_parent = sync_attributes["key_from_parent"]
-    endpoint = sync_attributes["endpoint"]
-    endpoint_detail = sync_attributes["endpoint_detail"]
-    endpoint_detail_key = sync_attributes["endpoint_detail_key"]
-    properties_in = sync_attributes["properties_in"]
-
     last_sync = datetime.strptime(state[schema], DATETIME_FMT)
     days_since_sync = (datetime.utcnow() - last_sync).days
-
-    logger.info("Syncing all %s", endpoint)
-    sync_schema(schema)
 
     harvest_updated_since = last_sync.strftime(HARVEST_DATE_FMT)
     logger.info("Harvest %s tap hasn't been updated since: %s", endpoint, harvest_updated_since)
@@ -670,44 +787,8 @@ def sync_time_entries():
         'updated_since': harvest_updated_since
     }
 
-    has_more = True
-    persisted_count = 0
-    while has_more:
-        resp = request(get_url(parent_endpoint, params=None))
-        # logger.info("Response from %s endpoint: %s", parent_endpoint, resp)
-        data = resp.json()
-        # logger.info("JSON Response from %s endpoint: %s", parent_endpoint, data)
-
-        # Get all time entries by user
-        for record in data:
-            # Records are inside of an object
-            record = record[parent_properties_in]
-            # logger.info("User Record: %s", record)
-            # Request the time entries using the key_from_parent, in this case user_id as a key
-            respb = request(get_url(endpoint, **{endpoint_detail_key: record[key_from_parent]}), params)
-
-            # Iterate through each record returned
-            # In time_entries case, each response is contained in a day_entry
-            for entry in respb.json():
-                # logger.info("Print the entry %s", entry)
-                entry = entry[properties_in]
-
-                if 'updated_at' in entry:
-                    modified_time = transform_timestamp(entry['updated_at'])
-                elif 'created_at' in entry:
-                    modified_time = transform_timestamp(entry['created_at'])
-                else:
-                    modified_time = None
-
-                if not modified_time or modified_time >= last_sync:
-                    stream('records', entry, schema)
-                    persisted_count += 1
-
-                update_state(endpoint, modified_time)
-
-        stream('state', state)
-        # No pagination, set has_more to False
-        has_more = False
+    # @TODO - Re-enable this once technical debt has been resolved for two double-star arguments in the endpoint_detail
+    persisted_count = sync_nested_records(sync_attributes, params)
 
     return persisted_count
 
@@ -717,20 +798,20 @@ def do_check(args):
 
 
 def do_sync():
-    # @TODO - Build all sync_funcs()
     persisted_count = 0
     persisted_count += sync_clients()
     persisted_count += sync_contacts()
     persisted_count += sync_expense_categories()
     persisted_count += sync_expenses()
-    # persisted_count += sync_invoice_item_categories()
-    # persisted_count += sync_invoices()
-    # persisted_count += sync_invoice_payments()
+    persisted_count += sync_invoice_item_categories()
+    persisted_count += sync_invoices()
+    persisted_count += sync_invoice_messages()
+    persisted_count += sync_invoice_payments()
     persisted_count += sync_people()
     persisted_count += sync_tasks()
     persisted_count += sync_projects()
-    # persisted_count += sync_project_tasks()
-    # persisted_count += sync_project_users()
+    persisted_count += sync_project_tasks()
+    persisted_count += sync_project_users()
     persisted_count += sync_time_entries()
     return persisted_count
 
