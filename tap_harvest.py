@@ -775,6 +775,7 @@ def sync_time_entries():
         "properties_in": "day_entry"
     }
 
+    schema = sync_attributes["schema"]
     last_sync = datetime.strptime(state[schema], DATETIME_FMT)
     days_since_sync = (datetime.utcnow() - last_sync).days
 
