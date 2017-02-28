@@ -80,6 +80,7 @@ Author: Jordan Ryan (jordan@facetinteractive.com)
         "invoices": "2000-01-01T00:00:00Z",
         "invoice_item_categories": "2000-01-01T00:00:00Z",
         "invoice_payments": "2000-01-01T00:00:00Z",
+        "invoice_messages": "2000-01-01T00:00:00Z",
         "expenses": "2000-01-01T00:00:00Z",
         "expense_categories": "2000-01-01T00:00:00Z",
         "projects": "2000-01-01T00:00:00Z",
