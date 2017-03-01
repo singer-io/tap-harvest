@@ -8,11 +8,10 @@
       "type": ["null", "string"]
     },
     "spent_at": {
-      "type": ["null", "string"],
-      "format": "date-time"
+      "type": ["null", "string"]
     },
     "hours": {
-      "type": ["null", "numbers"]
+      "type": ["null", "number"]
     },
     "user_id": {
       "type": ["null", "integer"]

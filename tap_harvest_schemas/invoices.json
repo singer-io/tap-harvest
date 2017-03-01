@@ -14,15 +14,13 @@
       "type": ["null", "string"]
     },
     "number": {
-      "type": ["null", "integer"]
+      "type": ["null", "string"]
     },
     "issued_at": {
-      "type": ["null", "string"],
-      "format": "date-time"
+      "type": ["null", "string"]
     },
     "due_at": {
-      "type": ["null", "string"],
-      "format": "date-time"
+      "type": ["null", "string"]
     },
     "amount": {
       "type": ["null", "number"]

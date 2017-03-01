@@ -31,8 +31,7 @@
       "type": ["null", "integer"]
     },
     "spent_at": {
-      "type": ["null", "string"],
-      "format": "date-time"
+      "type": ["null", "string"]
     },
     "is_closed": {
       "type": ["null", "boolean"]

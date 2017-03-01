@@ -52,12 +52,10 @@
       "format": "date-time"
     },
     "starts_on": {
-      "type": ["null", "string"],
-      "format": "date-time"
+      "type": ["null", "string"]
     },
     "ends_on": {
-      "type": ["null", "string"],
-      "format": "date-time"
+      "type": ["null", "string"]
     },
     "estimate": {
       "type": ["null", "number"]
@@ -66,12 +64,10 @@
       "type": ["null", "string"]
     },
     "hint_earliest_record_at": {
-      "type": ["null", "string"],
-      "format": "date-time"
+      "type": ["null", "string"]
     },
     "hint_latest_record_at": {
-      "type": ["null", "string"],
-      "format": "date-time"
+      "type": ["null", "string"]
     },
     "notes": {
       "type": ["null", "string"]
