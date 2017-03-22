@@ -102,4 +102,4 @@ Author: Jordan Ryan (jordan@facetinteractive.com)
 
 ---
 
-Copyright &copy; 2017 Facet Interactive
+Copyright &copy; 2017 Stitch
