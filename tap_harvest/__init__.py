@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import datetime
+import os
 
 import requests
 import singer
@@ -23,6 +24,11 @@ BASE_URL = "https://{}.harvestapp.com/"
 CONFIG = {}
 STATE = {}
 
+def get_abs_path(path):
+    return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
+
+def load_schema(entity):
+    return utils.load_json(get_abs_path("schemas/{}.json".format(entity)))
 
 def get_start(key):
     if key not in STATE:
@@ -73,7 +79,7 @@ def request(url, params=None):
 
 def sync_endpoint(endpoint, path, table_name=None, date_fields=None):
     table_name = table_name or endpoint
-    schema = utils.load_schema(endpoint)
+    schema = load_schema(endpoint)
     singer.write_schema(table_name, schema, ["id"])
     start = get_start(endpoint)
 
@@ -94,13 +100,13 @@ def sync_endpoint(endpoint, path, table_name=None, date_fields=None):
 
 
 def sync_projects():
-    tasks_schema = utils.load_schema("project_tasks")
+    tasks_schema = load_schema("project_tasks")
     singer.write_schema("project_tasks", tasks_schema, ["id"])
 
-    users_schema = utils.load_schema("project_users")
+    users_schema = load_schema("project_users")
     singer.write_schema("project_users", users_schema, ["id"])
 
-    schema = utils.load_schema("projects")
+    schema = load_schema("projects")
     singer.write_schema("projects", schema, ["id"])
     start = get_start("projects")
 
@@ -133,7 +139,7 @@ def sync_projects():
 
 
 def sync_time_entries():
-    schema = utils.load_schema("time_entries")
+    schema = load_schema("time_entries")
     singer.write_schema("time_entries", schema, ["id"])
     start = get_start("time_entries")
 
@@ -159,10 +165,10 @@ def sync_time_entries():
 
 
 def sync_invoices():
-    payments_schema = utils.load_schema("invoice_payments")
+    payments_schema = load_schema("invoice_payments")
     singer.write_schema("invoice_payments", payments_schema, ["id"])
 
-    schema = utils.load_schema("invoices")
+    schema = load_schema("invoices")
     singer.write_schema("invoices", schema, ["id"])
     start = get_start("invoices")
 
