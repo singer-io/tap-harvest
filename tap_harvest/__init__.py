@@ -5,11 +5,11 @@ import datetime
 import requests
 import singer
 
-from tap_harvest import utils
+from singer import utils
 
 
-logger = singer.get_logger()
-session = requests.Session()
+LOGGER = singer.get_logger()
+SESSION = requests.Session()
 
 REQUIRED_CONFIG_KEYS = [
     "start_date",
@@ -43,14 +43,14 @@ def refresh_token():
         "grant_type": "refresh_token",
     }
 
-    logger.info("Refreshing token")
+    LOGGER.info("Refreshing token")
     url = get_url("oauth2/token")
     resp = requests.post(url, data=payload)
     resp.raise_for_status()
     auth = resp.json()
 
     expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=auth['expires_in'])
-    logger.info("Token refreshed. Expires at {}".format(expires))
+    LOGGER.info("Token refreshed. Expires at {}".format(expires))
 
     CONFIG["access_token"] = auth["access_token"]
     CONFIG["token_expires"] = expires - datetime.timedelta(seconds=600)
@@ -65,8 +65,8 @@ def request(url, params=None):
     params["access_token"] = CONFIG["access_token"]
     headers = {"Accept": "application/json"}
     req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
-    logger.info("GET {}".format(req.url))
-    resp = session.send(req)
+    LOGGER.info("GET {}".format(req.url))
+    resp = SESSION.send(req)
     resp.raise_for_status()
     return resp.json()
 
@@ -110,7 +110,8 @@ def sync_projects():
     url = get_url("projects")
     for row in request(url):
         item = row["project"]
-        for date_field in ["starts_on", "ends_on", "hint_earliest_record_at", "hint_latest_record_at"]:
+        date_fields = ["starts_on", "ends_on", "hint_earliest_record_at", "hint_latest_record_at"]
+        for date_field in date_fields:
             if item.get(date_field):
                 item[date_field] += "T00:00:00Z"
 
@@ -199,7 +200,7 @@ def sync_invoices():
 
 
 def do_sync():
-    logger.info("Starting sync")
+    LOGGER.info("Starting sync")
 
     # Grab all clients and client contacts. Contacts have client FKs so grab
     # them last.
@@ -223,7 +224,7 @@ def do_sync():
     sync_endpoint("invoice_item_categories", "invoice_category")
     sync_invoices()
 
-    logger.info("Sync complete")
+    LOGGER.info("Sync complete")
 
 
 def main():
