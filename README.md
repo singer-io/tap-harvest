@@ -1,6 +1,6 @@
 # tap-harvest
 
-A data stream generator for the Harvest REST API, written in python 3.
+A singer.io tap for extracting data from the Harvest REST API, written in python 3.
 Author: Jordan Ryan (jordan@facetinteractive.com)
 
 ## Quick start

@@ -1,31 +1,25 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
-import os.path
-
-with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'VERSION')) as f:
-    version = f.read().strip()
+from setuptools import setup
 
 setup(name='tap-harvest',
-      version=version,
-      description='Taps Harvest data',
+      version="0.2.4",
+      description='Singer.io tap for extracting data from the Harvest api',
       author='Facet Interactive',
-      url='https://github.com/facetinteractive/tap-harvest',
+      url='http://singer.io',
       classifiers=['Programming Language :: Python :: 3 :: Only'],
       py_modules=['tap_harvest'],
       install_requires=[
-            'singer-python>=0.2.1',
+            'singer-python>=0.3.1',
             'requests==2.13.0',
-            'backoff==1.3.2',
-            'python-dateutil==2.6.0',
       ],
       entry_points='''
           [console_scripts]
           tap-harvest=tap_harvest:main
       ''',
-      packages=['tap_harvest_schemas'],
+      packages=['tap_harvest'],
       package_data = {
-          'tap_harvest_schemas': [
+          'tap_harvest/schemas': [
               "clients.json",
               "contacts.json",
               "expense_categories.json",
@@ -40,9 +34,6 @@ setup(name='tap-harvest',
               "tasks.json",
               "time_entries.json",
           ],
-          '': [
-              'VERSION',
-              'LICENSE',
-          ]
-      }
+      },
+      include_package_data=True,
 )
