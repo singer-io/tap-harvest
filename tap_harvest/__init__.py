@@ -17,7 +17,7 @@ REQUIRED_CONFIG_KEYS = [
     "client_id",
     "client_secret",
     "refresh_token",
-    "subdomain",
+    "account_name",
 ]
 
 BASE_URL = "https://{}.harvestapp.com/"
@@ -38,7 +38,7 @@ def get_start(key):
 
 
 def get_url(endpoint):
-    return BASE_URL.format(CONFIG['subdomain']) + endpoint
+    return BASE_URL.format(CONFIG['account_name']) + endpoint
 
 
 def refresh_token():
