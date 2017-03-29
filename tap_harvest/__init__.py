@@ -77,10 +77,9 @@ def request(url, params=None):
     return resp.json()
 
 
-def sync_endpoint(endpoint, path, table_name=None, date_fields=None):
-    table_name = table_name or endpoint
+def sync_endpoint(endpoint, path, date_fields=None):
     schema = load_schema(endpoint)
-    singer.write_schema(table_name, schema, ["id"])
+    singer.write_schema(endpoint, schema, ["id"])
     start = get_start(endpoint)
 
     url = get_url(endpoint)
@@ -215,7 +214,7 @@ def do_sync():
 
     # Get all people and tasks before grabbing the projects. When we grab the
     # projects we will grab the project_users and project_tasks for each.
-    sync_endpoint("people", "user", table_name="users")
+    sync_endpoint("people", "user")
     sync_endpoint("tasks", "task")
     sync_projects()
 
