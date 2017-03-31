@@ -14,9 +14,7 @@ SESSION = requests.Session()
 
 REQUIRED_CONFIG_KEYS = [
     "start_date",
-    "client_id",
-    "client_secret",
-    "refresh_token",
+    "access_token",
     "account_name",
 ]
 
@@ -40,33 +38,8 @@ def get_start(key):
 def get_url(endpoint):
     return BASE_URL.format(CONFIG['account_name']) + endpoint
 
-
-def refresh_token():
-    payload = {
-        "refresh_token": CONFIG["refresh_token"],
-        "client_id": CONFIG["client_id"],
-        "client_secret": CONFIG["client_secret"],
-        "grant_type": "refresh_token",
-    }
-
-    LOGGER.info("Refreshing token")
-    url = get_url("oauth2/token")
-    resp = requests.post(url, data=payload)
-    resp.raise_for_status()
-    auth = resp.json()
-
-    expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=auth['expires_in'])
-    LOGGER.info("Token refreshed. Expires at {}".format(expires))
-
-    CONFIG["access_token"] = auth["access_token"]
-    CONFIG["token_expires"] = expires - datetime.timedelta(seconds=600)
-
-
 @utils.ratelimit(100, 15)
 def request(url, params=None):
-    if CONFIG.get("token_expires") is None or CONFIG["token_expires"] < datetime.datetime.utcnow():
-        refresh_token()
-
     params = params or {}
     params["access_token"] = CONFIG["access_token"]
     headers = {"Accept": "application/json"}
