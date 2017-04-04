@@ -3,15 +3,16 @@
 from setuptools import setup
 
 setup(name='tap-harvest',
-      version="0.3.2",
+      version="0.3.3",
       description='Singer.io tap for extracting data from the Harvest api',
       author='Facet Interactive',
       url='http://singer.io',
       classifiers=['Programming Language :: Python :: 3 :: Only'],
       py_modules=['tap_harvest'],
       install_requires=[
-            'singer-python==0.3.1',
-            'requests==2.13.0',
+          'singer-python==0.3.1',
+          'requests==2.13.0',
+          'dateparser==0.6.0',
       ],
       entry_points='''
           [console_scripts]

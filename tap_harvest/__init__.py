@@ -4,14 +4,15 @@ import datetime
 import os
 
 import requests
-import singer
+import dateparser
 
+import singer
 from singer import utils
+from tap_harvest.transform import transform, EXPECTED_DATE_FORMATS
 
 
 LOGGER = singer.get_logger()
 SESSION = requests.Session()
-
 REQUIRED_CONFIG_KEYS = [
     "start_date",
     "access_token",
@@ -37,12 +38,6 @@ def get_start(key):
 def get_url(endpoint):
     return BASE_URL.format(CONFIG['account_name']) + endpoint
 
-def transform_project_id(entity):
-    if entity.get('project_id'):
-        int_project_id = int(entity["project_id"])
-        entity["project_id"] = int_project_id
-    return entity
-
 @utils.ratelimit(100, 15)
 def request(url, params=None):
     params = params or {}
@@ -63,13 +58,11 @@ def sync_endpoint(endpoint, path, date_fields=None):
     url = get_url(endpoint)
     for row in request(url):
         item = row[path]
-
+        item = transform(item, schema)
         if date_fields:
             for date_field in date_fields:
                 if item.get(date_field):
                     item[date_field] += "T00:00:00Z"
-
-        item = transform_project_id(item)
 
         if item['updated_at'] >= start:
             singer.write_record(endpoint, item)
@@ -89,12 +82,13 @@ def sync_projects():
     singer.write_schema("projects", schema, ["id"])
     start = get_start("projects")
 
-    start_dt = utils.strptime(start)
+    start_dt = dateparser.parse(start, date_formats=EXPECTED_DATE_FORMATS)
     updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
 
     url = get_url("projects")
     for row in request(url):
         item = row["project"]
+        item = transform(item, schema)
         date_fields = ["starts_on", "ends_on", "hint_earliest_record_at", "hint_latest_record_at"]
         for date_field in date_fields:
             if item.get(date_field):
@@ -107,13 +101,13 @@ def sync_projects():
         suburl = url + "/{}/user_assignments".format(item["id"])
         for subrow in request(suburl, params={"updated_since": updated_since}):
             subitem = subrow["user_assignment"]
-            subitem = transform_project_id(subitem)
+            subitem = transform(subitem, users_schema)
             singer.write_record("project_users", subitem)
 
         suburl = url + "/{}/task_assignments".format(item["id"])
         for subrow in request(suburl, params={"updated_since": updated_since}):
             subitem = subrow["task_assignment"]
-            subitem = transform_project_id(subitem)
+            subitem = transform(subitem, tasks_schema)
             singer.write_record("project_tasks", subitem)
 
     singer.write_state(STATE)
@@ -127,20 +121,22 @@ def sync_time_entries():
     endpoint = "daily/{day_of_year}/{year}"
     params = {"slim": 1}
 
-    start_date = utils.strptime(start).date()
+    start_date = dateparser.parse(start, \
+                                  date_formats=EXPECTED_DATE_FORMATS) \
+                           .date()
     today = datetime.datetime.utcnow().date()
     while start_date <= today:
         year = start_date.timetuple().tm_year
         day_of_year = start_date.timetuple().tm_yday
         url = get_url(endpoint.format(day_of_year=day_of_year, year=year))
         data = request(url, params)
-        for item in data["day_entries"]:
-            if "spent_at" in item:
-                item["spent_at"] += "T00:00:00Z"
+        if data.get('day_entries'):
+            for item in data.get('day_entries'):
+                if "spent_at" in item:
+                    item["spent_at"] += "T00:00:00Z"
 
-            item = transform_project_id(item)
-
-            singer.write_record("time_entries", item)
+                item = transform(item, schema)
+                singer.write_record("time_entries", item)
 
         start_date += datetime.timedelta(days=1)
 
@@ -155,7 +151,7 @@ def sync_invoices():
     singer.write_schema("invoices", schema, ["id"])
     start = get_start("invoices")
 
-    start_dt = utils.strptime(start)
+    start_dt = dateparser.parse(start, date_formats=EXPECTED_DATE_FORMATS)
     updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
 
     url = get_url("invoices")
@@ -163,6 +159,7 @@ def sync_invoices():
         data = request(url, {"updated_since": updated_since})
         for row in data:
             item = row["invoices"]
+            item = transform(item, schema)
             for date_field in ["issued_at", "due_at"]:
                 if item.get(date_field):
                     item[date_field] += "T00:00:00Z"
@@ -170,15 +167,16 @@ def sync_invoices():
             singer.write_record("invoices", item)
             utils.update_state(STATE, "invoices", item['updated_at'])
 
-            suburl = url + "/{}/messages"
+            suburl = url + "/{}/messages".format(item['id'])
             for subrow in request(suburl):
                 item = subrow["message"]
                 if item['updated_at'] >= start:
                     singer.write_record("invoice_messages", item)
 
-            suburl = url + "/{}/payments"
+            suburl = url + "/{}/payments".format(item['id'])
             for subrow in request(suburl):
                 item = subrow["payment"]
+                item = transform(item, payments_schema)
                 if item['updated_at'] >= start:
                     singer.write_record("invoice_payments", item)
 
