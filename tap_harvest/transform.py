@@ -1,5 +1,5 @@
 import datetime
-from tap_harvest import utils
+from singer import utils
 
 
 def _transform_datetime(value):
@@ -19,35 +19,35 @@ def _transform(data, typ, schema):
         if schema["format"] == "date-time":
             try:
                 data = _transform_datetime(data)
-            except Exception as e:
+            except Exception:
                 data = str(data)
 
-    if typ == "object":
+    elif typ == "object":
         data = _transform_object(data, schema["properties"])
 
-    if typ == "array":
+    elif typ == "array":
         data = _transform_array(data, schema["items"])
 
-    if typ == "null":
+    elif typ == "null":
         if data is None or data == "":
             return None
         else:
             raise ValueError("Not null")
 
-    if typ == "string":
+    elif typ == "string":
         data = str(data)
 
-    if typ == "integer":
+    elif typ == "integer":
         if isinstance(data, str):
             data = data.replace(',', '')
         data = int(data)
 
-    if typ == "number":
+    elif typ == "number":
         if isinstance(data, str):
             data = data.replace(',', '')
         data = float(data)
 
-    if typ == "boolean":
+    elif typ == "boolean":
         data = bool(data)
 
     return data
@@ -65,7 +65,7 @@ def transform(data, schema):
     for typ in types:
         try:
             return _transform(data, typ, schema)
-        except Exception as e:
+        except Exception:
             pass
 
     raise Exception("Invalid data: {} does not match {}".format(data, schema))
