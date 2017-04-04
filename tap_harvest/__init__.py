@@ -5,6 +5,7 @@ import os
 
 import requests
 import singer
+import dateparser
 
 from singer import utils
 from tap_harvest.transform import transform
@@ -82,7 +83,7 @@ def sync_projects():
     singer.write_schema("projects", schema, ["id"])
     start = get_start("projects")
 
-    start_dt = utils.strptime(start)
+    start_dt = dateparser.parse(start, date_formats=['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S'])
     updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
 
     url = get_url("projects")
@@ -121,7 +122,7 @@ def sync_time_entries():
     endpoint = "daily/{day_of_year}/{year}"
     params = {"slim": 1}
 
-    start_date = utils.strptime(start).date()
+    start_date = dateparser.parse(start, date_formats=['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S']).date()
     today = datetime.datetime.utcnow().date()
     while start_date <= today:
         year = start_date.timetuple().tm_year
@@ -149,7 +150,7 @@ def sync_invoices():
     singer.write_schema("invoices", schema, ["id"])
     start = get_start("invoices")
 
-    start_dt = utils.strptime(start)
+    start_dt = dateparser.parse(start, date_formats=['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S'])
     updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
 
     url = get_url("invoices")
@@ -165,13 +166,13 @@ def sync_invoices():
             singer.write_record("invoices", item)
             utils.update_state(STATE, "invoices", item['updated_at'])
 
-            suburl = url + "/{}/messages"
+            suburl = url + "/{}/messages".format(item['id'])
             for subrow in request(suburl):
                 item = subrow["message"]
                 if item['updated_at'] >= start:
                     singer.write_record("invoice_messages", item)
 
-            suburl = url + "/{}/payments"
+            suburl = url + "/{}/payments".format(item['id'])
             for subrow in request(suburl):
                 item = subrow["payment"]
                 item = transform(item, payments_schema)

@@ -10,8 +10,9 @@ setup(name='tap-harvest',
       classifiers=['Programming Language :: Python :: 3 :: Only'],
       py_modules=['tap_harvest'],
       install_requires=[
-            'singer-python==0.3.1',
-            'requests==2.13.0',
+          'singer-python==0.3.1',
+          'requests==2.13.0',
+          'dateparser==0.6.0',
       ],
       entry_points='''
           [console_scripts]

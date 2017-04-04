@@ -1,9 +1,10 @@
 import datetime
+import dateparser
 from singer import utils
 
 
 def _transform_datetime(value):
-    return utils.strftime(datetime.datetime.utcfromtimestamp(int(value) * 0.001))
+    return utils.strftime(dateparser.parse(start, date_formats=['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S']))
 
 
 def _transform_object(data, prop_schema):
