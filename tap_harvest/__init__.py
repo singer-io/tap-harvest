@@ -34,9 +34,14 @@ def get_start(key):
 
     return STATE[key]
 
-
 def get_url(endpoint):
     return BASE_URL.format(CONFIG['account_name']) + endpoint
+
+def transform_project_id(entity):
+    if entity.get('project_id'):
+        int_project_id = int(entity["project_id"])
+        entity["project_id"] = int_project_id
+    return entity
 
 @utils.ratelimit(100, 15)
 def request(url, params=None):
@@ -63,6 +68,8 @@ def sync_endpoint(endpoint, path, date_fields=None):
             for date_field in date_fields:
                 if item.get(date_field):
                     item[date_field] += "T00:00:00Z"
+
+        item = transform_project_id(item)
 
         if item['updated_at'] >= start:
             singer.write_record(endpoint, item)
@@ -100,11 +107,13 @@ def sync_projects():
         suburl = url + "/{}/user_assignments".format(item["id"])
         for subrow in request(suburl, params={"updated_since": updated_since}):
             subitem = subrow["user_assignment"]
+            subitem = transform_project_id(subitem)
             singer.write_record("project_users", subitem)
 
         suburl = url + "/{}/task_assignments".format(item["id"])
         for subrow in request(suburl, params={"updated_since": updated_since}):
             subitem = subrow["task_assignment"]
+            subitem = transform_project_id(subitem)
             singer.write_record("project_tasks", subitem)
 
     singer.write_state(STATE)
@@ -128,6 +137,8 @@ def sync_time_entries():
         for item in data["day_entries"]:
             if "spent_at" in item:
                 item["spent_at"] += "T00:00:00Z"
+
+            item = transform_project_id(item)
 
             singer.write_record("time_entries", item)
 
