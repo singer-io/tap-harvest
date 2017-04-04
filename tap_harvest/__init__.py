@@ -82,7 +82,7 @@ def sync_projects():
     singer.write_schema("projects", schema, ["id"])
     start = get_start("projects")
 
-    start_dt = dateparser.parse(start, date_formats=['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S'])
+    start_dt = dateparser.parse(start, date_formats=EXPECTED_DATE_FORMATS)
     updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
 
     url = get_url("projects")
@@ -151,7 +151,7 @@ def sync_invoices():
     singer.write_schema("invoices", schema, ["id"])
     start = get_start("invoices")
 
-    start_dt = dateparser.parse(start, date_formats=['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S'])
+    start_dt = dateparser.parse(start, date_formats=EXPECTED_DATE_FORMATS)
     updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
 
     url = get_url("invoices")
