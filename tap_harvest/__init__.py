@@ -7,7 +7,7 @@ import requests
 import singer
 
 from singer import utils
-from tap_harvest.transform import transform, _transform_datetime
+from tap_harvest.transform import transform
 
 
 LOGGER = singer.get_logger()
@@ -58,7 +58,7 @@ def sync_endpoint(endpoint, path, date_fields=None):
     url = get_url(endpoint)
     for row in request(url):
         item = row[path]
-        item = transform(item,schema)
+        item = transform(item, schema)
         if date_fields:
             for date_field in date_fields:
                 if item.get(date_field):
@@ -88,7 +88,7 @@ def sync_projects():
     url = get_url("projects")
     for row in request(url):
         item = row["project"]
-        item = transform(item,schema)
+        item = transform(item, schema)
         date_fields = ["starts_on", "ends_on", "hint_earliest_record_at", "hint_latest_record_at"]
         for date_field in date_fields:
             if item.get(date_field):
@@ -133,7 +133,7 @@ def sync_time_entries():
                 if "spent_at" in item:
                     item["spent_at"] += "T00:00:00Z"
 
-                item = transform(item,schema)
+                item = transform(item, schema)
                 singer.write_record("time_entries", item)
 
         start_date += datetime.timedelta(days=1)
@@ -157,7 +157,7 @@ def sync_invoices():
         data = request(url, {"updated_since": updated_since})
         for row in data:
             item = row["invoices"]
-            item = transform(item,schema)
+            item = transform(item, schema)
             for date_field in ["issued_at", "due_at"]:
                 if item.get(date_field):
                     item[date_field] += "T00:00:00Z"
