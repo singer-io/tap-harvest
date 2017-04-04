@@ -4,16 +4,15 @@ import datetime
 import os
 
 import requests
-import singer
 import dateparser
 
+import singer
 from singer import utils
-from tap_harvest.transform import transform
+from tap_harvest.transform import transform, EXPECTED_DATE_FORMATS
 
 
 LOGGER = singer.get_logger()
 SESSION = requests.Session()
-
 REQUIRED_CONFIG_KEYS = [
     "start_date",
     "access_token",
@@ -122,7 +121,9 @@ def sync_time_entries():
     endpoint = "daily/{day_of_year}/{year}"
     params = {"slim": 1}
 
-    start_date = dateparser.parse(start, date_formats=['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S']).date()
+    start_date = dateparser.parse(start, \
+                                  date_formats=EXPECTED_DATE_FORMATS) \
+                           .date()
     today = datetime.datetime.utcnow().date()
     while start_date <= today:
         year = start_date.timetuple().tm_year
