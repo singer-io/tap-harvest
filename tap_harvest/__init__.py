@@ -4,7 +4,7 @@ import datetime
 import os
 
 import requests
-import dateparser
+import pendulum
 
 import singer
 from singer import utils
@@ -82,7 +82,7 @@ def sync_projects():
     singer.write_schema("projects", schema, ["id"])
     start = get_start("projects")
 
-    start_dt = dateparser.parse(start, date_formats=EXPECTED_DATE_FORMATS)
+    start_dt = pendulum.parse(start)
     updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
 
     url = get_url("projects")
@@ -121,9 +121,7 @@ def sync_time_entries():
     endpoint = "daily/{day_of_year}/{year}"
     params = {"slim": 1}
 
-    start_date = dateparser.parse(start, \
-                                  date_formats=EXPECTED_DATE_FORMATS) \
-                           .date()
+    start_date = pendulum.parse(start).date()
     today = datetime.datetime.utcnow().date()
     while start_date <= today:
         year = start_date.timetuple().tm_year
@@ -151,7 +149,7 @@ def sync_invoices():
     singer.write_schema("invoices", schema, ["id"])
     start = get_start("invoices")
 
-    start_dt = dateparser.parse(start, date_formats=EXPECTED_DATE_FORMATS)
+    start_dt = pendulum.parse(start)
     updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
 
     url = get_url("invoices")
