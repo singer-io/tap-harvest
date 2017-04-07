@@ -213,9 +213,9 @@ def do_sync():
 
 
 def main():
-    config, state = utils.parse_args(REQUIRED_CONFIG_KEYS)
-    CONFIG.update(config)
-    STATE.update(state)
+    args = utils.parse_args(REQUIRED_CONFIG_KEYS)
+    CONFIG.update(args.config)
+    STATE.update(args.state)
     do_sync()
 
 
