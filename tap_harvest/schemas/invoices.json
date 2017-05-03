@@ -82,7 +82,7 @@
       "type": ["null", "number"]
     },
     "retainer_id": {
-      "type": ["null", "id"]
+      "type": ["null", "integer"]
     },
     "created_by_id": {
       "type": ["null", "integer"]
