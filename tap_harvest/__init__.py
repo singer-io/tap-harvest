@@ -167,16 +167,18 @@ def sync_invoices():
 
             suburl = url + "/{}/messages".format(item['id'])
             for subrow in request(suburl):
-                item = subrow["message"]
-                if item['updated_at'] >= start:
-                    singer.write_record("invoice_messages", item)
+                subitem = subrow["message"]
+                if subitem['updated_at'] >= start:
+                    singer.write_record("invoice_messages", subitem)
 
             suburl = url + "/{}/payments".format(item['id'])
             for subrow in request(suburl):
-                item = subrow["payment"]
-                item = transform(item, payments_schema)
-                if item['updated_at'] >= start:
-                    singer.write_record("invoice_payments", item)
+                subitem = subrow["payment"]
+                subitem = transform(subitem, payments_schema)
+                if subitem['updated_at'] >= start:
+                    singer.write_record("invoice_payments", subitem)
+
+            singer.write_state(STATE)
 
         if len(data) < 50:
             break
