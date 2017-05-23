@@ -8,7 +8,7 @@ import pendulum
 
 import singer
 from singer import utils
-from tap_harvest.transform import transform, EXPECTED_DATE_FORMATS
+from tap_harvest.transform import transform
 
 
 LOGGER = singer.get_logger()

@@ -1,7 +1,6 @@
 import pendulum
 from singer import utils
 
-EXPECTED_DATE_FORMATS = ['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S']
 
 def _transform_datetime(value):
     return utils.strftime(pendulum.parse(value))
@@ -34,9 +33,6 @@ def _transform(data, typ, schema):
             return None
         else:
             raise ValueError("Not null")
-
-    elif typ == "string":
-        data = str(data)
 
     elif typ == "integer":
         if isinstance(data, str):
