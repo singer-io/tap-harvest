@@ -87,4 +87,12 @@ ENV/
 
 # Rope project settings
 .ropeproject
-*~
+
+# Mac
+._*
+.DS_Store
+
+# Custom stuff
+env.sh
+config.json
+.autoenv.zsh
