@@ -142,6 +142,9 @@ def sync_time_entries():
 
 
 def sync_invoices():
+    messages_schema = load_schema("invoice_messages")
+    singer.write_schema("invoice_messages", messages_schema, ["id"])
+
     payments_schema = load_schema("invoice_payments")
     singer.write_schema("invoice_payments", payments_schema, ["id"])
 
