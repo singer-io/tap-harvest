@@ -3,6 +3,7 @@
 import datetime
 import os
 
+import backoff
 import requests
 import pendulum
 
@@ -23,11 +24,14 @@ BASE_URL = "https://{}.harvestapp.com/"
 CONFIG = {}
 STATE = {}
 
+
 def get_abs_path(path):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
 
+
 def load_schema(entity):
     return utils.load_json(get_abs_path("schemas/{}.json".format(entity)))
+
 
 def get_start(key):
     if key not in STATE:
@@ -35,9 +39,16 @@ def get_start(key):
 
     return STATE[key]
 
+
 def get_url(endpoint):
     return BASE_URL.format(CONFIG['account_name']) + endpoint
 
+
+@backoff.on_exception(backoff.expo,
+                      (requests.exceptions.RequestException),
+                      max_tries=5,
+                      giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
+                      factor=2)
 @utils.ratelimit(100, 15)
 def request(url, params=None):
     params = params or {}
