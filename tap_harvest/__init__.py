@@ -125,7 +125,12 @@ def sync_projects():
             singer.write_record("project_tasks", subitem)
 
         suburl = url + "/{}/entries".format(item["id"])
-        for subrow in request(suburl, params={"updated_since": updated_since}):
+        subparams = {
+            "from": start_dt.strftime("%Y%m%d"),
+            "to": datetime.datetime.utcnow().strftime("%Y%m%d"),
+            "updated_since": updated_since,
+        }
+        for subrow in request(suburl, params=subparams):
             subitem = subrow["day_entry"]
             subitem = transform(subitem, entries_schema)
             singer.write_record("time_entries", subitem)
