@@ -89,6 +89,9 @@ def sync_projects():
     users_schema = load_schema("project_users")
     singer.write_schema("project_users", users_schema, ["id"])
 
+    entries_schema = load_schema("time_entries")
+    singer.write_schema("time_entries", entries_schema, ["id"])
+
     schema = load_schema("projects")
     singer.write_schema("projects", schema, ["id"])
     start = get_start("projects")
@@ -121,35 +124,13 @@ def sync_projects():
             subitem = transform(subitem, tasks_schema)
             singer.write_record("project_tasks", subitem)
 
+        suburl = url + "/{}/entries".format(item["id"])
+        for subrow in request(suburl, params={"updated_since": updated_since}):
+            subitem = subrow["day_entry"]
+            subitem = transform(subitem, entries_schema)
+            singer.write_record("time_entries", subitem)
+
     singer.write_state(STATE)
-
-
-def sync_time_entries():
-    schema = load_schema("time_entries")
-    singer.write_schema("time_entries", schema, ["id"])
-    start = get_start("time_entries")
-
-    endpoint = "daily/{day_of_year}/{year}"
-    params = {"slim": 1}
-
-    start_date = pendulum.parse(start).date()
-    today = datetime.datetime.utcnow().date()
-    while start_date <= today:
-        year = start_date.timetuple().tm_year
-        day_of_year = start_date.timetuple().tm_yday
-        url = get_url(endpoint.format(day_of_year=day_of_year, year=year))
-        data = request(url, params)
-        if data.get('day_entries'):
-            for item in data.get('day_entries'):
-                if "spent_at" in item:
-                    item["spent_at"] += "T00:00:00Z"
-
-                item = transform(item, schema)
-                singer.write_record("time_entries", item)
-
-        start_date += datetime.timedelta(days=1)
-
-    utils.update_state(STATE, "time_entries", utils.strftime(today))
 
 
 def sync_invoices():
@@ -209,13 +190,11 @@ def do_sync():
     sync_endpoint("contacts", "contact")
 
     # Get all people and tasks before grabbing the projects. When we grab the
-    # projects we will grab the project_users and project_tasks for each.
+    # projects we will grab the project_users, project_tasks, and time_entries
+    # for each.
     sync_endpoint("people", "user")
     sync_endpoint("tasks", "task")
     sync_projects()
-
-    # Sync time entries one day at a time
-    sync_time_entries()
 
     # Sync expenses and their categories
     sync_endpoint("expense_categories", "expense_category")
