@@ -27,15 +27,29 @@
       "format": "date-time"
     },
     "updated_at": {
-      "type": ["null", "string"],
-      "format": "date-time"
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "adjustment_record": {
       "type": ["null", "boolean"]
     },
     "timer_started_at": {
-      "type": ["null", "string"],
-      "format": "date-time"
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "is_closed": {
       "type": ["null", "boolean"]
