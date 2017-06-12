@@ -15,12 +15,9 @@ def _transform_array(data, item_schema):
 
 
 def _transform(data, typ, schema):
-    if "format" in schema and typ != "null":
+    if typ == "string" and "format" in schema and typ != "null":
         if schema["format"] == "date-time":
-            try:
-                data = _transform_datetime(data)
-            except Exception:
-                data = str(data)
+            data = _transform_datetime(data)
 
     elif typ == "object":
         data = _transform_object(data, schema["properties"])
@@ -46,6 +43,10 @@ def _transform(data, typ, schema):
 
     elif typ == "boolean":
         data = bool(data)
+
+    elif typ == "string":
+        if data is None:
+            raise ValueError("string is null")
 
     return data
 
