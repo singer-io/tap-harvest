@@ -43,7 +43,6 @@ def get_start(key):
 def get_url(endpoint):
     return BASE_URL.format(CONFIG['account_name']) + endpoint
 
-
 @backoff.on_exception(backoff.expo,
                       (requests.exceptions.RequestException),
                       max_tries=5,
@@ -60,6 +59,11 @@ def request(url, params=None):
     resp.raise_for_status()
     return resp.json()
 
+def append_times_to_dates(item, date_fields):
+    if date_fields:
+        for date_field in date_fields:
+            if item.get(date_field):
+                item[date_field] += "T00:00:00Z"
 
 def sync_endpoint(endpoint, path, date_fields=None):
     schema = load_schema(endpoint)
@@ -70,10 +74,7 @@ def sync_endpoint(endpoint, path, date_fields=None):
     for row in request(url):
         item = row[path]
         item = transform(item, schema)
-        if date_fields:
-            for date_field in date_fields:
-                if item.get(date_field):
-                    item[date_field] += "T00:00:00Z"
+        append_times_to_dates(item, date_fields)
 
         if item['updated_at'] >= start:
             singer.write_record(endpoint, item)
@@ -104,9 +105,7 @@ def sync_projects():
         item = row["project"]
         item = transform(item, schema)
         date_fields = ["starts_on", "ends_on", "hint_earliest_record_at", "hint_latest_record_at"]
-        for date_field in date_fields:
-            if item.get(date_field):
-                item[date_field] += "T00:00:00Z"
+        append_times_to_dates(item, date_fields)
 
         if item['updated_at'] >= start:
             singer.write_record("projects", item)
@@ -158,9 +157,7 @@ def sync_invoices():
         for row in data:
             item = row["invoices"]
             item = transform(item, schema)
-            for date_field in ["issued_at", "due_at"]:
-                if item.get(date_field):
-                    item[date_field] += "T00:00:00Z"
+            append_times_to_dates(item, ["issued_at", "due_at"])
 
             singer.write_record("invoices", item)
             utils.update_state(STATE, "invoices", item['updated_at'])
@@ -169,6 +166,7 @@ def sync_invoices():
             for subrow in request(suburl):
                 subitem = subrow["message"]
                 if subitem['updated_at'] >= start:
+                    append_times_to_dates(subitem, ["send_reminder_on"])
                     singer.write_record("invoice_messages", subitem)
 
             suburl = url + "/{}/payments".format(item['id'])
