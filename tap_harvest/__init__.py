@@ -43,11 +43,12 @@ def get_start(key):
 def get_url(endpoint):
     return BASE_URL.format(CONFIG['account_name']) + endpoint
 
-@backoff.on_exception(backoff.expo,
-                      (requests.exceptions.RequestException),
-                      max_tries=5,
-                      giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
-                      factor=2)
+@backoff.on_exception(
+    backoff.expo,
+    (requests.exceptions.RequestException),
+    max_tries=5,
+    giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
+    factor=2)
 @utils.ratelimit(100, 15)
 def request(url, params=None):
     params = params or {}
