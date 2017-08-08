@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='tap-harvest',
-      version="0.4.6",
+      version="0.4.7",
       description='Singer.io tap for extracting data from the Harvest api',
       author='Facet Interactive',
       url='http://singer.io',
