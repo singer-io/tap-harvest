@@ -52,7 +52,7 @@
       "format": "date-time"
     },
     "tax": {
-      "type": ["null", "string"]
+      "type": ["null", "string", "number"]
     },
     "tax_amount": {
       "type": ["null", "number"]
