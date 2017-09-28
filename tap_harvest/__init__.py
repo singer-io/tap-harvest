@@ -211,11 +211,18 @@ def do_sync():
     LOGGER.info("Sync complete")
 
 
-def main():
+def main_impl():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
     CONFIG.update(args.config)
     STATE.update(args.state)
     do_sync()
+
+def main():
+    try:
+        main_impl()
+    except Exception as exc:
+        LOGGER.critical(exc)
+        raise exc
 
 
 if __name__ == "__main__":
