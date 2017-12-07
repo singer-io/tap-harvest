@@ -76,7 +76,7 @@
       "type": ["null", "integer"]
     },
     "discount": {
-      "type": ["null", "number"]
+      "type": ["null", "string", "number"]
     },
     "discount_amount": {
       "type": ["null", "number"]
