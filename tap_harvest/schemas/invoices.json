@@ -64,7 +64,7 @@
       "type": ["null", "integer"]
     },
     "tax2": {
-      "type": ["null", "string"]
+      "type": ["null", "string", "number"]
     },
     "tax2_amount": {
       "type": ["null", "number"]
@@ -76,7 +76,7 @@
       "type": ["null", "integer"]
     },
     "discount": {
-      "type": ["null", "string"]
+      "type": ["null", "number"]
     },
     "discount_amount": {
       "type": ["null", "number"]
