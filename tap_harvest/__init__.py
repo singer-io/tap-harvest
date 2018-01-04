@@ -57,20 +57,20 @@ class Auth:
         try:
             resp_json = resp.json()
             self._access_token = resp_json['access_token']
-        except KeyError as e:
+        except KeyError as key_err:
             if resp_json.get('error'):
                 LOGGER.critical(resp_json.get('error'))
             if resp_json.get('error_description'):
                 LOGGER.critical(resp_json.get('error_description'))
-            raise e
+            raise key_err
         LOGGER.info("Got refreshed access token")
 
     def get_access_token(self):
         if (self._access_token is not None and self._expires_at > pendulum.now()):
             return self._access_token
-        else:
-            self._refresh_access_token()
-            return self._access_token
+
+        self._refresh_access_token()
+        return self._access_token
 
 
 def get_abs_path(path):
