@@ -16,13 +16,61 @@ LOGGER = singer.get_logger()
 SESSION = requests.Session()
 REQUIRED_CONFIG_KEYS = [
     "start_date",
-    "access_token",
+    "refresh_token",
+    "client_id",
+    "client_secret",
     "account_name",
 ]
 
 BASE_URL = "https://{}.harvestapp.com/"
 CONFIG = {}
 STATE = {}
+AUTH = {}
+
+class Auth:
+    def __init__(self, client_id, client_secret, refresh_token):
+        self._client_id = client_id
+        self._client_secret = client_secret
+        self._refresh_token = refresh_token
+        self._refresh_access_token()
+
+    @backoff.on_exception(
+        backoff.expo,
+        (requests.exceptions.RequestException),
+        max_tries=5,
+        giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
+        factor=2)
+    def _make_refresh_token_request(self):
+        return requests.request('POST',
+                                url='https://api.harvestapp.com/oauth2/token',
+                                params={'client_id': self._client_id,
+                                        'client_secret': self._client_secret,
+                                        'refresh_token': self._refresh_token,
+                                        'grant_type': 'refresh_token'})
+
+    def _refresh_access_token(self):
+        LOGGER.info("Refreshing access token")
+        resp = self._make_refresh_token_request()
+        expires_in_seconds = resp.json().get('expires_in', 17 * 60 * 60)
+        self._expires_at = pendulum.now().add(seconds=expires_in_seconds)
+        resp_json = {}
+        try:
+            resp_json = resp.json()
+            self._access_token = resp_json['access_token']
+        except KeyError as e:
+            if resp_json.get('error'):
+                LOGGER.critical(resp_json.get('error'))
+            if resp_json.get('error_description'):
+                LOGGER.critical(resp_json.get('error_description'))
+            raise e
+        LOGGER.info("Got refreshed access token")
+
+    def get_access_token(self):
+        if (self._access_token is not None and self._expires_at > pendulum.now()):
+            return self._access_token
+        else:
+            self._refresh_access_token()
+            return self._access_token
 
 
 def get_abs_path(path):
@@ -52,7 +100,7 @@ def get_url(endpoint):
 @utils.ratelimit(100, 15)
 def request(url, params=None):
     params = params or {}
-    params["access_token"] = CONFIG["access_token"]
+    params["access_token"] = AUTH.get_access_token()
     headers = {"Accept": "application/json"}
     req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
     LOGGER.info("GET {}".format(req.url))
@@ -214,6 +262,8 @@ def do_sync():
 def main_impl():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
     CONFIG.update(args.config)
+    global AUTH
+    AUTH = Auth(CONFIG['client_id'], CONFIG['client_secret'], CONFIG['refresh_token'])
     STATE.update(args.state)
     do_sync()
 
