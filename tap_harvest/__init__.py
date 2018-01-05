@@ -262,7 +262,7 @@ def do_sync():
 def main_impl():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
     CONFIG.update(args.config)
-    global AUTH
+    global AUTH # pylint: disable=global-statement
     AUTH = Auth(CONFIG['client_id'], CONFIG['client_secret'], CONFIG['refresh_token'])
     STATE.update(args.state)
     do_sync()
