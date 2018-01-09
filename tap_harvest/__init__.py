@@ -100,10 +100,11 @@ def get_url(endpoint):
 @utils.ratelimit(100, 15)
 def request(url, params=None):
     params = params or {}
-    params["access_token"] = AUTH.get_access_token()
+    access_token = AUTH.get_access_token()
+    params["access_token"] = access_token
     headers = {"Accept": "application/json"}
     req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
-    LOGGER.info("GET {}".format(req.url))
+    LOGGER.info("GET {}".format(req.url.replace(access_token, '.' * len(access_token))))
     resp = SESSION.send(req)
     resp.raise_for_status()
     return resp.json()
