@@ -20,7 +20,9 @@ Author: Jordan Ryan (jordan@facetinteractive.com)
 
     ```json
     {
-        "access_token": "YOUR_OAUTH_TOKEN",
+        "client_id": "OAUTH_CLIENT_ID",
+        "client_secret": "OAUTH_CLIENT_SECRET",
+        "refresh_token": "YOUR_OAUTH_REFRESH_TOKEN",
         "start_date": "2017-04-19T13:37:30Z",
         "account_name": "YOUR_ACCOUNT_NAME"
     }

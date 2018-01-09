@@ -8,4 +8,4 @@ dependencies:
 
 test:
   post:
-    - pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches
+    - pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches,too-few-public-methods,wrong-import-order
