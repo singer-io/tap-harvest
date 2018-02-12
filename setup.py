@@ -10,7 +10,7 @@ setup(name='tap-harvest',
       classifiers=['Programming Language :: Python :: 3 :: Only'],
       py_modules=['tap_harvest'],
       install_requires=[
-          'singer-python==1.2.0',
+          'singer-python==5.0.4',
           'requests==2.13.0',
           'pendulum==1.2.0',
           'backoff==1.3.2'
