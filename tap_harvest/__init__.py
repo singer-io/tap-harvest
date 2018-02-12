@@ -117,7 +117,11 @@ def sync_endpoint(endpoint, path, date_fields=None):
     schema = load_schema(endpoint)
     bookmark_property = 'updated_at'
 
-    singer.write_schema(endpoint, schema, ["id"], bookmark_properties=[bookmark_property])
+    singer.write_schema(endpoint,
+                        schema,
+                        ["id"],
+                        bookmark_properties=[bookmark_property])
+
     start = get_start(endpoint)
 
     url = get_url(endpoint)
@@ -132,7 +136,10 @@ def sync_endpoint(endpoint, path, date_fields=None):
             append_times_to_dates(item, date_fields)
 
             if item[bookmark_property] >= start:
-                singer.write_record(endpoint, item, time_extracted=time_extracted)
+                singer.write_record(endpoint,
+                                    item,
+                                    time_extracted=time_extracted)
+
                 utils.update_state(STATE, endpoint, item[bookmark_property])
 
     singer.write_state(STATE)
@@ -141,16 +148,28 @@ def sync_endpoint(endpoint, path, date_fields=None):
 def sync_projects():
     bookmark_property = 'updated_at'
     tasks_schema = load_schema("project_tasks")
-    singer.write_schema("project_tasks", tasks_schema, ["id"], bookmark_properties=[bookmark_property])
+    singer.write_schema("project_tasks",
+                        tasks_schema,
+                        ["id"],
+                        bookmark_properties=[bookmark_property])
 
     users_schema = load_schema("project_users")
-    singer.write_schema("project_users", users_schema, ["id"], bookmark_properties=[bookmark_property])
+    singer.write_schema("project_users",
+                        users_schema,
+                        ["id"],
+                        bookmark_properties=[bookmark_property])
 
     entries_schema = load_schema("time_entries")
-    singer.write_schema("time_entries", entries_schema, ["id"], bookmark_properties=[bookmark_property])
+    singer.write_schema("time_entries",
+                        entries_schema,
+                        ["id"],
+                        bookmark_properties=[bookmark_property])
 
     schema = load_schema("projects")
-    singer.write_schema("projects", schema, ["id"], bookmark_properties=[bookmark_property])
+    singer.write_schema("projects",
+                        schema,
+                        ["id"],
+                        bookmark_properties=[bookmark_property])
     start = get_start("projects")
 
     start_dt = pendulum.parse(start)
@@ -164,11 +183,18 @@ def sync_projects():
         for row in projects_data:
             item = row["project"]
             item = transformer.transform(item, schema)
-            date_fields = ["starts_on", "ends_on", "hint_earliest_record_at", "hint_latest_record_at"]
+            date_fields = ["starts_on",
+                           "ends_on",
+                           "hint_earliest_record_at",
+                           "hint_latest_record_at"]
+
             append_times_to_dates(item, date_fields)
 
             if item[bookmark_property] >= start:
-                singer.write_record("projects", item, time_extracted=projects_time_extracted)
+                singer.write_record("projects",
+                                    item,
+                                    time_extracted=projects_time_extracted)
+
                 utils.update_state(STATE, "projects", item[bookmark_property])
 
             suburl = url + "/{}/user_assignments".format(item["id"])
@@ -178,7 +204,9 @@ def sync_projects():
             for subrow in project_users_data:
                 subitem = subrow["user_assignment"]
                 subitem = transformer.transform(subitem, users_schema)
-                singer.write_record("project_users", subitem, time_extracted=project_users_time_extracted)
+                singer.write_record("project_users",
+                                    subitem,
+                                    time_extracted=project_users_time_extracted)
 
             suburl = url + "/{}/task_assignments".format(item["id"])
             task_assignments_data = request(suburl, params={"updated_since": updated_since})
@@ -187,7 +215,9 @@ def sync_projects():
             for subrow in task_assignments_data:
                 subitem = subrow["task_assignment"]
                 subitem = transformer.transform(subitem, tasks_schema)
-                singer.write_record("project_tasks", subitem, time_extracted=task_assignments_time_extracted)
+                singer.write_record("project_tasks",
+                                    subitem,
+                                    time_extracted=task_assignments_time_extracted)
 
             suburl = url + "/{}/entries".format(item["id"])
             subparams = {
@@ -202,7 +232,9 @@ def sync_projects():
             for subrow in time_entries_data:
                 subitem = subrow["day_entry"]
                 subitem = transformer.transform(subitem, entries_schema)
-                singer.write_record("time_entries", subitem, time_extracted=time_entries_time_extracted)
+                singer.write_record("time_entries",
+                                    subitem,
+                                    time_extracted=time_entries_time_extracted)
 
     singer.write_state(STATE)
 
@@ -210,13 +242,23 @@ def sync_projects():
 def sync_invoices():
     messages_schema = load_schema("invoice_messages")
     bookmark_property = 'updated_at'
-    singer.write_schema("invoice_messages", messages_schema, ["id"], bookmark_properties=[bookmark_property])
+    singer.write_schema("invoice_messages",
+                        messages_schema,
+                        ["id"],
+                        bookmark_properties=[bookmark_property])
 
     payments_schema = load_schema("invoice_payments")
-    singer.write_schema("invoice_payments", payments_schema, ["id"], bookmark_properties=[bookmark_property])
+    singer.write_schema("invoice_payments",
+                        payments_schema,
+                        ["id"],
+                        bookmark_properties=[bookmark_property])
 
     schema = load_schema("invoices")
-    singer.write_schema("invoices", schema, ["id"], bookmark_properties=[bookmark_property])
+    singer.write_schema("invoices",
+                        schema,
+                        ["id"],
+                        bookmark_properties=[bookmark_property])
+
     start = get_start("invoices")
 
     start_dt = pendulum.parse(start)
@@ -233,7 +275,10 @@ def sync_invoices():
                 item = transformer.transform(item, schema)
                 append_times_to_dates(item, ["issued_at", "due_at"])
 
-                singer.write_record("invoices", item, time_extracted=invoices_time_extracted)
+                singer.write_record("invoices",
+                                    item,
+                                    time_extracted=invoices_time_extracted)
+
                 utils.update_state(STATE, "invoices", item['updated_at'])
 
                 suburl = url + "/{}/messages".format(item['id'])
@@ -243,7 +288,9 @@ def sync_invoices():
                     subitem = subrow["message"]
                     if subitem['updated_at'] >= start:
                         append_times_to_dates(subitem, ["send_reminder_on"])
-                        singer.write_record("invoice_messages", subitem, time_extracted=messages_time_extracted)
+                        singer.write_record("invoice_messages",
+                                            subitem,
+                                            time_extracted=messages_time_extracted)
 
                 suburl = url + "/{}/payments".format(item['id'])
                 payments_data = request(suburl)
@@ -253,7 +300,9 @@ def sync_invoices():
                     subitem = subrow["payment"]
                     subitem = transformer.transform(subitem, payments_schema)
                     if subitem['updated_at'] >= start:
-                        singer.write_record("invoice_payments", subitem, time_extracted=payments_time_extracted)
+                        singer.write_record("invoice_payments",
+                                            subitem,
+                                            time_extracted=payments_time_extracted)
 
                 singer.write_state(STATE)
 
