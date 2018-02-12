@@ -8,9 +8,7 @@ import requests
 import pendulum
 
 import singer
-from singer import utils
-from tap_harvest.transform import transform
-
+from singer import Transformer, utils
 
 LOGGER = singer.get_logger()
 SESSION = requests.Session()
@@ -117,121 +115,152 @@ def append_times_to_dates(item, date_fields):
 
 def sync_endpoint(endpoint, path, date_fields=None):
     schema = load_schema(endpoint)
-    singer.write_schema(endpoint, schema, ["id"])
+    bookmark_property = 'updated_at'
+
+    singer.write_schema(endpoint, schema, ["id"], bookmark_properties=[bookmark_property])
     start = get_start(endpoint)
 
     url = get_url(endpoint)
-    for row in request(url):
-        item = row[path]
-        item = transform(item, schema)
-        append_times_to_dates(item, date_fields)
+    data = request(url)
+    time_extracted = utils.now()
 
-        if item['updated_at'] >= start:
-            singer.write_record(endpoint, item)
-            utils.update_state(STATE, endpoint, item['updated_at'])
+    with Transformer() as transformer:
+        for row in data:
+            item = row[path]
+            item = transformer.transform(item, schema)
+
+            append_times_to_dates(item, date_fields)
+
+            if item[bookmark_property] >= start:
+                singer.write_record(endpoint, item, time_extracted=time_extracted)
+                utils.update_state(STATE, endpoint, item[bookmark_property])
 
     singer.write_state(STATE)
 
 
 def sync_projects():
+    bookmark_property = 'updated_at'
     tasks_schema = load_schema("project_tasks")
-    singer.write_schema("project_tasks", tasks_schema, ["id"])
+    singer.write_schema("project_tasks", tasks_schema, ["id"], bookmark_properties=[bookmark_property])
 
     users_schema = load_schema("project_users")
-    singer.write_schema("project_users", users_schema, ["id"])
+    singer.write_schema("project_users", users_schema, ["id"], bookmark_properties=[bookmark_property])
 
     entries_schema = load_schema("time_entries")
-    singer.write_schema("time_entries", entries_schema, ["id"])
+    singer.write_schema("time_entries", entries_schema, ["id"], bookmark_properties=[bookmark_property])
 
     schema = load_schema("projects")
-    singer.write_schema("projects", schema, ["id"])
+    singer.write_schema("projects", schema, ["id"], bookmark_properties=[bookmark_property])
     start = get_start("projects")
 
     start_dt = pendulum.parse(start)
     updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
 
     url = get_url("projects")
-    for row in request(url):
-        item = row["project"]
-        item = transform(item, schema)
-        date_fields = ["starts_on", "ends_on", "hint_earliest_record_at", "hint_latest_record_at"]
-        append_times_to_dates(item, date_fields)
+    projects_data = request(url)
+    projects_time_extracted = utils.now()
 
-        if item['updated_at'] >= start:
-            singer.write_record("projects", item)
-            utils.update_state(STATE, "projects", item['updated_at'])
+    with Transformer() as transformer:
+        for row in projects_data:
+            item = row["project"]
+            item = transformer.transform(item, schema)
+            date_fields = ["starts_on", "ends_on", "hint_earliest_record_at", "hint_latest_record_at"]
+            append_times_to_dates(item, date_fields)
 
-        suburl = url + "/{}/user_assignments".format(item["id"])
-        for subrow in request(suburl, params={"updated_since": updated_since}):
-            subitem = subrow["user_assignment"]
-            subitem = transform(subitem, users_schema)
-            singer.write_record("project_users", subitem)
+            if item[bookmark_property] >= start:
+                singer.write_record("projects", item, time_extracted=projects_time_extracted)
+                utils.update_state(STATE, "projects", item[bookmark_property])
 
-        suburl = url + "/{}/task_assignments".format(item["id"])
-        for subrow in request(suburl, params={"updated_since": updated_since}):
-            subitem = subrow["task_assignment"]
-            subitem = transform(subitem, tasks_schema)
-            singer.write_record("project_tasks", subitem)
+            suburl = url + "/{}/user_assignments".format(item["id"])
+            project_users_data = request(suburl, params={"updated_since": updated_since})
+            project_users_time_extracted = utils.now()
 
-        suburl = url + "/{}/entries".format(item["id"])
-        subparams = {
-            "from": start_dt.strftime("%Y%m%d"),
-            "to": datetime.datetime.utcnow().strftime("%Y%m%d"),
-            "updated_since": updated_since,
-        }
-        for subrow in request(suburl, params=subparams):
-            subitem = subrow["day_entry"]
-            subitem = transform(subitem, entries_schema)
-            singer.write_record("time_entries", subitem)
+            for subrow in project_users_data:
+                subitem = subrow["user_assignment"]
+                subitem = transformer.transform(subitem, users_schema)
+                singer.write_record("project_users", subitem, time_extracted=project_users_time_extracted)
+
+            suburl = url + "/{}/task_assignments".format(item["id"])
+            task_assignments_data = request(suburl, params={"updated_since": updated_since})
+            task_assignments_time_extracted = utils.now()
+
+            for subrow in task_assignments_data:
+                subitem = subrow["task_assignment"]
+                subitem = transformer.transform(subitem, tasks_schema)
+                singer.write_record("project_tasks", subitem, time_extracted=task_assignments_time_extracted)
+
+            suburl = url + "/{}/entries".format(item["id"])
+            subparams = {
+                "from": start_dt.strftime("%Y%m%d"),
+                "to": datetime.datetime.utcnow().strftime("%Y%m%d"),
+                "updated_since": updated_since,
+            }
+
+            time_entries_data = request(suburl, params=subparams)
+            time_entries_time_extracted = utils.now()
+
+            for subrow in time_entries_data:
+                subitem = subrow["day_entry"]
+                subitem = transformer.transform(subitem, entries_schema)
+                singer.write_record("time_entries", subitem, time_extracted=time_entries_time_extracted)
 
     singer.write_state(STATE)
 
 
 def sync_invoices():
     messages_schema = load_schema("invoice_messages")
-    singer.write_schema("invoice_messages", messages_schema, ["id"])
+    bookmark_property = 'updated_at'
+    singer.write_schema("invoice_messages", messages_schema, ["id"], bookmark_properties=[bookmark_property])
 
     payments_schema = load_schema("invoice_payments")
-    singer.write_schema("invoice_payments", payments_schema, ["id"])
+    singer.write_schema("invoice_payments", payments_schema, ["id"], bookmark_properties=[bookmark_property])
 
     schema = load_schema("invoices")
-    singer.write_schema("invoices", schema, ["id"])
+    singer.write_schema("invoices", schema, ["id"], bookmark_properties=[bookmark_property])
     start = get_start("invoices")
 
     start_dt = pendulum.parse(start)
     updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
 
     url = get_url("invoices")
-    while True:
-        data = request(url, {"updated_since": updated_since})
-        for row in data:
-            item = row["invoices"]
-            item = transform(item, schema)
-            append_times_to_dates(item, ["issued_at", "due_at"])
+    with Transformer() as transformer:
+        while True:
+            data = request(url, {"updated_since": updated_since})
+            invoices_time_extracted = utils.now()
 
-            singer.write_record("invoices", item)
-            utils.update_state(STATE, "invoices", item['updated_at'])
+            for row in data:
+                item = row["invoices"]
+                item = transformer.transform(item, schema)
+                append_times_to_dates(item, ["issued_at", "due_at"])
 
-            suburl = url + "/{}/messages".format(item['id'])
-            for subrow in request(suburl):
-                subitem = subrow["message"]
-                if subitem['updated_at'] >= start:
-                    append_times_to_dates(subitem, ["send_reminder_on"])
-                    singer.write_record("invoice_messages", subitem)
+                singer.write_record("invoices", item, time_extracted=invoices_time_extracted)
+                utils.update_state(STATE, "invoices", item['updated_at'])
 
-            suburl = url + "/{}/payments".format(item['id'])
-            for subrow in request(suburl):
-                subitem = subrow["payment"]
-                subitem = transform(subitem, payments_schema)
-                if subitem['updated_at'] >= start:
-                    singer.write_record("invoice_payments", subitem)
+                suburl = url + "/{}/messages".format(item['id'])
+                messages_data = request(suburl)
+                messages_time_extracted = utils.now()
+                for subrow in messages_data:
+                    subitem = subrow["message"]
+                    if subitem['updated_at'] >= start:
+                        append_times_to_dates(subitem, ["send_reminder_on"])
+                        singer.write_record("invoice_messages", subitem, time_extracted=messages_time_extracted)
 
-            singer.write_state(STATE)
+                suburl = url + "/{}/payments".format(item['id'])
+                payments_data = request(suburl)
+                payments_time_extracted = utils.now()
 
-        if len(data) < 50:
-            break
+                for subrow in payments_data:
+                    subitem = subrow["payment"]
+                    subitem = transformer.transform(subitem, payments_schema)
+                    if subitem['updated_at'] >= start:
+                        singer.write_record("invoice_payments", subitem, time_extracted=payments_time_extracted)
 
-    singer.write_state(STATE)
+                singer.write_state(STATE)
+
+            if len(data) < 50:
+                break
+
+        singer.write_state(STATE)
 
 
 def do_sync():
