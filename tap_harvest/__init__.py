@@ -99,10 +99,11 @@ def get_url(endpoint):
 def request(url, params=None):
     params = params or {}
     access_token = AUTH.get_access_token()
-    params["access_token"] = access_token
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": "application/json",
+               "Authorization": "Bearer " + access_token,
+               "User-Agent": CONFIG.get("user_agent")}
     req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
-    LOGGER.info("GET {}".format(req.url.replace(access_token, '.' * len(access_token))))
+    LOGGER.info("GET {}".format(req.url))
     resp = SESSION.send(req)
     resp.raise_for_status()
     return resp.json()
