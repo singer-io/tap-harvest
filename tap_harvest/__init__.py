@@ -41,10 +41,11 @@ class Auth:
     def _make_refresh_token_request(self):
         return requests.request('POST',
                                 url='https://api.harvestapp.com/oauth2/token',
-                                params={'client_id': self._client_id,
-                                        'client_secret': self._client_secret,
-                                        'refresh_token': self._refresh_token,
-                                        'grant_type': 'refresh_token'})
+                                data={'client_id': self._client_id,
+                                      'client_secret': self._client_secret,
+                                      'refresh_token': self._refresh_token,
+                                      'grant_type': 'refresh_token'},
+                                headers={"User-Agent": CONFIG.get("user_agent")})
 
     def _refresh_access_token(self):
         LOGGER.info("Refreshing access token")
@@ -99,10 +100,11 @@ def get_url(endpoint):
 def request(url, params=None):
     params = params or {}
     access_token = AUTH.get_access_token()
-    params["access_token"] = access_token
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": "application/json",
+               "Authorization": "Bearer " + access_token,
+               "User-Agent": CONFIG.get("user_agent")}
     req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
-    LOGGER.info("GET {}".format(req.url.replace(access_token, '.' * len(access_token))))
+    LOGGER.info("GET {}".format(req.url))
     resp = SESSION.send(req)
     resp.raise_for_status()
     return resp.json()
