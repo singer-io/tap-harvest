@@ -41,7 +41,7 @@ class Auth:
     def _make_refresh_token_request(self):
         return requests.request('POST',
                                 url='https://api.harvestapp.com/oauth2/token',
-                                params={'client_id': self._client_id,
+                                data={'client_id': self._client_id,
                                         'client_secret': self._client_secret,
                                         'refresh_token': self._refresh_token,
                                         'grant_type': 'refresh_token'})
