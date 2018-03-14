@@ -44,7 +44,8 @@ class Auth:
                                 data={'client_id': self._client_id,
                                       'client_secret': self._client_secret,
                                       'refresh_token': self._refresh_token,
-                                      'grant_type': 'refresh_token'})
+                                      'grant_type': 'refresh_token'},
+                                headers={"User-Agent": CONFIG.get("user_agent")})
 
     def _refresh_access_token(self):
         LOGGER.info("Refreshing access token")
