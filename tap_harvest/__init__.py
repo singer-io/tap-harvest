@@ -42,9 +42,9 @@ class Auth:
         return requests.request('POST',
                                 url='https://api.harvestapp.com/oauth2/token',
                                 data={'client_id': self._client_id,
-                                        'client_secret': self._client_secret,
-                                        'refresh_token': self._refresh_token,
-                                        'grant_type': 'refresh_token'})
+                                      'client_secret': self._client_secret,
+                                      'refresh_token': self._refresh_token,
+                                      'grant_type': 'refresh_token'})
 
     def _refresh_access_token(self):
         LOGGER.info("Refreshing access token")
