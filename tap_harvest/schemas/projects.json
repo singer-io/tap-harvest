@@ -19,6 +19,12 @@
     "billable": {
       "type": ["null", "boolean"]
     },
+    "is-fixed-fee": {
+      "type": ["null", "boolean"]
+    },
+    "fee": {
+      "type": ["null", "number"]
+    },
     "bill_by": {
       "type": ["null", "string"]
     },
