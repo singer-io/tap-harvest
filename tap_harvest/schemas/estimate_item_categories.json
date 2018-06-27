@@ -7,12 +7,6 @@
     "name": {
       "type": ["null", "string"]
     },
-    "use_as_service": {
-      "type": ["null","boolean"]
-    },
-    "use_as_expense": {
-      "type": ["null","boolean"]
-    },
     "created_at": {
       "type": ["null", "string"],
       "format": "date-time"

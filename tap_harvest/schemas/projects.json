@@ -13,10 +13,13 @@
     "code": {
       "type": ["null", "string"]
     },
-    "active": {
+    "is_active": {
       "type": ["null", "boolean"]
     },
-    "billable": {
+    "is_billable": {
+      "type": ["null", "boolean"]
+    },
+    "is_fixed_fee": {
       "type": ["null", "boolean"]
     },
     "bill_by": {
@@ -31,17 +34,39 @@
     "budget_by": {
       "type": ["null", "string"]
     },
+    "budget_is_monthly": {
+      "type": ["null", "boolean"]
+    },
     "notify_when_over_budget": {
       "type": ["null", "boolean"]
     },
-    "over_budget_notification_percetange": {
+    "over_budget_notification_percentage": {
       "type": ["null", "integer"]
     },
-    "over_budget_notified_at": {
-      "type": ["null", "string"]
+    "over_budget_notification_date": {
+      "type": ["null", "string"],
+      "format": "date-time"
     },
     "show_budget_to_all": {
       "type": ["null", "boolean"]
+    },
+    "cost_budget": {
+      "type": ["null", "number"]
+    },
+    "cost_budget_include_expenses": {
+      "type": ["null", "boolean"]
+    },
+    "fee": {
+      "type": ["null", "number"]
+    },
+    "notes": {
+      "type": ["null", "string"]
+    },
+    "starts_on": {
+      "type": ["null", "string"]
+    },
+    "ends_on": {
+      "type": ["null", "string"]
     },
     "created_at": {
       "type": ["null", "string"],
@@ -50,33 +75,6 @@
     "updated_at": {
       "type": ["null", "string"],
       "format": "date-time"
-    },
-    "starts_on": {
-      "type": ["null", "string"]
-    },
-    "ends_on": {
-      "type": ["null", "string"]
-    },
-    "estimate": {
-      "type": ["null", "number"]
-    },
-    "estimate_by": {
-      "type": ["null", "string"]
-    },
-    "hint_earliest_record_at": {
-      "type": ["null", "string"]
-    },
-    "hint_latest_record_at": {
-      "type": ["null", "string"]
-    },
-    "notes": {
-      "type": ["null", "string"]
-    },
-    "cost_budget": {
-      "type": ["null", "number"]
-    },
-    "cost_budget_include_expenses": {
-      "type": ["null", "boolean"]
     }
   }
 }

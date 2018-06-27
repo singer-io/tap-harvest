@@ -7,12 +7,6 @@
     "client_id": {
       "type": ["null", "integer"]
     },
-    "estimate_id": {
-      "type": ["null", "integer"]
-    },
-    "retainer_id": {
-      "type": ["null", "integer"]
-    },
     "user_id": {
       "type": ["null", "integer"]
     },
@@ -26,9 +20,6 @@
       "type": ["null", "string"]
     },
     "amount": {
-      "type": ["null", "number"]
-    },
-    "due_amount": {
       "type": ["null", "number"]
     },
     "tax": {
@@ -61,38 +52,19 @@
     "state": {
       "type": ["null", "string"]
     },
-    "period_start": {
-      "type": ["null", "string"],
-      "format": "date-time"
-    },
-    "period_end": {
-      "type": ["null", "string"],
-      "format": "date-time"
-    },
     "issued_date": {
       "type": ["null", "string"],
       "format": "date-time"
-    },
-    "due_date": {
-      "type": ["null", "string"],
-      "format": "date-time"
-    },
-    "payment_term": {
-      "type": ["null", "string"]
     },
     "sent_at": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "paid_at": {
+    "accepted_at": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "paid_date": {
-      "type": ["null", "string"],
-      "format": "date-time"
-    },
-    "closed_at": {
+    "declined_at": {
       "type": ["null", "string"],
       "format": "date-time"
     },

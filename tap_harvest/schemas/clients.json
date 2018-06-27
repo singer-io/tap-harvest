@@ -7,37 +7,22 @@
     "name": {
       "type": ["null", "string"]
     },
-    "active": {
+    "is_active": {
       "type": ["null", "boolean"]
+    },
+    "address": {
+      "type": ["null", "string"]
     },
     "currency": {
       "type": ["null", "string"]
-    },
-    "highrise_id": {
-      "type": ["null", "boolean"]
-    },
-    "cache_version": {
-      "type": ["null", "integer"]
-    },
-    "updated_at": {
-      "type": ["null", "string"],
-      "format": "date-time"
     },
     "created_at": {
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "currency_symbol": {
-      "type": ["null", "string"]
-    },
-    "details": {
-      "type": ["null", "string"]
-    },
-    "default_invoice_timeframe": {
-      "type": ["null", "string"]
-    },
-    "last_invoice_kind": {
-      "type": ["null", "string"]
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
     }
   }
 }

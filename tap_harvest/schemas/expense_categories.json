@@ -13,6 +13,9 @@
     "unit_price": {
       "type": ["null", "number"]
     },
+    "is_active": {
+      "type": ["null","boolean"]
+    },
     "created_at": {
       "type": ["null", "string"],
       "format": "date-time"
@@ -20,9 +23,6 @@
     "updated_at": {
       "type": ["null", "string"],
       "format": "date-time"
-    },
-    "deactivated": {
-      "type": ["null","boolean"]
     }
   }
 }

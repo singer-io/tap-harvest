@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": ["null", "integer"]
+    },
+    "task_id": {
+      "type": ["null", "integer"]
+    },
+    "group_id": {
+      "type": ["null", "integer"]
+    },
+    "permalink": {
+      "type": ["null", "string"]
+    },
+    "service": {
+      "type": ["null", "string"]
+    },
+    "service_icon_url": {
+      "type": ["null", "string"]
+    }
+  }
+}
