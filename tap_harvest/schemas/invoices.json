@@ -13,7 +13,7 @@
     "retainer_id": {
       "type": ["null", "integer"]
     },
-    "user_id": {
+    "creator_id": {
       "type": ["null", "integer"]
     },
     "client_key": {

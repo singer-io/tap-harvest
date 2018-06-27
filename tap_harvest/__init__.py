@@ -83,6 +83,14 @@ def load_schema(entity):
     return utils.load_json(get_abs_path("schemas/{}.json".format(entity)))
 
 
+def load_and_write_schema(name, bookmark_property='updated_at'):
+    schema = load_schema(name)
+    singer.write_schema(name,
+                        schema,
+                        ["id"],
+                        bookmark_properties=[bookmark_property])
+    return schema
+
 def get_start(key):
     if key not in STATE:
         STATE[key] = CONFIG['start_date']
@@ -119,7 +127,7 @@ def append_times_to_dates(item, date_fields):
             if item.get(date_field):
                 item[date_field] += "T00:00:00Z"
 
-def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_updated_since=True, for_each_handler=None, map_handler=None):
+def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_updated_since=True, for_each_handler=None, map_handler=None, object_to_id=[]):
     schema = load_schema(schema_name)
     bookmark_property = 'updated_at'
 
@@ -143,6 +151,10 @@ def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_
         for row in data:
             if map_handler is not None:
                 row = map_handler(row)
+
+            for key in object_to_id:
+                if row[key] is not None:
+                    row[key + '_id'] = row[key]['id']
 
             item = transformer.transform(row, schema)
 
@@ -186,7 +198,8 @@ def sync_time_entries():
                                     pivot_row,
                                     time_extracted=time_extracted)
 
-    sync_endpoint("time_entries", for_each_handler=for_each_time_entry)
+    sync_endpoint("time_entries", for_each_handler=for_each_time_entry,
+                  object_to_id=['user', 'user_assignment', 'client', 'project', 'task', 'task_assignment', 'external_reference', 'invoice'])
 
 def sync_invoices():
     def for_each_invoice_message(message, time_extracted):
@@ -201,16 +214,17 @@ def sync_invoices():
                                     recipient,
                                     time_extracted=time_extracted)
 
-    def map_invoice_payment(payment):
-        payment['payment_gateway_id'] = payment['payment_gateway']['id']
-        payment['payment_gateway_name'] = payment['payment_gateway']['name']
-        return payment
-
-    def map_invoice_message(message):
-        message['invoice_id'] = message['id']
-        return message
-
     def for_each_invoice(invoice, time_extracted):
+        def map_invoice_message(message):
+            message['invoice_id'] = invoice['id']
+            return message
+
+        def map_invoice_payment(payment):
+            payment['invoice_id'] = invoice['id']
+            payment['payment_gateway_id'] = payment['payment_gateway']['id']
+            payment['payment_gateway_name'] = payment['payment_gateway']['name']
+            return payment
+
         # Sync invoice messages
         sync_endpoint("invoice_messages",
                       endpoint=("invoices/{}/messages".format(invoice['id'])),
@@ -234,7 +248,7 @@ def sync_invoices():
         line_items_schema = load_and_write_schema("invoice_line_items")
         with Transformer() as transformer:
             for line_item in invoice['line_items']:
-                line_item['estimate_id'] = invoice['id']
+                line_item['invoice_id'] = invoice['id']
                 line_item = transformer.transform(line_item, line_items_schema)
 
                 singer.write_record("estimate_line_items",
@@ -247,7 +261,7 @@ def sync_invoices():
                 "issued_date",
                 "due_date",
                 "paid_date",
-            ])
+            ], object_to_id=['client', 'estimate', 'retainer', 'creator'])
 
 def sync_estimates():
     def for_each_estimate_message(message, time_extracted):
@@ -289,16 +303,7 @@ def sync_estimates():
                                     line_item,
                                     time_extracted=time_extracted)
 
-    sync_endpoint("estimates", for_each_handler=for_each_estimate, date_fields=["issued_date"])
-
-# TODO: move elsewhere
-def load_and_write_schema(name, bookmark_property='updated_at'):
-    user_roles_schema = load_schema(name)
-    singer.write_schema(name,
-                        user_roles_schema,
-                        ["id"],
-                        bookmark_properties=[bookmark_property])
-    return user_roles_schema
+    sync_endpoint("estimates", for_each_handler=for_each_estimate, date_fields=["issued_date"], object_to_id=['client', 'user'])
 
 def sync_roles():
     def for_each_role(role, time_extracted):
@@ -318,10 +323,16 @@ def sync_roles():
 
 def sync_users():
     def for_each_user(user, time_extracted):
+        def map_user_projects(project_assignment):
+            project_assignment['user'] = user
+            return project_assignment
+
         sync_endpoint("user_projects",
                       endpoint=("users/{}/project_assignments".format(user['id'])),
                       path="project_assignments",
-                      with_updated_since=False
+                      with_updated_since=False,
+                      object_to_id=['project', 'client', 'user'],
+                      map_handler=map_user_projects
                       )
 
     sync_endpoint("users", for_each_handler=for_each_user)
@@ -333,7 +344,7 @@ def do_sync():
     # Grab all clients and client contacts. Contacts have client FKs so grab
     # them last.
     sync_endpoint("clients")
-    sync_endpoint("contacts")
+    sync_endpoint("contacts", object_to_id=['client'])
     sync_roles()
 
     # Get all people and tasks before grabbing the projects. When we grab the
@@ -341,15 +352,15 @@ def do_sync():
     # for each.
     sync_users()
     sync_endpoint("tasks")
-    sync_endpoint("projects")
+    sync_endpoint("projects", object_to_id=['client'])
 
     # Sync related project objects
-    sync_endpoint("project_tasks", endpoint='task_assignments', path='task_assignments')
-    sync_endpoint("project_users", endpoint='user_assignments', path='user_assignments')
+    sync_endpoint("project_tasks", endpoint='task_assignments', path='task_assignments', object_to_id=['project', 'task'])
+    sync_endpoint("project_users", endpoint='user_assignments', path='user_assignments', object_to_id=['project', 'user'])
 
     # Sync expenses and their categories
     sync_endpoint("expense_categories")
-    sync_endpoint("expenses", date_fields=["spent_at"])
+    sync_endpoint("expenses", date_fields=["spent_at"], object_to_id=['client', 'project', 'expense_category', 'user', 'user_assignment', 'invoice'])
 
     # Sync invoices and all related records
     sync_endpoint("invoice_item_categories")

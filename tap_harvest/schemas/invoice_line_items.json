@@ -27,6 +27,10 @@
     },
     "taxed2": {
       "type": ["null", "boolean"]
+    },
+
+    "invoice_id": {
+      "type": ["null", "integer"]
     }
   }
 }
