@@ -140,36 +140,40 @@ def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_
     start_dt = pendulum.parse(start)
     updated_since = start_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    url = get_url(endpoint or schema_name)
-    params = {"updated_since": updated_since} if with_updated_since else {}
-    data = request(url, params)
-    path = path or schema_name
-    data = data[path]
-    time_extracted = utils.now()
-
     with Transformer() as transformer:
-        for row in data:
-            if map_handler is not None:
-                row = map_handler(row)
+        page = 1
+        while page is not None:
+            url = get_url(endpoint or schema_name)
+            params = {"updated_since": updated_since} if with_updated_since else {}
+            params['page'] = page
+            response = request(url, params)
+            path = path or schema_name
+            data = response[path]
+            time_extracted = utils.now()
 
-            for key in object_to_id:
-                if row[key] is not None:
-                    row[key + '_id'] = row[key]['id']
+            for row in data:
+                if map_handler is not None:
+                    row = map_handler(row)
 
-            item = transformer.transform(row, schema)
+                for key in object_to_id:
+                    if row[key] is not None:
+                        row[key + '_id'] = row[key]['id']
 
-            append_times_to_dates(item, date_fields)
+                item = transformer.transform(row, schema)
 
-            if item[bookmark_property] >= start:
-                singer.write_record(schema_name,
-                                    item,
-                                    time_extracted=time_extracted)
+                append_times_to_dates(item, date_fields)
 
-                # take any additional actions required for the currently loaded endpoint
-                if for_each_handler is not None:
-                    for_each_handler(row, time_extracted=time_extracted)
+                if item[bookmark_property] >= start:
+                    singer.write_record(schema_name,
+                                        item,
+                                        time_extracted=time_extracted)
 
-                utils.update_state(STATE, schema_name, item[bookmark_property])
+                    # take any additional actions required for the currently loaded endpoint
+                    if for_each_handler is not None:
+                        for_each_handler(row, time_extracted=time_extracted)
+
+                    utils.update_state(STATE, schema_name, item[bookmark_property])
+            page = response['next_page']
 
     singer.write_state(STATE)
 
