@@ -131,6 +131,11 @@ def append_times_to_dates(item, date_fields):
                 item[date_field] += "T00:00:00Z"
 
 
+def get_company():
+    url = get_url('company')
+    return request(url)
+
+
 def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_updated_since=True,
                   for_each_handler=None, map_handler=None, object_to_id=None):
     schema = load_schema(schema_name)
@@ -413,6 +418,8 @@ def sync_expenses():
 def do_sync():
     LOGGER.info("Starting sync")
 
+    company = get_company()
+
     # Grab all clients and client contacts. Contacts have client FKs so grab
     # them last.
     sync_endpoint("clients")
@@ -430,17 +437,26 @@ def do_sync():
     # Sync users
     sync_users()
 
-    # Sync expenses and their categories
-    sync_endpoint("expense_categories")
-    sync_expenses()
+    if company['expense_feature']:
+        # Sync expenses and their categories
+        sync_endpoint("expense_categories")
+        sync_expenses()
+    else:
+        LOGGER.info("Expense Feature not enabled, skipping.")
 
-    # Sync invoices and all related records
-    sync_endpoint("invoice_item_categories")
-    sync_invoices()
+    if company['invoice_feature']:
+        # Sync invoices and all related records
+        sync_endpoint("invoice_item_categories")
+        sync_invoices()
+    else:
+        LOGGER.info("Invoice Feature not enabled, skipping.")
 
-    # Sync estimates and all related records
-    sync_endpoint("estimate_item_categories")
-    sync_estimates()
+    if company['estimate_feature']:
+        # Sync estimates and all related records
+        sync_endpoint("estimate_item_categories")
+        sync_estimates()
+    else:
+        LOGGER.info("Estimate Feature not enabled, skipping.")
 
     # Sync Time Entries along with their external reference objects
     sync_time_entries()
