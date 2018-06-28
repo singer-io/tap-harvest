@@ -83,12 +83,9 @@ def load_schema(entity):
     return utils.load_json(get_abs_path("schemas/{}.json".format(entity)))
 
 
-def load_and_write_schema(name, key_properties=None, bookmark_property='updated_at'):
-    key_properties = key_properties or ["id"]
-
+def load_and_write_schema(name, key_properties='id', bookmark_property='updated_at'):
     schema = load_schema(name)
     singer.write_schema(name, schema, key_properties, bookmark_properties=[bookmark_property])
-
     return schema
 
 

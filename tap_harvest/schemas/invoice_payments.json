@@ -5,7 +5,7 @@
       "type": ["null", "integer"]
     },
     "amount": {
-      "type": ["null","number"]
+      "type": ["null", "number"]
     },
     "paid_at": {
       "type": ["null", "string"],
@@ -41,7 +41,6 @@
       "type": ["null", "string"],
       "format": "date-time"
     },
-
     "invoice_id": {
       "type": ["null", "integer"]
     }

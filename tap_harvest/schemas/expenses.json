@@ -64,7 +64,6 @@
       "type": ["null", "string"],
       "format": "date-time"
     },
-
     "total_cost": {
       "type": ["null", "number"]
     },

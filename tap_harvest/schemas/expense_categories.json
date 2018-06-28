@@ -14,7 +14,7 @@
       "type": ["null", "number"]
     },
     "is_active": {
-      "type": ["null","boolean"]
+      "type": ["null", "boolean"]
     },
     "created_at": {
       "type": ["null", "string"],
