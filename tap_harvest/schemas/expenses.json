@@ -22,6 +22,15 @@
     "receipt_url": {
       "type": ["null", "string"]
     },
+    "receipt_file_name": {
+      "type": ["null", "string"]
+    },
+    "receipt_file_size": {
+      "type": ["null", "integer"]
+    },
+    "receipt_content_type": {
+      "type": ["null", "string"]
+    },
     "invoice_id": {
       "type": ["null", "integer"]
     },
@@ -44,7 +53,8 @@
       "type": ["null", "string"]
     },
     "spent_date": {
-      "type": ["null", "string"]
+      "type": ["null", "string"],
+      "format": "date-time"
     },
     "created_at": {
       "type": ["null", "string"],

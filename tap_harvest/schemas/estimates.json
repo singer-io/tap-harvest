@@ -7,7 +7,7 @@
     "client_id": {
       "type": ["null", "integer"]
     },
-    "user_id": {
+    "creator_id": {
       "type": ["null", "integer"]
     },
     "client_key": {
@@ -52,7 +52,7 @@
     "state": {
       "type": ["null", "string"]
     },
-    "issued_date": {
+    "issue_date": {
       "type": ["null", "string"],
       "format": "date-time"
     },

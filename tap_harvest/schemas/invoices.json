@@ -69,7 +69,7 @@
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "issued_date": {
+    "issue_date": {
       "type": ["null", "string"],
       "format": "date-time"
     },
