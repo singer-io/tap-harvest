@@ -17,10 +17,10 @@ REQUIRED_CONFIG_KEYS = [
     "client_id",
     "client_secret",
     "user_agent",
-    "account_id",
 ]
 
-BASE_URL = "https://api.harvestapp.com/v2/"
+BASE_API_URL = "https://api.harvestapp.com/v2/"
+BASE_ID_URL = "https://id.getharvest.com/api/v2/"
 CONFIG = {}
 STATE = {}
 AUTH = {}
@@ -31,6 +31,7 @@ class Auth:
         self._client_id = client_id
         self._client_secret = client_secret
         self._refresh_token = refresh_token
+        self._account_id = None
         self._refresh_access_token()
 
     @backoff.on_exception(
@@ -41,7 +42,7 @@ class Auth:
         factor=2)
     def _make_refresh_token_request(self):
         return requests.request('POST',
-                                url='https://id.getharvest.com/api/v2/oauth2/token',
+                                url=BASE_ID_URL + 'oauth2/token',
                                 data={
                                     'client_id': self._client_id,
                                     'client_secret': self._client_secret,
@@ -74,6 +75,21 @@ class Auth:
         self._refresh_access_token()
         return self._access_token
 
+    def get_account_id(self):
+        if self._account_id is not None:
+            return self._account_id
+
+        response = requests.request('GET',
+                                    url=BASE_ID_URL + 'accounts',
+                                    data={
+                                        'access_token': self._access_token,
+                                    },
+                                    headers={"User-Agent": CONFIG.get("user_agent")})
+
+        self._account_id = str(response.json()['accounts'][0]['id'])
+
+        return self._account_id
+
 
 def get_abs_path(path):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
@@ -97,7 +113,7 @@ def get_start(key):
 
 
 def get_url(endpoint):
-    return BASE_URL + endpoint
+    return BASE_API_URL + endpoint
 
 
 @backoff.on_exception(
@@ -111,7 +127,7 @@ def request(url, params=None):
     params = params or {}
     access_token = AUTH.get_access_token()
     headers = {"Accept": "application/json",
-               "Harvest-Account-Id": CONFIG.get("account_id"),
+               "Harvest-Account-Id": AUTH.get_account_id(),
                "Authorization": "Bearer " + access_token,
                "User-Agent": CONFIG.get("user_agent")}
     req = requests.Request("GET", url=url, params=params, headers=headers).prepare()

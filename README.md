@@ -25,7 +25,6 @@ API V2 Author: Steven Hernandez (steven.hernandez@fostermade.co)
         "client_secret": "OAUTH_CLIENT_SECRET",
         "refresh_token": "YOUR_OAUTH_REFRESH_TOKEN",
         "start_date": "2017-04-19T13:37:30Z",
-        "account_id": "YOUR_ACCOUNT_ID",
         "user_agent": "MyApp (your.email@example.com)"
     }
     ```
