@@ -149,7 +149,7 @@ def get_company():
     return request(url)
 
 
-def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_updated_since=True,
+def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_updated_since=True, #pylint: disable=too-many-arguments
                   for_each_handler=None, map_handler=None, object_to_id=None):
     schema = load_schema(schema_name)
     bookmark_property = 'updated_at'
@@ -371,7 +371,7 @@ def sync_roles():
 
 
 def sync_users():
-    def for_each_user(user, time_extracted):
+    def for_each_user(user, time_extracted): #pylint: disable=unused-argument
         def map_user_projects(project_assignment):
             project_assignment['user'] = user
             return project_assignment
