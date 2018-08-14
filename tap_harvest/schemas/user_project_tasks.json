@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": ["null", "integer"]
+    },
+    "project_task_id": {
+      "type": ["null", "integer"]
+    }
+  }
+}

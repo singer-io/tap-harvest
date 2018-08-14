@@ -4,45 +4,56 @@
     "id": {
       "type": ["null", "integer"]
     },
-    "sent_by": {
+    "first_name": {
       "type": ["null", "string"]
     },
-    "sent_by_email": {
+    "last_name": {
       "type": ["null", "string"]
     },
-    "sent_from": {
+    "email": {
       "type": ["null", "string"]
     },
-    "sent_from_email": {
+    "telephone": {
       "type": ["null", "string"]
     },
-    "subject": {
+    "timezone": {
       "type": ["null", "string"]
     },
-    "body": {
-      "type": ["null", "string"]
-    },
-    "include_link_to_client_invoice": {
+    "has_access_to_all_future_projects": {
       "type": ["null", "boolean"]
     },
-    "attach_pdf": {
+    "is_contractor": {
       "type": ["null", "boolean"]
     },
-    "send_me_a_copy": {
+    "is_admin": {
       "type": ["null", "boolean"]
     },
-    "thank_you": {
+    "is_project_manager": {
       "type": ["null", "boolean"]
     },
-    "event_type": {
+    "can_see_rates": {
+      "type": ["null", "boolean"]
+    },
+    "can_create_projects": {
+      "type": ["null", "boolean"]
+    },
+    "can_create_invoices": {
+      "type": ["null", "boolean"]
+    },
+    "is_active": {
+      "type": ["null", "boolean"]
+    },
+    "weekly_capacity": {
+      "type": ["null", "integer"]
+    },
+    "default_hourly_rate": {
+      "type": ["null", "number"]
+    },
+    "cost_rate": {
+      "type": ["null", "number"]
+    },
+    "avatar_url": {
       "type": ["null", "string"]
-    },
-    "reminder": {
-      "type": ["null", "boolean"]
-    },
-    "send_reminder_on": {
-      "type": ["null", "string"],
-      "format": "date-time"
     },
     "created_at": {
       "type": ["null", "string"],
@@ -51,9 +62,6 @@
     "updated_at": {
       "type": ["null", "string"],
       "format": "date-time"
-    },
-    "invoice_id": {
-      "type": ["null", "integer"]
     }
   }
 }

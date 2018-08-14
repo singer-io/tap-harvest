@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import datetime
 import os
 
 import backoff
@@ -17,34 +16,39 @@ REQUIRED_CONFIG_KEYS = [
     "refresh_token",
     "client_id",
     "client_secret",
-    "account_name",
+    "user_agent",
 ]
 
-BASE_URL = "https://{}.harvestapp.com/"
+BASE_API_URL = "https://api.harvestapp.com/v2/"
+BASE_ID_URL = "https://id.getharvest.com/api/v2/"
 CONFIG = {}
 STATE = {}
 AUTH = {}
+
 
 class Auth:
     def __init__(self, client_id, client_secret, refresh_token):
         self._client_id = client_id
         self._client_secret = client_secret
         self._refresh_token = refresh_token
+        self._account_id = None
         self._refresh_access_token()
 
     @backoff.on_exception(
         backoff.expo,
-        (requests.exceptions.RequestException),
+        requests.exceptions.RequestException,
         max_tries=5,
         giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
         factor=2)
     def _make_refresh_token_request(self):
         return requests.request('POST',
-                                url='https://api.harvestapp.com/oauth2/token',
-                                data={'client_id': self._client_id,
-                                      'client_secret': self._client_secret,
-                                      'refresh_token': self._refresh_token,
-                                      'grant_type': 'refresh_token'},
+                                url=BASE_ID_URL + 'oauth2/token',
+                                data={
+                                    'client_id': self._client_id,
+                                    'client_secret': self._client_secret,
+                                    'refresh_token': self._refresh_token,
+                                    'grant_type': 'refresh_token',
+                                },
                                 headers={"User-Agent": CONFIG.get("user_agent")})
 
     def _refresh_access_token(self):
@@ -65,11 +69,26 @@ class Auth:
         LOGGER.info("Got refreshed access token")
 
     def get_access_token(self):
-        if (self._access_token is not None and self._expires_at > pendulum.now()):
+        if self._access_token is not None and self._expires_at > pendulum.now():
             return self._access_token
 
         self._refresh_access_token()
         return self._access_token
+
+    def get_account_id(self):
+        if self._account_id is not None:
+            return self._account_id
+
+        response = requests.request('GET',
+                                    url=BASE_ID_URL + 'accounts',
+                                    data={
+                                        'access_token': self._access_token,
+                                    },
+                                    headers={"User-Agent": CONFIG.get("user_agent")})
+
+        self._account_id = str(response.json()['accounts'][0]['id'])
+
+        return self._account_id
 
 
 def get_abs_path(path):
@@ -80,6 +99,12 @@ def load_schema(entity):
     return utils.load_json(get_abs_path("schemas/{}.json".format(entity)))
 
 
+def load_and_write_schema(name, key_properties='id', bookmark_property='updated_at'):
+    schema = load_schema(name)
+    singer.write_schema(name, schema, key_properties, bookmark_properties=[bookmark_property])
+    return schema
+
+
 def get_start(key):
     if key not in STATE:
         STATE[key] = CONFIG['start_date']
@@ -88,11 +113,12 @@ def get_start(key):
 
 
 def get_url(endpoint):
-    return BASE_URL.format(CONFIG['account_name']) + endpoint
+    return BASE_API_URL + endpoint
+
 
 @backoff.on_exception(
     backoff.expo,
-    (requests.exceptions.RequestException),
+    requests.exceptions.RequestException,
     max_tries=5,
     giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
     factor=2)
@@ -101,6 +127,7 @@ def request(url, params=None):
     params = params or {}
     access_token = AUTH.get_access_token()
     headers = {"Accept": "application/json",
+               "Harvest-Account-Id": AUTH.get_account_id(),
                "Authorization": "Bearer " + access_token,
                "User-Agent": CONFIG.get("user_agent")}
     req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
@@ -109,233 +136,343 @@ def request(url, params=None):
     resp.raise_for_status()
     return resp.json()
 
+
 def append_times_to_dates(item, date_fields):
     if date_fields:
         for date_field in date_fields:
             if item.get(date_field):
                 item[date_field] += "T00:00:00Z"
 
-def sync_endpoint(endpoint, path, date_fields=None):
-    schema = load_schema(endpoint)
+
+def get_company():
+    url = get_url('company')
+    return request(url)
+
+
+def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_updated_since=True,
+                  for_each_handler=None, map_handler=None, object_to_id=None):
+    schema = load_schema(schema_name)
     bookmark_property = 'updated_at'
 
-    singer.write_schema(endpoint,
+    singer.write_schema(schema_name,
                         schema,
                         ["id"],
                         bookmark_properties=[bookmark_property])
 
-    start = get_start(endpoint)
-
-    url = get_url(endpoint)
-    data = request(url)
-    time_extracted = utils.now()
+    start = get_start(schema_name)
+    start_dt = pendulum.parse(start)
+    updated_since = start_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     with Transformer() as transformer:
-        for row in data:
-            item = row[path]
-            item = transformer.transform(item, schema)
+        page = 1
+        while page is not None:
+            url = get_url(endpoint or schema_name)
+            params = {"updated_since": updated_since} if with_updated_since else {}
+            params['page'] = page
+            response = request(url, params)
+            path = path or schema_name
+            data = response[path]
+            time_extracted = utils.now()
 
-            append_times_to_dates(item, date_fields)
+            for row in data:
+                if map_handler is not None:
+                    row = map_handler(row)
 
-            if item[bookmark_property] >= start:
-                singer.write_record(endpoint,
-                                    item,
+                if object_to_id is not None:
+                    for key in object_to_id:
+                        if row[key] is not None:
+                            row[key + '_id'] = row[key]['id']
+                        else:
+                            row[key + '_id'] = None
+
+                item = transformer.transform(row, schema)
+
+                append_times_to_dates(item, date_fields)
+
+                if item[bookmark_property] >= start:
+                    singer.write_record(schema_name,
+                                        item,
+                                        time_extracted=time_extracted)
+
+                    # take any additional actions required for the currently loaded endpoint
+                    if for_each_handler is not None:
+                        for_each_handler(row, time_extracted=time_extracted)
+
+                    utils.update_state(STATE, schema_name, item[bookmark_property])
+            page = response['next_page']
+
+    singer.write_state(STATE)
+
+
+def sync_time_entries():
+    def for_each_time_entry(time_entry, time_extracted):
+        # Extract external_reference
+        external_reference_schema = load_and_write_schema("external_reference")
+        load_and_write_schema("time_entry_external_reference",
+                              key_properties=["time_entry_id", "external_reference_id"])
+        if time_entry['external_reference'] is not None:
+            with Transformer() as transformer:
+                external_reference = time_entry['external_reference']
+                external_reference = transformer.transform(external_reference,
+                                                           external_reference_schema)
+
+                singer.write_record("external_reference",
+                                    external_reference,
                                     time_extracted=time_extracted)
 
-                utils.update_state(STATE, endpoint, item[bookmark_property])
+                # Create pivot row for time_entry and external_reference
+                pivot_row = {
+                    'time_entry_id': time_entry['id'],
+                    'external_reference_id': external_reference['id']
+                }
 
-    singer.write_state(STATE)
+                singer.write_record("time_entry_external_reference",
+                                    pivot_row,
+                                    time_extracted=time_extracted)
 
-
-def sync_projects():
-    bookmark_property = 'updated_at'
-    tasks_schema = load_schema("project_tasks")
-    singer.write_schema("project_tasks",
-                        tasks_schema,
-                        ["id"],
-                        bookmark_properties=[bookmark_property])
-
-    users_schema = load_schema("project_users")
-    singer.write_schema("project_users",
-                        users_schema,
-                        ["id"],
-                        bookmark_properties=[bookmark_property])
-
-    entries_schema = load_schema("time_entries")
-    singer.write_schema("time_entries",
-                        entries_schema,
-                        ["id"],
-                        bookmark_properties=[bookmark_property])
-
-    schema = load_schema("projects")
-    singer.write_schema("projects",
-                        schema,
-                        ["id"],
-                        bookmark_properties=[bookmark_property])
-    start = get_start("projects")
-
-    start_dt = pendulum.parse(start)
-    updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
-
-    url = get_url("projects")
-    projects_data = request(url)
-    projects_time_extracted = utils.now()
-
-    with Transformer() as transformer:
-        for row in projects_data:
-            item = row["project"]
-            item = transformer.transform(item, schema)
-            date_fields = ["starts_on",
-                           "ends_on",
-                           "hint_earliest_record_at",
-                           "hint_latest_record_at"]
-
-            append_times_to_dates(item, date_fields)
-
-            if item[bookmark_property] >= start:
-                singer.write_record("projects",
-                                    item,
-                                    time_extracted=projects_time_extracted)
-
-                utils.update_state(STATE, "projects", item[bookmark_property])
-
-            suburl = url + "/{}/user_assignments".format(item["id"])
-            project_users_data = request(suburl, params={"updated_since": updated_since})
-            project_users_time_extracted = utils.now()
-
-            for subrow in project_users_data:
-                subitem = subrow["user_assignment"]
-                subitem = transformer.transform(subitem, users_schema)
-                singer.write_record("project_users",
-                                    subitem,
-                                    time_extracted=project_users_time_extracted)
-
-            suburl = url + "/{}/task_assignments".format(item["id"])
-            task_assignments_data = request(suburl, params={"updated_since": updated_since})
-            task_assignments_time_extracted = utils.now()
-
-            for subrow in task_assignments_data:
-                subitem = subrow["task_assignment"]
-                subitem = transformer.transform(subitem, tasks_schema)
-                singer.write_record("project_tasks",
-                                    subitem,
-                                    time_extracted=task_assignments_time_extracted)
-
-            suburl = url + "/{}/entries".format(item["id"])
-            subparams = {
-                "from": start_dt.strftime("%Y%m%d"),
-                "to": datetime.datetime.utcnow().strftime("%Y%m%d"),
-                "updated_since": updated_since,
-            }
-
-            time_entries_data = request(suburl, params=subparams)
-            time_entries_time_extracted = utils.now()
-
-            for subrow in time_entries_data:
-                subitem = subrow["day_entry"]
-                subitem = transformer.transform(subitem, entries_schema)
-                singer.write_record("time_entries",
-                                    subitem,
-                                    time_extracted=time_entries_time_extracted)
-
-    singer.write_state(STATE)
+    sync_endpoint("time_entries", for_each_handler=for_each_time_entry,
+                  object_to_id=[
+                      'user',
+                      'user_assignment',
+                      'client',
+                      'project',
+                      'task',
+                      'task_assignment',
+                      'external_reference',
+                      'invoice'
+                  ])
 
 
 def sync_invoices():
-    messages_schema = load_schema("invoice_messages")
-    bookmark_property = 'updated_at'
-    singer.write_schema("invoice_messages",
-                        messages_schema,
-                        ["id"],
-                        bookmark_properties=[bookmark_property])
+    def for_each_invoice_message(message, time_extracted):
+        # Extract all invoice_message_recipients
+        recipients_schema = load_and_write_schema("invoice_message_recipients")
+        with Transformer() as transformer:
+            for recipient in message['recipients']:
+                recipient['invoice_message_id'] = message['id']
+                recipient = transformer.transform(recipient, recipients_schema)
 
-    payments_schema = load_schema("invoice_payments")
-    singer.write_schema("invoice_payments",
-                        payments_schema,
-                        ["id"],
-                        bookmark_properties=[bookmark_property])
+                singer.write_record("invoice_message_recipients",
+                                    recipient,
+                                    time_extracted=time_extracted)
 
-    schema = load_schema("invoices")
-    singer.write_schema("invoices",
-                        schema,
-                        ["id"],
-                        bookmark_properties=[bookmark_property])
+    def for_each_invoice(invoice, time_extracted):
+        def map_invoice_message(message):
+            message['invoice_id'] = invoice['id']
+            return message
 
-    start = get_start("invoices")
+        def map_invoice_payment(payment):
+            payment['invoice_id'] = invoice['id']
+            payment['payment_gateway_id'] = payment['payment_gateway']['id']
+            payment['payment_gateway_name'] = payment['payment_gateway']['name']
+            return payment
 
-    start_dt = pendulum.parse(start)
-    updated_since = start_dt.strftime("%Y-%m-%d %H:%M")
+        # Sync invoice messages
+        sync_endpoint("invoice_messages",
+                      endpoint=("invoices/{}/messages".format(invoice['id'])),
+                      path="invoice_messages",
+                      with_updated_since=False,
+                      map_handler=map_invoice_message,
+                      for_each_handler=for_each_invoice_message,
+                      date_fields=["send_reminder_on"])
 
-    url = get_url("invoices")
-    with Transformer() as transformer:
-        while True:
-            data = request(url, {"updated_since": updated_since})
-            invoices_time_extracted = utils.now()
+        # Sync invoice payments
+        sync_endpoint("invoice_payments",
+                      endpoint=("invoices/{}/payments".format(invoice['id'])),
+                      path="invoice_payments",
+                      with_updated_since=False,
+                      map_handler=map_invoice_payment,
+                      date_fields=["send_reminder_on"])
 
-            for row in data:
-                item = row["invoices"]
-                item = transformer.transform(item, schema)
-                append_times_to_dates(item, ["issued_at", "due_at"])
+        # Extract all invoice_line_items
+        line_items_schema = load_and_write_schema("invoice_line_items")
+        with Transformer() as transformer:
+            for line_item in invoice['line_items']:
+                line_item['invoice_id'] = invoice['id']
+                if line_item['project'] is not None:
+                    line_item['project_id'] = line_item['project']['id']
+                else:
+                    line_item['project_id'] = None
+                line_item = transformer.transform(line_item, line_items_schema)
 
-                singer.write_record("invoices",
-                                    item,
-                                    time_extracted=invoices_time_extracted)
+                singer.write_record("invoice_line_items",
+                                    line_item,
+                                    time_extracted=time_extracted)
 
-                utils.update_state(STATE, "invoices", item['updated_at'])
+    sync_endpoint("invoices", for_each_handler=for_each_invoice, date_fields=[
+        "period_start",
+        "period_end",
+        "issue_date",
+        "due_date",
+        "paid_date",
+    ], object_to_id=['client', 'estimate', 'retainer', 'creator'])
 
-                suburl = url + "/{}/messages".format(item['id'])
-                messages_data = request(suburl)
-                messages_time_extracted = utils.now()
-                for subrow in messages_data:
-                    subitem = subrow["message"]
-                    if subitem['updated_at'] >= start:
-                        append_times_to_dates(subitem, ["send_reminder_on"])
-                        singer.write_record("invoice_messages",
-                                            subitem,
-                                            time_extracted=messages_time_extracted)
 
-                suburl = url + "/{}/payments".format(item['id'])
-                payments_data = request(suburl)
-                payments_time_extracted = utils.now()
+def sync_estimates():
+    def for_each_estimate_message(message, time_extracted):
+        # Extract all estimate_message_recipients
+        recipients_schema = load_and_write_schema("estimate_message_recipients")
 
-                for subrow in payments_data:
-                    subitem = subrow["payment"]
-                    subitem = transformer.transform(subitem, payments_schema)
-                    if subitem['updated_at'] >= start:
-                        singer.write_record("invoice_payments",
-                                            subitem,
-                                            time_extracted=payments_time_extracted)
+        with Transformer() as transformer:
+            for recipient in message['recipients']:
+                recipient['estimate_message_id'] = message['id']
+                recipient = transformer.transform(recipient, recipients_schema)
 
-                singer.write_state(STATE)
+                singer.write_record("estimate_message_recipients",
+                                    recipient,
+                                    time_extracted=time_extracted)
 
-            if len(data) < 50:
-                break
+    def map_estimate_message(message):
+        message['estimate_id'] = message['id']
+        return message
 
-        singer.write_state(STATE)
+    def for_each_estimate(estimate, time_extracted):
+        # Sync estimate messages
+        sync_endpoint("estimate_messages",
+                      endpoint=("estimates/{}/messages".format(estimate['id'])),
+                      path="estimate_messages",
+                      with_updated_since=False,
+                      for_each_handler=for_each_estimate_message,
+                      date_fields=["send_reminder_on"],
+                      map_handler=map_estimate_message)
+
+        # Extract all estimate_line_items
+        line_items_schema = load_and_write_schema("estimate_line_items")
+        with Transformer() as transformer:
+            for line_item in estimate['line_items']:
+                line_item['estimate_id'] = estimate['id']
+                line_item = transformer.transform(line_item, line_items_schema)
+
+                singer.write_record("estimate_line_items",
+                                    line_item,
+                                    time_extracted=time_extracted)
+
+    sync_endpoint("estimates",
+                  for_each_handler=for_each_estimate,
+                  date_fields=["issue_date"],
+                  object_to_id=['client', 'user'])
+
+
+def sync_roles():
+    def for_each_role(role, time_extracted):
+        # Extract user_roles
+        load_and_write_schema("user_roles", key_properties=["user_id", "role_id"])
+        for user_id in role['user_ids']:
+            pivot_row = {
+                'role_id': role['id'],
+                'user_id': user_id
+            }
+
+            singer.write_record("user_roles",
+                                pivot_row,
+                                time_extracted=time_extracted)
+
+    sync_endpoint("roles", for_each_handler=for_each_role)
+
+
+def sync_users():
+    def for_each_user(user, time_extracted):
+        def map_user_projects(project_assignment):
+            project_assignment['user'] = user
+            return project_assignment
+
+        def for_each_user_project(user_project_assignment, time_extracted):
+            # Extract user_project_tasks
+            load_and_write_schema("user_project_tasks",
+                                  key_properties=["user_id", "project_task_id"])
+            for project_task in user_project_assignment['task_assignments']:
+                pivot_row = {
+                    'user_id': user['id'],
+                    'project_task_id': project_task['id']
+                }
+
+                singer.write_record("user_project_tasks",
+                                    pivot_row,
+                                    time_extracted=time_extracted)
+
+        sync_endpoint("user_projects",
+                      endpoint=("users/{}/project_assignments".format(user['id'])),
+                      path="project_assignments",
+                      with_updated_since=False,
+                      object_to_id=['project', 'client', 'user'],
+                      map_handler=map_user_projects,
+                      for_each_handler=for_each_user_project)
+
+    sync_endpoint("users", for_each_handler=for_each_user)
+
+
+def sync_expenses():
+    def map_expense(expense):
+        if expense['receipt'] is None:
+            expense['receipt_url'] = None
+            expense['receipt_file_name'] = None
+            expense['receipt_file_size'] = None
+            expense['receipt_content_type'] = None
+        else:
+            expense['receipt_url'] = expense['receipt']['url']
+            expense['receipt_file_name'] = expense['receipt']['file_name']
+            expense['receipt_file_size'] = expense['receipt']['file_size']
+            expense['receipt_content_type'] = expense['receipt']['content_type']
+        return expense
+
+    sync_endpoint("expenses",
+                  date_fields=["spent_date"],
+                  map_handler=map_expense,
+                  object_to_id=[
+                      'client',
+                      'project',
+                      'expense_category',
+                      'user',
+                      'user_assignment',
+                      'invoice'
+                  ])
 
 
 def do_sync():
     LOGGER.info("Starting sync")
 
+    company = get_company()
+
     # Grab all clients and client contacts. Contacts have client FKs so grab
     # them last.
-    sync_endpoint("clients", "client")
-    sync_endpoint("contacts", "contact")
+    sync_endpoint("clients")
+    sync_endpoint("contacts", object_to_id=['client'])
+    sync_roles()
 
-    # Get all people and tasks before grabbing the projects. When we grab the
-    # projects we will grab the project_users, project_tasks, and time_entries
-    # for each.
-    sync_endpoint("people", "user")
-    sync_endpoint("tasks", "task")
-    sync_projects()
+    # Sync related project objects
+    sync_endpoint("projects", object_to_id=['client'])
+    sync_endpoint("tasks")
+    sync_endpoint("project_tasks", endpoint='task_assignments', path='task_assignments',
+                  object_to_id=['project', 'task'])
+    sync_endpoint("project_users", endpoint='user_assignments', path='user_assignments',
+                  object_to_id=['project', 'user'])
 
-    # Sync expenses and their categories
-    sync_endpoint("expense_categories", "expense_category")
-    sync_endpoint("expenses", "expense", date_fields=["spent_at"])
+    # Sync users
+    sync_users()
 
-    # Sync invoices and all related records
-    sync_endpoint("invoice_item_categories", "invoice_category")
-    sync_invoices()
+    if company['expense_feature']:
+        # Sync expenses and their categories
+        sync_endpoint("expense_categories")
+        sync_expenses()
+    else:
+        LOGGER.info("Expense Feature not enabled, skipping.")
+
+    if company['invoice_feature']:
+        # Sync invoices and all related records
+        sync_endpoint("invoice_item_categories")
+        sync_invoices()
+    else:
+        LOGGER.info("Invoice Feature not enabled, skipping.")
+
+    if company['estimate_feature']:
+        # Sync estimates and all related records
+        sync_endpoint("estimate_item_categories")
+        sync_estimates()
+    else:
+        LOGGER.info("Estimate Feature not enabled, skipping.")
+
+    # Sync Time Entries along with their external reference objects
+    sync_time_entries()
 
     LOGGER.info("Sync complete")
 
@@ -343,10 +480,11 @@ def do_sync():
 def main_impl():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
     CONFIG.update(args.config)
-    global AUTH # pylint: disable=global-statement
+    global AUTH  # pylint: disable=global-statement
     AUTH = Auth(CONFIG['client_id'], CONFIG['client_secret'], CONFIG['refresh_token'])
     STATE.update(args.state)
     do_sync()
+
 
 def main():
     try:
