@@ -54,6 +54,26 @@
     },
     "invoice_id": {
       "type": ["null", "integer"]
+    },
+    "recipients": {
+      "items": {
+        "properties": {
+          "name": {
+            "type": ["null", "string"]
+          },
+          "email": {
+            "type": ["null", "string"]
+          }
+        },
+        "type": [
+          "null",
+          "object"
+        ]
+      },
+      "type": [
+        "null",
+        "array"
+      ]
     }
   }
 }

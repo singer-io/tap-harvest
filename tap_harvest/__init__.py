@@ -262,19 +262,6 @@ def sync_time_entries():
 
 
 def sync_invoices():
-    def for_each_invoice_message(message, time_extracted):
-        # Extract all invoice_message_recipients
-        recipients_schema = load_and_write_schema("invoice_message_recipients")
-        with Transformer() as transformer:
-            for i, recipient in enumerate(message['recipients']):
-                recipient['id'] = '{}-{}'.format(message['id'], i)
-                recipient['invoice_message_id'] = message['id']
-                recipient = transformer.transform(recipient, recipients_schema)
-
-                singer.write_record("invoice_message_recipients",
-                                    recipient,
-                                    time_extracted=time_extracted)
-
     def for_each_invoice(invoice, time_extracted):
         def map_invoice_message(message):
             message['invoice_id'] = invoice['id']
@@ -291,8 +278,7 @@ def sync_invoices():
                       endpoint=("invoices/{}/messages".format(invoice['id'])),
                       path="invoice_messages",
                       with_updated_since=False,
-                      map_handler=map_invoice_message,
-                      for_each_handler=for_each_invoice_message)
+                      map_handler=map_invoice_message)
 
         # Sync invoice payments
         sync_endpoint("invoice_payments",
@@ -322,19 +308,6 @@ def sync_invoices():
 
 
 def sync_estimates():
-    def for_each_estimate_message(message, time_extracted):
-        # Extract all estimate_message_recipients
-        recipients_schema = load_and_write_schema("estimate_message_recipients")
-
-        with Transformer() as transformer:
-            for recipient in message['recipients']:
-                recipient['estimate_message_id'] = message['id']
-                recipient = transformer.transform(recipient, recipients_schema)
-
-                singer.write_record("estimate_message_recipients",
-                                    recipient,
-                                    time_extracted=time_extracted)
-
     def map_estimate_message(message):
         message['estimate_id'] = message['id']
         return message
@@ -345,7 +318,6 @@ def sync_estimates():
                       endpoint=("estimates/{}/messages".format(estimate['id'])),
                       path="estimate_messages",
                       with_updated_since=False,
-                      for_each_handler=for_each_estimate_message,
                       date_fields=["send_reminder_on"],
                       map_handler=map_estimate_message)
 
