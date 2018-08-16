@@ -137,6 +137,22 @@ def request(url, params=None):
     return resp.json()
 
 
+# Any date-times values can either be a string or a null.
+# If null, parsing the date results in an error.
+# Instead, removing the attribute before parsing ignores this error.
+def remove_empty_date_times(item, schema):
+    fields = []
+
+    for key in schema['properties']:
+        d = schema['properties'][key]
+        if d.get('format') == 'date-time':
+            fields.append(key)
+
+    for field in fields:
+        if item.get(field) is None:
+            del item[field]
+
+
 def append_times_to_dates(item, date_fields):
     if date_fields:
         for date_field in date_fields:
@@ -184,6 +200,8 @@ def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_
                             row[key + '_id'] = row[key]['id']
                         else:
                             row[key + '_id'] = None
+
+                remove_empty_date_times(row, schema)
 
                 item = transformer.transform(row, schema)
 
@@ -248,7 +266,8 @@ def sync_invoices():
         # Extract all invoice_message_recipients
         recipients_schema = load_and_write_schema("invoice_message_recipients")
         with Transformer() as transformer:
-            for recipient in message['recipients']:
+            for i, recipient in enumerate(message['recipients']):
+                recipient['id'] = '{}-{}'.format(message['id'], i)
                 recipient['invoice_message_id'] = message['id']
                 recipient = transformer.transform(recipient, recipients_schema)
 
@@ -273,8 +292,7 @@ def sync_invoices():
                       path="invoice_messages",
                       with_updated_since=False,
                       map_handler=map_invoice_message,
-                      for_each_handler=for_each_invoice_message,
-                      date_fields=["send_reminder_on"])
+                      for_each_handler=for_each_invoice_message)
 
         # Sync invoice payments
         sync_endpoint("invoice_payments",
@@ -299,13 +317,8 @@ def sync_invoices():
                                     line_item,
                                     time_extracted=time_extracted)
 
-    sync_endpoint("invoices", for_each_handler=for_each_invoice, date_fields=[
-        "period_start",
-        "period_end",
-        "issue_date",
-        "due_date",
-        "paid_date",
-    ], object_to_id=['client', 'estimate', 'retainer', 'creator'])
+    sync_endpoint("invoices", for_each_handler=for_each_invoice,
+                  object_to_id=['client', 'estimate', 'retainer', 'creator'])
 
 
 def sync_estimates():
@@ -416,7 +429,6 @@ def sync_expenses():
         return expense
 
     sync_endpoint("expenses",
-                  date_fields=["spent_date"],
                   map_handler=map_expense,
                   object_to_id=[
                       'client',
