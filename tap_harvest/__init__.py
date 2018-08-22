@@ -144,8 +144,8 @@ def remove_empty_date_times(item, schema):
     fields = []
 
     for key in schema['properties']:
-        d = schema['properties'][key]
-        if d.get('format') == 'date-time':
+        subschema = schema['properties'][key]
+        if subschema.get('format') == 'date-time':
             fields.append(key)
 
     for field in fields:
