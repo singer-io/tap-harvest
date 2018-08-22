@@ -5,7 +5,7 @@
       "type": ["null", "integer"]
     },
     "external_reference_id": {
-      "type": ["null", "integer"]
+      "type": ["null", "string"]
     }
   }
 }
