@@ -1,7 +1,7 @@
 # Changelog
 
-## 2.0.2
-  * Fixes schema of certain ID fields to accept `string` as well as `integer` [#23](https://github.com/singer-io/tap-harvest/pull/23)
+## 2.0.3
+  * Fixes schema of `external_reference_id` to be typed as strings [#23](https://github.com/singer-io/tap-harvest/pull/23)
 
 ## 2.0.1
   * Fixes issue with empty datetimes [#22](https://github.com/singer-io/tap-harvest/pull/22)
