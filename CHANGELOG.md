@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.4
+  * Fixes schema of `external_reference.group_id` to be a string [#24](https://github.com/singer-io/tap-harvest/pull/24)
+
 ## 2.0.3
   * Fixes schema of `external_reference_id` to be typed as strings [#23](https://github.com/singer-io/tap-harvest/pull/23)
 
