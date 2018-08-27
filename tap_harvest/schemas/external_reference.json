@@ -8,7 +8,7 @@
       "type": ["null", "integer"]
     },
     "group_id": {
-      "type": ["null", "integer"]
+      "type": ["null", "string"]
     },
     "permalink": {
       "type": ["null", "string"]
