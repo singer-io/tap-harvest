@@ -1,7 +1,7 @@
 # Changelog
 
 ## 2.0.5
-  * Fixes `expenses` stream to use `expense.creator` instead of `expense.user` [#26](https://github.com/singer-io/tap-harvest/pull/26)
+  * Fixes `estimates` stream to use `estimate.creator` instead of `estimate.user` [#26](https://github.com/singer-io/tap-harvest/pull/26)
 
 ## 2.0.4
   * Fixes schema of `external_reference.group_id` to be a string [#24](https://github.com/singer-io/tap-harvest/pull/24)
