@@ -1,7 +1,7 @@
 # Changelog
 
 ## 2.0.6
-  * Uses date-time parsing/formatting to add times to dates, instead of naive append (#27)[https://github.com/singer-io/tap-harvest/pull/27]
+  * Uses date-time parsing/formatting to add times to dates, instead of naive append [#27](https://github.com/singer-io/tap-harvest/pull/27)
 
 ## 2.0.5
   * Fixes `estimates` stream to use `estimate.creator` instead of `estimate.user` [#26](https://github.com/singer-io/tap-harvest/pull/26)
