@@ -335,7 +335,7 @@ def sync_estimates():
     sync_endpoint("estimates",
                   for_each_handler=for_each_estimate,
                   date_fields=["issue_date"],
-                  object_to_id=['client', 'user'])
+                  object_to_id=['client', 'creator'])
 
 
 def sync_roles():
