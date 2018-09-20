@@ -157,7 +157,7 @@ def append_times_to_dates(item, date_fields):
     if date_fields:
         for date_field in date_fields:
             if item.get(date_field):
-                item[date_field] += "T00:00:00Z"
+                item[date_field] = utils.strftime(utils.strptime_with_tz(item[date_field]))
 
 
 def get_company():
