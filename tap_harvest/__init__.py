@@ -196,7 +196,7 @@ def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_
 
                 if object_to_id is not None:
                     for key in object_to_id:
-                        if row[key] is not None:
+                        if row.get(key) is not None:
                             row[key + '_id'] = row[key]['id']
                         else:
                             row[key + '_id'] = None
@@ -335,7 +335,7 @@ def sync_estimates():
     sync_endpoint("estimates",
                   for_each_handler=for_each_estimate,
                   date_fields=["issue_date"],
-                  object_to_id=['client', 'user'])
+                  object_to_id=['client', 'creator'])
 
 
 def sync_roles():
