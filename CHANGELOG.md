@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.7
+  * Update version of `requests` to `0.20.0` in response to CVE 2018-18074
+
 ## 2.0.6
   * Uses date-time parsing/formatting to add times to dates, instead of naive append [#27](https://github.com/singer-io/tap-harvest/pull/27)
 
