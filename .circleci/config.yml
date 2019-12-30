@@ -13,8 +13,8 @@ jobs:
             # source ~/.virtualenvs/tap-harvest/bin/activate
             # pip install .
             # pip install pylint
-            python3 -mvenv /usr/local/share/virtualenvs/tap-jira
-            source /usr/local/share/virtualenvs/tap-jira/bin/activate
+            python3 -mvenv /usr/local/share/virtualenvs/tap-harvest
+            source /usr/local/share/virtualenvs/tap-harvest/bin/activate
             pip install -U 'pip<19.2' setuptools
             pip install -e .[dev]
       # - run:
