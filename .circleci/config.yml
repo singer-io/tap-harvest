@@ -22,6 +22,7 @@ jobs:
       #     command: |
       #       source ~/.virtualenvs/tap-harvest/bin/activate
       #       pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals
+      - add_ssh_keys
       - run:
           name: 'Integration Tests'
           command: |
