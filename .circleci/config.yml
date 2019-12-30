@@ -9,19 +9,19 @@ jobs:
       - run:
           name: 'Setup'
           command: |
-            # virtualenv -p python3 ~/.virtualenvs/tap-harvest
-            # source ~/.virtualenvs/tap-harvest/bin/activate
-            # pip install .
-            # pip install pylint
-            python3 -mvenv /usr/local/share/virtualenvs/tap-harvest
-            source /usr/local/share/virtualenvs/tap-harvest/bin/activate
-            pip install -U 'pip<19.2' setuptools
-            pip install -e .[dev]
-      # - run:
-      #     name: 'Pylint'
-      #     command: |
-      #       source ~/.virtualenvs/tap-harvest/bin/activate
-      #       pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals
+            virtualenv -p python3 ~/.virtualenvs/tap-harvest
+            source ~/.virtualenvs/tap-harvest/bin/activate
+            pip install .
+            pip install pylint
+            # python3 -mvenv /usr/local/share/virtualenvs/tap-harvest
+            # source /usr/local/share/virtualenvs/tap-harvest/bin/activate
+            # pip install -U 'pip<19.2' setuptools
+            # pip install -e .[dev]
+      - run:
+          name: 'Pylint'
+          command: |
+            source ~/.virtualenvs/tap-harvest/bin/activate
+            pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals
       - add_ssh_keys
       - run:
           name: 'Integration Tests'
