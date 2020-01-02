@@ -4,11 +4,11 @@ Test tap pagination of streams
 import logging
 import random
 
-from tap-tester.tap_tester import menagerie, runner
+from tap_tester import menagerie, runner
 
-from tap-tester.tap_tester.suites.harvest.harvest_api import *
-from tap-tester.tap_tester.scenario import SCENARIOS
-from tap-tester.tap_tester.suites.harvest.base import BaseTapTest
+from harvest_api import *
+from tap_tester.scenario import SCENARIOS
+from base import BaseTapTest
 
 
 class PaginationTest(BaseTapTest):
@@ -166,7 +166,7 @@ class PaginationTest(BaseTapTest):
                 cls._master["invoices"]["total"] += 1
                 # BUG see bug in clients above, removing so tests pass
                 remove_expected = {'closed_at', 'paid_at', 'recurring_invoice_id',
-                                   'sent_at', 'paid_date', 'period_start', 'period_end'}
+                                   'paid_date', 'period_start', 'period_end'} # 'sent_at',
                 expectations = (get_fields(invoice) - remove_expected)
                 cls._master["invoices"]["expected_fields"].update(expectations)
                 cls._master["invoices"]["delete_me"].append({"id": invoice['id']})

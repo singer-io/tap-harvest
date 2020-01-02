@@ -1,16 +1,16 @@
 """
 Test that the start_date configuration is respected
 """
-
+import unittest
 from functools import reduce
-
 from dateutil.parser import parse
 
-from tap-tester.tap_tester import menagerie, runner
-from tap-tester.tap_tester.suites.harvest.harvest_api import *
+from tap_tester import menagerie, runner
+from tap_tester.scenario import SCENARIOS
 
-from tap-tester.tap_tester.scenario import SCENARIOS
-from tap-tester.tap_tester.suites.harvest.base import BaseTapTest
+from harvest_api import *
+from base import BaseTapTest
+from spec import TapSpec
 
 
 class StartDateTest(BaseTapTest):
@@ -134,8 +134,8 @@ class StartDateTest(BaseTapTest):
         # Expenses
         # for expense in cls._teardown_delete['expenses']:
         #     delete_stream('expenses', expense['id'])
-        for expense_category in cls._teardown_delete['expense_categories']:
-            delete_stream('expense_categories', expense_category['id'])
+        # for expense_category in cls._teardown_delete['expense_categories']:
+        #     delete_stream('expense_categories', expense_category['id'])
         for role in cls._teardown_delete['roles']:
             delete_stream('roles', role['id'])
 
@@ -153,7 +153,8 @@ class StartDateTest(BaseTapTest):
         ####################################################
 
     def name(self):
-        return "{}_start_date_test".format(super().name())
+        return "tap_tester_harvest_start_date"
+
 
     def do_test(self, conn_id):
         """Test we get a lot of data back based on the start date configured in base"""

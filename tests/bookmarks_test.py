@@ -9,11 +9,11 @@ from datetime import datetime as dt
 from dateutil.parser import parse
 import random
 
-from tap-tester.tap_tester import menagerie, runner
-from tap-tester.tap_tester.scenario import SCENARIOS
+from tap_tester import menagerie, runner
+from tap_tester.scenario import SCENARIOS
 
-from tap-tester.tap_tester.suites.harvest.harvest_api import *
-from tap-tester.tap_tester.suites.harvest.base import BaseTapTest
+from harvest_api import *
+from base import BaseTapTest
 
 
 class BookmarkTest(BaseTapTest):
