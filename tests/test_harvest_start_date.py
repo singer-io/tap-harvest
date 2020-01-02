@@ -24,6 +24,7 @@ class StartDateTest(BaseTapTest):
     • verify that the minimum bookmark sent to the target for the later start_date sync
       is greater than or equal to the start date
     """
+    
     @classmethod
     def setUpClass(cls):
         logging.info("Start Setup")
