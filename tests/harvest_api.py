@@ -50,9 +50,9 @@ def _refresh_access_token():
         _ACCESS_TOKEN = resp_json['access_token']
     except KeyError as key_err:
         if resp_json.get('error'):
-            LOGGER.critical(resp_json.get('error'))
+            logging.critical(resp_json.get('error'))
         if resp_json.get('error_description'):
-            LOGGER.critical(resp_json.get('error_description'))
+            logging.critical(resp_json.get('error_description'))
         raise key_err
     print("Got refreshed access token")
 
