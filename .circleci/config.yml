@@ -2,7 +2,6 @@ version: 2
 jobs:
   build:
     docker:
-      #- image: circleci/python:3.4-jessie-browsers
       - image: 218546966473.dkr.ecr.us-east-1.amazonaws.com/circle-ci:tap-tester
     steps:
       - checkout
@@ -13,10 +12,6 @@ jobs:
             source ~/.virtualenvs/tap-harvest/bin/activate
             pip install .
             pip install pylint
-            # python3 -mvenv /usr/local/share/virtualenvs/tap-harvest
-            # source /usr/local/share/virtualenvs/tap-harvest/bin/activate
-            # pip install -U 'pip<19.2' setuptools
-            # pip install -e .[dev]
       - run:
           name: 'Pylint'
           command: |
@@ -36,7 +31,6 @@ jobs:
                        --password=$SANDBOX_PASSWORD \
                        --client-id=50 \
                        tests
-                       #tap_tester.suites.harvest
 
 workflows:
   version: 2

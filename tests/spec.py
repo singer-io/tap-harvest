@@ -46,16 +46,10 @@ class TapSpec():
         return return_value
 
     def get_credentials(self):
-        import json;
-        
-        with open("/opt/code/tap-tester/harvest_creds.json", 'r') as creds:
-            contents = json.loads("".join(creds.readlines()))
-
-            return_val = {"access_token": contents["access_token"],
-                          "client_id": contents["client_id"],
-                          "client_secret": contents["client_secret"],
-                          "refresh_token":  contents["refresh_token"]}
-
+        return_val = {"access_token": os.environ["TAP_HARVEST_ACCESS_TOKEN"],
+                      "client_id": os.environ["TAP_HARVEST_CLIENT_ID"],
+                      "client_secret": os.environ["TAP_HARVEST_CLIENT_SECRET"],
+                      "refresh_token":  os.environ["TAP_HARVEST_REFRESH_TOKEN"]}
         return return_val
     
     def expected_metadata(self):

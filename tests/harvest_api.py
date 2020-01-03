@@ -230,7 +230,7 @@ def create_invoice(client_id, estimate_id: str = "", project_id: str = ""):
 
 def create_invoice_message(invoice_id):
     data = {"subject":"Invoice #{}".format(invoice_id),"body":"The invoice is attached below.","attach_pdf":True,
-            "send_me_a_copy":True,"recipients":[{"name":"Richard Roe","email":"richardroe@example.com"}]}
+            "send_me_a_copy":False,"recipients":[{"name":"Richard Roe","email":"richardroe@example.com"}]}
     response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/messages".format(invoice_id), headers=HEADERS, json=data)
     if response.status_code >= 400:
         logging.warn("create_invoice_message: {} {}".format(response.status_code, response.text))
@@ -377,7 +377,7 @@ def update_estimate_message(estimate_id):
     response = requests.post(url="https://api.harvestapp.com/v2/estimates/{}/messages".format(estimate_id), headers=HEADERS, json=data)
     if response.status_code >= 400:
         logging.warn('update_estimate_message: {} {}'.format(response.status_code, response.text))
-        data = {"event_type": "send"}
+        data = {"event_type": "view"}
         response = requests.post(url="https://api.harvestapp.com/v2/estimates/{}/messages".format(estimate_id), headers=HEADERS, json=data)
         if response.status_code >= 400:
             logging.warn('update_estimate_message: {} {}'.format(response.status_code, response.text))
@@ -731,13 +731,12 @@ def get_fields(stream):
     null_fields = [key for key in keys if stream[key] is None]
     for field in null_fields:
 
-        if field in is_stream:
-            removed.add(field)                            
-            continue
-
-        elif field in has_sub_fields:
+        if field in has_sub_fields:
             removed.add(field)                
             reformed.add(field + "_id")
+            continue
+
+        removed.add(field)
 
     # Return reformed keys and any key that did not need reforming
     return reformed.union(keys - removed)
