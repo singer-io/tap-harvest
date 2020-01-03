@@ -181,13 +181,13 @@ def create_estimate_message(estimate_id):
 
 def create_expense(project_id):
     """required | project_id, expense_category_id, spent_date"""
-    rand_month = random.randint(1,12)
+    rand_month = random.randint(1,5)
     spent_date = date.today() - relativedelta(months=rand_month)
     data = {"project_id":project_id,"expense_category_id":get_random('expense_categories'),
-            "spent_date":str(spent_date),"total_cost":42.42}
+            "spent_date":str(spent_date),"total_cost":random.randint(10,10000000)}
     receipt_file = None
     response = None
-    # NOTE we cannot attach files on the free Harvest plan (weak Harvest...real weak)
+    # NOTE we cannot attach files on the free Harvest plan
     # with open(os.getcwd() +'/harvest_test_receipt.gif') as receipt:
     #     receipt_file = {"harvest_test_receipt.gif": receipt}
     #     response = requests.post(url="https://api.harvestapp.com/v2/expenses", headers=HEADERS, json=data, files=receipt_file) 
@@ -400,7 +400,7 @@ def update_estimate_item_category(category_id):
 
 
 def update_expense(expense_id):
-    spent_date = date.today() - relativedelta(months=random.randint(1,12))
+    spent_date = date.today() - relativedelta(months=random.randint(7,12))
     data = {"spent_date":str(spent_date)}
     response = requests.patch(url="https://api.harvestapp.com/v2/expenses/{}".format(expense_id), headers=HEADERS, json=data)
     if response.status_code >= 400:
