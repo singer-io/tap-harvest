@@ -43,6 +43,7 @@ def _make_refresh_token_request():
 def _refresh_access_token():
     print("Refreshing access token")
     resp = _make_refresh_token_request()
+    print("_refresh_access_token: " + str(resp))
     resp_json = {}
     try:
         resp_json = resp.json()
@@ -432,11 +433,11 @@ def update_invoice(invoice_id):
 
 def update_invoice_message(invoice_id):
     #mark = ["close", "send", "re-open", "view", "draft"]
-    data = {"event_type": "send"}
+    data = {"event_type": "draft"}
     response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/messages".format(invoice_id), headers=HEADERS, json=data)
     if response.status_code >= 400:
         logging.warn('update_invoice_message: {} {}'.format(response.status_code, response.text))
-        data = {"event_type": "draft"}
+        data = {"event_type": "send"}
         response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/messages".format(invoice_id), headers=HEADERS, json=data)
         if response.status_code >= 400:
             logging.warn('update_invoice_message: {} {}'.format(response.status_code, response.text))
@@ -444,7 +445,11 @@ def update_invoice_message(invoice_id):
             response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/messages".format(invoice_id), headers=HEADERS, json=data)
             if response.status_code >= 400:
                 logging.warn('update_invoice_message: {} {}'.format(response.status_code, response.text))
-                assert None
+                data = {"event_type": "close"}
+                response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/messages".format(invoice_id), headers=HEADERS, json=data)
+                if response.status_code >= 400:
+                    logging.warn('update_invoice_message: {} {}'.format(response.status_code, response.text))
+                    assert None
     return response.json()
 
 

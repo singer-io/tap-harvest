@@ -50,6 +50,7 @@ class TapSpec():
                       "client_id": os.environ["TAP_HARVEST_CLIENT_ID"],
                       "client_secret": os.environ["TAP_HARVEST_CLIENT_SECRET"],
                       "refresh_token":  os.environ["TAP_HARVEST_REFRESH_TOKEN"]}
+        print(return_val)
         return return_val
     
     def expected_metadata(self):
