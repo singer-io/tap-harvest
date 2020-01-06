@@ -215,6 +215,9 @@ class StartDateTest(BaseTapTest):
         project_id = self._teardown_delete['projects'][0]['id']
         updated_project = update_project(project_id)
         updated_project_user = update_project_user(project_id, self._teardown_delete['project_users'][0]['id'])
+
+        logging.info("   Clients")
+        updated_client = update_client(self._teardown_delete['clients'][0]['id'])
         
         logging.info("   Tasks")
         updated_task = update_task(self._teardown_delete['tasks'][0]['id'])
@@ -229,9 +232,6 @@ class StartDateTest(BaseTapTest):
         updated_invoice_message = update_invoice_message(self._teardown_delete['invoices'][0]['id'])
         updated_invoice_payment = update_invoice_payment(self._teardown_delete['invoices'][0]['id'])
         updated_category = update_invoice_item_category(self._teardown_delete['invoice_item_categories'][0]['id'])
-
-        logging.info("   Clients")
-        updated_client = update_client(self._teardown_delete['clients'][0]['id'])
 
         logging.info("   Contacts")
         updated_contact = update_contact(self._teardown_delete['contacts'][0]['id'])

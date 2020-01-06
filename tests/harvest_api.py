@@ -120,7 +120,7 @@ HEADERS = {
 
 def create_client():
     """required | name"""
-    data = {"name":"New Client {}".format(random.randint(0,1000000)),"currency":"EUR"}
+    data = {"name":"New {} Client {}".format(random.randint(0,1000000), random.randint(0,1000000)),"currency":"EUR"}
     response = requests.post(url="https://api.harvestapp.com/v2/clients", headers=HEADERS, json=data)
     if response.status_code >= 400:
         if data['name'] in [client['name'] for client in  get_all('clients')]:
@@ -137,8 +137,8 @@ def create_client():
 
 def create_contact(client_id):
     """required | first_name, client_id"""
-    george_num = random.randint(0,1000000)
-    data= {"client_id":client_id,"first_name":"George{0}","last_name":"Frank","email":"george{0}@example.com".format(george_num)}
+    data= {"client_id":client_id,"first_name":"George","last_name":"Frank",
+           "email":"george{}{}@example.com".format(random.randint(0,1000000), random.randint(0,1000000))}
     response = requests.post(url="https://api.harvestapp.com/v2/contacts", headers=HEADERS, json=data)
     if response.status_code >= 400:
         logging.warn("create_contact: {} {}".format(response.status_code, response.text))
@@ -148,7 +148,7 @@ def create_contact(client_id):
 
 def create_estimate(client_id):
     """used for estimate_line_items as well"""    
-    line_items = [{"kind":"Service","description":"estimate description {}".format(random.randint(0,1000000)),"unit_price":5000.0}]
+    line_items = [{"kind":"Service","description":"estimate description {}".format(random.randint(0,1000000)),"unit_price":random.randint(1,1000000)}]
     data = {"client_id":client_id,"subject":"ABC{} Project Quote".format(random.randint(0,100)),"line_items":line_items}
     response = requests.post(url="https://api.harvestapp.com/v2/estimates", headers=HEADERS, json=data)
     if response.status_code >= 400:
@@ -158,7 +158,7 @@ def create_estimate(client_id):
 
 
 def create_estimate_item_category():
-    data = {"name": "Random Category {}".format(random.randint(0,1000000))}
+    data = {"name": "Random {} Category {}".format(random.randint(0,1000000), random.randint(0,1000000))}
     response = requests.post(url="https://api.harvestapp.com/v2/estimate_item_categories", headers=HEADERS, json=data)
     if response.status_code >= 400:
         logging.warn("create_estimate_item_category: {} {}".format(response.status_code, response.text))
@@ -169,7 +169,7 @@ def create_estimate_item_category():
 def create_estimate_message(estimate_id):
     """required | recipients"""
     rand = random.randint(0,1000000)
-    data = {"subject":"Estimate #{}_{}".format(estimate_id, rand),
+    data = {"subject":"Estimate #{}_{}".format(estimate_id, random.randint(0,1000000)),
             "body":"Here is our estimate.","send_me_a_copy":False,
             "recipients":[{"name":"Rando {}".format(rand), "email":"rando{}@example.com".format(rand)}]}
     response = requests.post(url="https://api.harvestapp.com/v2/estimates/{}/messages".format(estimate_id), headers=HEADERS, json=data)
@@ -184,7 +184,7 @@ def create_expense(project_id):
     rand_month = random.randint(1,5)
     spent_date = date.today() - relativedelta(months=rand_month)
     data = {"project_id":project_id,"expense_category_id":get_random('expense_categories'),
-            "spent_date":str(spent_date),"total_cost":random.randint(10,10000000)}
+            "spent_date":str(spent_date),"total_cost":random.randint(1,10000000)}
     receipt_file = None
     response = None
     # NOTE we cannot attach files on the free Harvest plan
@@ -203,7 +203,7 @@ def create_expense(project_id):
 
 def create_expense_category():
     """required | name"""
-    data = {"name": "Expense category {}".format(random.randint(0,1000000))}
+    data = {"name": "Expense {} category {}".format(random.randint(0,1000000), random.randint(0,1000000))}
     response = requests.post(url="https://api.harvestapp.com/v2/expense_categories", headers=HEADERS, json=data)
     if response.status_code >= 400:
         logging.warn("create_expense_category: {} {}".format(response.status_code, response.text))
@@ -218,7 +218,8 @@ def create_invoice(client_id, estimate_id: str = "", project_id: str = ""):
         project_id = get_random('projects')
     rand_month = random.randint(1,12) 
     due_date = date.today() + relativedelta(months=rand_month)
-    line_items = [{"kind":"Service","description":"ABC Project","unit_price":5000.0,"project_id": project_id}]
+    line_items = [{"kind":"Service","description":"ABC{} Project".format(random.randint(0,1000000)),
+                   "unit_price":random.randint(1,1000000),"project_id": project_id}]
     data = {"client_id":client_id,"subject":"ABC Project Quote","due_date":"{}".format(due_date),"line_items":line_items,
             "estimate_id":estimate_id}
     response = requests.post(url="https://api.harvestapp.com/v2/invoices", headers=HEADERS, json=data)
@@ -242,12 +243,13 @@ def create_invoice_payment(invoice_id):
     """amount | required"""
     rand_month = random.randint(1,12) 
     paid_date = date.today() - relativedelta(months=rand_month)
-    data = {"amount":random.randint(15000, 75000)/100,"paid_at":str(paid_date),"notes":"Paid by phone"}
+    data = {"amount":random.randint(1,1000000),"paid_at":str(paid_date),"notes":"Paid by phone"}
     response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/payments".format(invoice_id), headers=HEADERS, json=data)
     if response.status_code >= 400:
         logging.warn("create_invoice_payment: {} {}".format(response.status_code, response.text))
         assert None
     return response.json()
+
 
 def create_invoice_item_category():
     """amount | requireed"""
@@ -262,7 +264,7 @@ def create_invoice_item_category():
 
 
 def create_project(client_id):
-    data = {"client_id":client_id,"name":"Created Project {}".format(random.randint(0, 1000000)),"is_billable":True,"bill_by":"Project",
+    data = {"client_id":client_id,"name":"Created {} Project {}".format(random.randint(0, 1000000),random.randint(0, 1000000)),"is_billable":True,"bill_by":"Project",
             "hourly_rate":100.0,"budget_by":"project","budget":10000}
     response = requests.post(url="https://api.harvestapp.com/v2/projects", headers=HEADERS, json=data)
     if response.status_code >= 400:
@@ -293,7 +295,8 @@ def create_project_user(project_id, user_id):
 
 def create_role():
     """required | name"""
-    data = {"name":"Manger #{}".format(random.randint(0,1000000)), "user_ids":[get_random('users')]}
+    data = {"name":"Manger #{}-{}".format(random.randint(0,1000000),random.randint(0,1000000)),
+            "user_ids":[get_random('users')]}
     response = requests.post(url="https://api.harvestapp.com/v2/roles", headers=HEADERS, json=data)
     if response.status_code >= 400:
         logging.warn("create_roles: {} {}".format(response.status_code, response.text))
@@ -305,7 +308,7 @@ def create_task():
     rand_1 = random.randint(0,1000000)
     rand_2 = random.randint(0,1000000)
     rand_3 = random.randint(0,1000000)
-    data = {"name":"{} Taskd {}  Name {}".format(rand_1, rand_2, rand_3),"hourly_rate":42.0}
+    data = {"name":"{} Task {}  Name {}".format(rand_1, rand_2, rand_3),"hourly_rate":42.0}
     response = requests.post(url="https://api.harvestapp.com/v2/tasks", headers=HEADERS, json=data)
     if response.status_code >= 400:
         logging.warn("create_task: {} {}".format(response.status_code, response.text))
@@ -317,8 +320,8 @@ def create_time_entry(project_id, task_id):
     """required | project_id, task_id, spend_date"""
     rand_month = random.randint(1,12)
     spent_date = date.today() - relativedelta(months=rand_month)
-    data = {"project_id":project_id,"task_id":task_id,"spent_date":str(spent_date),"hours":2.0,
-            "external_reference":{"id":random.randint(5, 1000000),"group_id":random.randint(100,500),
+    data = {"project_id":project_id,"task_id":task_id,"spent_date":str(spent_date),"hours":1.0,
+            "external_reference":{"id":random.randint(5, 1000000),"group_id":random.randint(1,1000000),
                                   "permalink": 'https://help.getharvest.com/api-v2/'}}
     response = requests.post(url="https://api.harvestapp.com/v2/time_entries", headers=HEADERS, json=data)
     if response.status_code >= 400:
@@ -429,15 +432,19 @@ def update_invoice(invoice_id):
 
 def update_invoice_message(invoice_id):
     #mark = ["close", "send", "re-open", "view", "draft"]
-    data = {"event_type": "draft"}
+    data = {"event_type": "send"}
     response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/messages".format(invoice_id), headers=HEADERS, json=data)
     if response.status_code >= 400:
         logging.warn('update_invoice_message: {} {}'.format(response.status_code, response.text))
-        data = {"event_type": "send"}
+        data = {"event_type": "draft"}
         response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/messages".format(invoice_id), headers=HEADERS, json=data)
         if response.status_code >= 400:
             logging.warn('update_invoice_message: {} {}'.format(response.status_code, response.text))
-            assert None
+            data = {"event_type": "re-open"}
+            response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/messages".format(invoice_id), headers=HEADERS, json=data)
+            if response.status_code >= 400:
+                logging.warn('update_invoice_message: {} {}'.format(response.status_code, response.text))
+                assert None
     return response.json()
 
 

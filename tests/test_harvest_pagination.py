@@ -284,7 +284,7 @@ class PaginationTest(BaseTapTest):
         ################################################################
         
         ##########  Uncomment for PURGE MODE ###########################
-        # stream = "tasks"
+        # stream = "time_entries"
         # logging.info("Comencing PURGE of stream: {}".format(stream))
         # deletions = 0
         # delete_failed = 0
