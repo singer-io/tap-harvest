@@ -396,30 +396,6 @@ class BookmarkTest(BaseTapTest):
                 logging.info("last synced {}: {}".format(stream, expect[-1]))
 
         try:
-            logging.info("Inserting invoices")
-            client_id = self._teardown_delete['clients'][0]['id']
-            inserted_invoice = create_invoice(client_id)
-            expected['invoices'].append({"id": inserted_invoice['id']})
-            self._teardown_delete['invoices'].append({"id":inserted_invoice['id']})
-
-            logging.info("Inserting invoice_payments")
-            inserted_payment = create_invoice_payment(inserted_invoice['id'])
-            expected['invoice_payments'].append({"id": inserted_payment['id']})
-
-            logging.info("Inserting invoice_line_items")
-            updated_invoice_line_item = inserted_invoice['line_items'][0]
-            expected['invoice_line_items'].append({"id": updated_invoice_line_item['id']})
-
-            logging.info("Inserting invoice_messages")
-            inserted_message = create_invoice_message(inserted_invoice['id'])
-            expected['invoice_messages'].append({"id": inserted_message['id']})
-            self._teardown_delete['invoice_messages'].append({"id":inserted_message['id']})
-            
-            logging.info("Inserting invoice_item_categories")
-            inserted_category = create_invoice_item_category()
-            expected['invoice_item_categories'].append({"id": inserted_category['id']})
-            self._teardown_delete['invoice_item_categories'].append({"id":inserted_category['id']})
-            
             logging.info("Inserting roles")
             inserted_role = create_role()
             expected['roles'].append({"id": inserted_role['id']})
@@ -457,6 +433,30 @@ class BookmarkTest(BaseTapTest):
             logging.info("Inserting estimate_messages")
             inserted_estimate_message = create_estimate_message(inserted_estimate['id'])
             expected['estimate_messages'].append({"id": inserted_estimate_message['id']})
+
+            logging.info("Inserting invoices")
+            client_id = self._teardown_delete['clients'][0]['id']
+            inserted_invoice = create_invoice(client_id=client_id,estimate_id=inserted_estimate['id'])
+            expected['invoices'].append({"id": inserted_invoice['id']})
+            self._teardown_delete['invoices'].append({"id":inserted_invoice['id']})
+
+            logging.info("Inserting invoice_payments")
+            inserted_payment = create_invoice_payment(inserted_invoice['id'])
+            expected['invoice_payments'].append({"id": inserted_payment['id']})
+
+            logging.info("Inserting invoice_line_items")
+            updated_invoice_line_item = inserted_invoice['line_items'][0]
+            expected['invoice_line_items'].append({"id": updated_invoice_line_item['id']})
+
+            logging.info("Inserting invoice_messages")
+            inserted_message = create_invoice_message(inserted_invoice['id'])
+            expected['invoice_messages'].append({"id": inserted_message['id']})
+            self._teardown_delete['invoice_messages'].append({"id":inserted_message['id']})
+            
+            logging.info("Inserting invoice_item_categories")
+            inserted_category = create_invoice_item_category()
+            expected['invoice_item_categories'].append({"id": inserted_category['id']})
+            self._teardown_delete['invoice_item_categories'].append({"id":inserted_category['id']})
 
             logging.info("Inserting expenses")
             project_id = self._teardown_delete['projects'][0]['id']
