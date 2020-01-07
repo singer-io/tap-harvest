@@ -44,6 +44,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - update/harvest-circle-config
+                #- master
     jobs:
       - build

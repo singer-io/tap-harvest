@@ -768,7 +768,6 @@ def delete_stream(stream, stream_id):
     response = requests.delete(url="https://api.harvestapp.com/v2/{}/{}".format(stream, stream_id), headers=HEADERS)
     if response.status_code >= 400:
         logging.warn("delete_{}: {} {}".format(stream, response.status_code, response.text))
-        assert None
     return response.json()
 
 
@@ -778,5 +777,4 @@ def delete_project_user(project_id, project_user_id):
         project_id, project_user_id), headers=HEADERS)
     if response.status_code >= 400:
         logging.warn("delete_project_user: {} {}".format(response.status_code, response.text))
-        assert None
     return response.json()
