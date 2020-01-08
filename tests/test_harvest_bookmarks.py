@@ -353,13 +353,13 @@ class BookmarkTest(BaseTapTest):
         logging.info(updated_user_role['updated_at'])
         
         # TODO - Why is this the same as user_roles update ^
-        logging.info("Updating user_project_tasks")
-        user_id = get_random('users')
-        update_user_role = update_role(role_id, [])
-        updated_user_role = update_role(role_id, [user_id])
-        expected['user_roles'].append({"roles": user_id, "role_id": role_id})
+        # logging.info("Updating user_project_tasks")
+        # user_id = get_random('users')
+        # update_user_role = update_role(role_id, [])
+        # updated_user_role = update_role(role_id, [user_id])
+        # expected['user_roles'].append({"roles": user_id, "role_id": role_id})
 
-        logging.info(updated_user_role['updated_at'])
+        # logging.info(updated_user_role['updated_at'])
         
         logging.info("Updating expenses")
         expense_id = self._teardown_delete['expenses'][0]['id']

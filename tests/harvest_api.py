@@ -522,8 +522,11 @@ def update_task(task_id):
     data = {"name":"Updated Task Name {}".format(random.randint(0,1000000))}
     response = requests.patch(url="https://api.harvestapp.com/v2/tasks/{}".format(task_id), headers=HEADERS, json=data)
     if response.status_code >= 400:
-        logging.warn('update_task: {} {}'.format(response.status_code, response.text))
-        assert None
+        data = {"name":"Updated Task {} Name {}".format(random.randint(0,1000000), random.randint(0,1000000))}
+        response = requests.patch(url="https://api.harvestapp.com/v2/tasks/{}".format(task_id), headers=HEADERS, json=data)
+        if response.status_code >= 400:
+            logging.warn('update_task: {} {}'.format(response.status_code, response.text))
+            assert None
     return response.json()
 
 
