@@ -86,7 +86,8 @@ class PaginationTest(BaseTapTest):
                 expectations = (get_fields(client) - remove_expected)
                 cls._master["clients"]["expected_fields"].update(expectations)
                 cls._master["clients"]["delete_me"].append({"id": client['id']})
-            # Contacts            
+
+            # Contacts
             if cls._master["contacts"]["total"] < 101:
                 logging.info("  Creating Contact")
                 contact = create_contact(get_random('clients'))
@@ -220,14 +221,6 @@ class PaginationTest(BaseTapTest):
                 cls._master["expense_categories"]["expected_fields"].update(category.keys())
                 cls._master["expense_categories"]["delete_me"].append({"id": category['id']})
                 
-
-            # Contacts
-            if cls._master["contacts"]["total"] < 101:
-                logging.info("  Creating Contact")
-                contact = create_contact(get_random("clients"))
-                cls._master["contacts"]["total"] += 1
-                cls._master["contacts"]["expected_fields"].update(contact.keys())
-                cls._master["contacts"]["delete_me"].append({"id": contact['id']})
 
             # Estimates
             if cls._master["estimates"]["total"] < 101: # or cls._master["estimate_messages"]["total"] < 101:
