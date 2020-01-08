@@ -276,20 +276,28 @@ class BookmarkTest(BaseTapTest):
         updated_client = update_client(client_id)
         expected['clients'].append({"id": client_id})
 
+        logging.info(updated_client['updated_at'])
+        
         logging.info("Updating contacts")
         contact_id = self._teardown_delete['contacts'][0]['id']
         updated_contact = update_contact(contact_id)
         expected['contacts'].append({"id": contact_id})
 
+        logging.info(updated_contact['updated_at'])
+        
         logging.info("Updating estimates")
         estimate_id = self._teardown_delete['estimates'][0]['id']
         updated_estimate = update_estimate(estimate_id)
         expected['estimates'].append({"id": estimate_id})
 
+        logging.info(updated_estimate['updated_at'])
+        
         logging.info("'Updating' estimate_messages")
         updated_estimate_message = update_estimate_message(estimate_id)
         expected['estimate_messages'].append({"id": updated_estimate_message['id']})
 
+        logging.info(updated_estimate_message['updated_at'])
+        
         logging.info("Updating estimate_line_items")
         expected['estimate_line_items'].append({"id": updated_estimate['line_items'][0]['id']})
 
@@ -298,15 +306,21 @@ class BookmarkTest(BaseTapTest):
         updated_category = update_estimate_item_category(category_id)
         expected['estimate_item_categories'].append({"id": category_id})
 
+        logging.info(updated_category['updated_at'])
+        
         logging.info("Updating invoices")
         invoice_id = self._teardown_delete['invoices'][0]['id']
         updated_invoice = update_invoice(invoice_id)
         expected['invoices'].append({"id": invoice_id})
 
+        logging.info(updated_invoice['updated_at'])
+        
         logging.info("Updating invoice_payments")
         updated_payment = update_invoice_payment(invoice_id)
         expected['invoice_payments'].append({"id": updated_payment['id']})
         
+        logging.info(updated_payment['updated_at'])
+
         logging.info("Updating invoice_messages")
         updated_message = update_invoice_message(invoice_id)
         expected['invoice_messages'].append({"id": updated_message['id']})
@@ -314,48 +328,85 @@ class BookmarkTest(BaseTapTest):
         logging.info("Updating invoice_line_items")
         expected['invoice_line_items'].append({"id": updated_invoice['line_items'][0]['id']})
 
+        logging.info(updated_message['updated_at'])
+        
         logging.info("Updating invoice_item_categories")
         category_id = self._teardown_delete['invoice_item_categories'][0]['id']        
         updated_category = update_invoice_item_category(category_id)
         expected['invoice_item_categories'].append({"id": category_id})
+
+        logging.info(updated_category['updated_at'])
         
         logging.info("Updating roles")
         role_id = self._teardown_delete['roles'][0]['id']
         updated_role = update_role(role_id)
         expected['roles'].append({"id": role_id})
 
+        logging.info(updated_role['updated_at'])
+
         logging.info("Updating user_roles")
         user_id = get_random('users')
         update_user_role = update_role(role_id, [])
-        update_user_role = update_role(role_id, [user_id])
+        updated_user_role = update_role(role_id, [user_id])
         expected['user_roles'].append({"user_id": user_id, "role_id": role_id})
 
+        logging.info(updated_user_role['updated_at'])
+        
+        # TODO - Why is this the same as user_roles update ^
         logging.info("Updating user_project_tasks")
         user_id = get_random('users')
         update_user_role = update_role(role_id, [])
-        update_user_role = update_role(role_id, [user_id])
-        expected['user_roles'].append({"user_id": user_id, "role_id": role_id})
+        updated_user_role = update_role(role_id, [user_id])
+        expected['user_roles'].append({"roles": user_id, "role_id": role_id})
+
+        logging.info(updated_user_role['updated_at'])
         
         logging.info("Updating expenses")
         expense_id = self._teardown_delete['expenses'][0]['id']
         updated_expense = update_expense(expense_id)
         expected['expenses'].append({"id": expense_id})
 
+        logging.info(updated_category['updated_at'])
+        
         logging.info("Updating expense_categories")
         category_id = self._teardown_delete['expense_categories'][0]['id']
         updated_category = update_expense_category(category_id)
         expected['expense_categories'].append({"id": category_id})
+
+        logging.info(updated_category['updated_at'])
 
         logging.info("Updating tasks")
         task_id = self._teardown_delete['tasks'][0]['id']
         updated_task = update_task(task_id)
         expected['tasks'].append({"id": task_id})
 
+        logging.info(updated_category['updated_at'])
+                
+        # This is commented because we are not testing this stream and it affects time_entries and it's child streams
+        # logging.info("Updating project_users")
+        # project_id = self._teardown_delete["projects"][0]['id']
+        # project_user_id = self._teardown_delete["project_users"][0]['id']
+        # updated_project_user = update_project_user(project_id, project_user_id)
+        # expected['project_users'].append({'id': updated_project_user['id']})
+        
+        # logging.info(updated_project_user['updated_at'])
+        
+        logging.info("Updating project_tasks (task_assignments)")
+        project_id = self._teardown_delete["projects"][0]['id']
+        project_task_id = self._teardown_delete["project_tasks"][0]['id']
+        updated_project_task = update_project_task(project_id, project_task_id)
+        expected['project_tasks'].append({"id": updated_project_task['id']})
+        expected['user_project_tasks'].append({"project_task_id": updated_project_task['id'], "user_id": get_random("users")})
+
+        logging.info(updated_project_task['updated_at'])
+
         logging.info("Updating time_entries")
         time_entry_id = self._teardown_delete['time_entries'][0]['id']
         updated_time_entry = update_time_entry(time_entry_id)
         expected['time_entries'].append({"id": time_entry_id})
 
+        logging.info(updated_category['updated_at'])
+        
         logging.info("Updating external_reference (time_entries)")
         external_reference_id = updated_time_entry['external_reference']['id']
         expected['external_reference'].append({"id": external_reference_id})
@@ -363,19 +414,6 @@ class BookmarkTest(BaseTapTest):
         logging.info("Updating time_entry_external_reference (time_entries)")
         expected['time_entry_external_reference'].append({"time_entry_id": time_entry_id,
                                                           "external_reference_id": external_reference_id})
-        
-        logging.info("Updating project_users")
-        project_id = self._teardown_delete["projects"][0]['id']
-        project_user_id = self._teardown_delete["project_users"][0]['id']
-        updated_project_user = update_project_user(project_id, project_user_id)
-        expected['project_users'].append({'id': updated_project_user['id']})
-        
-        logging.info("Updating project_tasks (task_assignments)")
-        project_id = self._teardown_delete["projects"][0]['id']
-        project_task_id = get_random_project_task(project_id)
-        updated_project_task = update_project_task(project_id, project_task_id)
-        expected['project_tasks'].append({"id": updated_project_task['id']})
-        expected['user_project_tasks'].append({"project_task_id": updated_project_task['id'], "user_id": get_random("users")})
 
         logging.info("Updated Expectations : \n{}".format(expected))
 
