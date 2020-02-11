@@ -141,7 +141,7 @@ class PaginationTest(BaseTapTest):
                 # NOTE: time_entries has fields which are set to null in a create and so do not get picked up
                 # automatically when checking the keys, so we set partial expectations manually.
                 add_expected = {'invoice_id'}
-                remove_expected = {'invoice', 'timer_started_at'} # BUG (for timer_started_at see clients bug above)
+                remove_expected = {'invoice', 'timer_started_at', 'rounded_hours'} # BUG (for timer_started_at see clients bug above)
                 expectations = add_expected.union(get_fields(time_entry) - remove_expected)
                 cls._master["time_entries"]["expected_fields"].update(expectations)
                 cls._master["time_entries"]["delete_me"].append({"id": time_entry['id']})
@@ -366,11 +366,10 @@ class PaginationTest(BaseTapTest):
                 #  ex. {evet_type: send} in estimate_messages = {sent_at: time} in estimates
 
                 # verify the target recieves all possible fields for a given stream
-                if stream != "time_entries": # BUG https://github.com/singer-io/tap-harvest/issues/39
-                    self.assertEqual(
-                        set(), self._master[stream]["expected_fields"].difference(actual_fields_by_stream.get(stream, set())),
-                        msg="The fields sent to the target have an extra or missing field"
-                    )
+                self.assertEqual(
+                    set(), self._master[stream]["expected_fields"].difference(actual_fields_by_stream.get(stream, set())),
+                    msg="The fields sent to the target have an extra or missing field"
+                )
                 
                 # verify that the automatic fields are sent to the target for non-child streams
                 if not self._master[stream]["child"]:
