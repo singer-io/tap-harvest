@@ -460,6 +460,8 @@ def do_sync():
 
     LOGGER.info("Sync complete")
 
+def do_discover():
+    print('{"streams":[]}')
 
 def main_impl():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
@@ -467,8 +469,10 @@ def main_impl():
     global AUTH  # pylint: disable=global-statement
     AUTH = Auth(CONFIG['client_id'], CONFIG['client_secret'], CONFIG['refresh_token'])
     STATE.update(args.state)
-    do_sync()
-
+    if args.discover:
+        do_discover()
+    else:
+        do_sync()
 
 def main():
     try:
