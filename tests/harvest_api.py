@@ -21,7 +21,7 @@ from base import BaseTapTest
 _ACCESS_TOKEN = None
 _ACCOUNT_ID = None
 UPDATED_SINCE = datetime.datetime.strptime(TapSpec.DEFAULT_START_DATE,
-                                           "%Y-%m-%d %H:%M:%S").isoformat() + "Z"
+                                           "%Y-%m-%dT%H:%M:%SZ").isoformat()
 
 ##############################
 #  Access Token Methods      #
@@ -73,10 +73,8 @@ def get_account_id():
         return _ACCOUNT_ID
     response = requests.request('GET',
                                 url="https://id.getharvest.com/api/v2/accounts",
-                                data={
-                                    'access_token': _ACCESS_TOKEN,
-                                },
-                                headers={"User-Agent": "dev@talend.com"})
+                                headers={'Authorization': 'Bearer ' + _ACCESS_TOKEN,
+                                         'User-Agent': "dev@talend.com"})
     _ACCOUNT_ID = str(response.json()['accounts'][0]['id'])
     return _ACCOUNT_ID
 
@@ -147,7 +145,7 @@ def create_contact(client_id):
 
 
 def create_estimate(client_id):
-    """used for estimate_line_items as well"""    
+    """used for estimate_line_items as well"""
     line_items = [{"kind":"Service","description":"estimate description {}".format(random.randint(0,1000000)),"unit_price":random.randint(1,1000000)}]
     data = {"client_id":client_id,"subject":"ABC{} Project Quote".format(random.randint(0,100)),"line_items":line_items}
     response = requests.post(url="https://api.harvestapp.com/v2/estimates", headers=HEADERS, json=data)
@@ -190,7 +188,7 @@ def create_expense(project_id):
     # NOTE we cannot attach files on the free Harvest plan
     # with open(os.getcwd() +'/harvest_test_receipt.gif') as receipt:
     #     receipt_file = {"harvest_test_receipt.gif": receipt}
-    #     response = requests.post(url="https://api.harvestapp.com/v2/expenses", headers=HEADERS, json=data, files=receipt_file) 
+    #     response = requests.post(url="https://api.harvestapp.com/v2/expenses", headers=HEADERS, json=data, files=receipt_file)
     #     if response.status_code >= 400:
     #         logging.warn("create_expense: {} {}".format(response.status_code, response.text))
     #         assert None
@@ -216,7 +214,7 @@ def create_invoice(client_id, estimate_id: str = "", project_id: str = ""):
         estimate_id = get_random('estimates')
     if project_id == "":
         project_id = get_random('projects')
-    rand_month = random.randint(1,12) 
+    rand_month = random.randint(1,12)
     due_date = date.today() + relativedelta(months=rand_month)
     line_items = [{"kind":"Service","description":"ABC{} Project".format(random.randint(0,1000000)),
                    "unit_price":random.randint(1,1000000),"project_id": project_id}]
@@ -243,7 +241,7 @@ def create_invoice_payment(invoice_id):
     """amount | required"""
     invoice = requests.get(url="https://api.harvestapp.com/v2/invoices/{}".format(invoice_id), headers=HEADERS)
     amount = invoice.json()['amount']
-    rand_month = random.randint(1,12) 
+    rand_month = random.randint(1,12)
     paid_date = date.today() - relativedelta(months=rand_month)
     data = {"amount":random.randint(1,amount-1),"paid_at":str(paid_date),"notes":"Paid by phone"}
     response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/payments".format(invoice_id), headers=HEADERS, json=data)
@@ -286,7 +284,7 @@ def create_project_task(project_id, task_id):
 
 
 def create_project_user(project_id, user_id):
-    data = {"user_id":user_id,"use_default_rates":False,"hourly_rate":42.0, "budget":random.randint(100,1000000)} 
+    data = {"user_id":user_id,"use_default_rates":False,"hourly_rate":42.0, "budget":random.randint(100,1000000)}
     response = requests.post(url="https://api.harvestapp.com/v2/projects/{}/user_assignments".format(project_id),
                              headers=HEADERS, json=data)
     if response.status_code >= 400:
@@ -459,7 +457,7 @@ def update_invoice_message(invoice_id):
 
 
 def update_invoice_payment(invoice_id):
-    rand_month = random.randint(1,12) 
+    rand_month = random.randint(1,12)
     paid_date = date.today() - relativedelta(months=rand_month)
     data = {"amount":random.randint(15000, 75000)/100,"paid_at":str(paid_date),"notes":"Paid by phone"}
     response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/payments".format(invoice_id), headers=HEADERS, json=data)
@@ -477,7 +475,7 @@ def update_invoice_item_category(category_id):
         assert None
     return response.json()
 
-    
+
 def update_project(project_id):
     data = {"hourly_rate": str(random.randint(20,90))}
     response = requests.patch(url="https://api.harvestapp.com/v2/projects/{}".format(project_id), headers=HEADERS, json=data)
@@ -545,7 +543,7 @@ def update_time_entry(time_entry_id):
             logging.warn('update_time_entry: {} {}'.format(response.status_code, response.text))
             assert None
     return response.json()
-    
+
 
 def update_user(user_id, role_names = None):
     rand_1 = random.randint(0,1000000)
@@ -570,7 +568,7 @@ def get_all(stream):
         logging.warn("get_all_{}: {} {}".format(stream, response.status_code, response.text))
         assert None
     return response.json()[stream]
-            
+
 # def get_all(stream):
 #     return_response =[]
 #     response = requests.get(url="https://api.harvestapp.com/v2/{}".format(stream), headers=HEADERS)
@@ -581,7 +579,7 @@ def get_all(stream):
 #             assert None
 #         return_response.append(response.json()[stream])
 #         response = requests.get(url="https://api.harvestapp.com/v2/{}".format(stream), headers=HEADERS)
-            
+
 # Complex streams require their own functions
 def get_user_projects(user_id):
     response = requests.get(url="https://api.harvestapp.com/v2/users/{}/project_assignments".format(user_id), headers=HEADERS)
@@ -697,7 +695,7 @@ def get_random_task(project_id: str = None):
         assert None
     num_tasks = len(response.json()['tasks']) - 1
     return response.json()['tasks'][random.randint(0, num_tasks)]['id']
-    
+
 
 ####################
 # Get Random       #
@@ -706,7 +704,7 @@ def get_random_task(project_id: str = None):
 # on things like client: {id, name} != client_id
 def get_fields(stream):
     """
-    Checks a stream's keys (using the json response from an api call) for 
+    Checks a stream's keys (using the json response from an api call) for
     values that are dictionaries. This indicates it has subfields.
     returns the keys with necessary id-adjusted key names
     """
@@ -716,7 +714,7 @@ def get_fields(stream):
     removed = set()
 
     # Find the fields which have subfields
-    has_sub_fields = [key for key in keys if type(stream[key]) is dict]    
+    has_sub_fields = [key for key in keys if type(stream[key]) is dict]
 
     # Some fields are actually child streams
     is_stream = ['line_items'] #, 'external_reference']
@@ -727,11 +725,11 @@ def get_fields(stream):
     # Reform the fields which have subfields (which have values of type dict)
     for field in has_sub_fields:
         # Queue main field for removal
-        removed.add(field)        
+        removed.add(field)
 
         # If field has is stream remove it
         if field in is_stream:
-            removed.add(field)                            
+            removed.add(field)
             continue
 
         # If field has a subfield of 'id' keep only 'field_id'
@@ -752,7 +750,7 @@ def get_fields(stream):
     for field in null_fields:
 
         if field in has_sub_fields:
-            removed.add(field)                
+            removed.add(field)
             reformed.add(field + "_id")
             continue
 

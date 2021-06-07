@@ -11,14 +11,9 @@ class TapSpec():
     API_LIMIT = "max-row-limit"
     INCREMENTAL = "INCREMENTAL"
     FULL = "FULL_TABLE"
-    START_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+    START_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
-    CONFIGURATION_ENVIRONMENT = {
-        "properties": {"account_name": "stitchatelendcompany"}#,
-        #"credentials": {}
-    }
-
-    DEFAULT_START_DATE = datetime.datetime.strftime(datetime.datetime.today(), "%Y-%m-%d 00:00:00")
+    DEFAULT_START_DATE = datetime.datetime.strftime(datetime.datetime.today(), "%Y-%m-%dT00:00:00Z")
 
     @staticmethod
     def tap_name():
@@ -32,26 +27,24 @@ class TapSpec():
 
     def get_properties(self, original: bool = True):
         """Configuration properties required for the tap."""
-        properties_env = self.CONFIGURATION_ENVIRONMENT['properties']
-        return_value = {k: os.getenv(v) for k, v in properties_env.items()}
-        return_value['start_date'] = self.DEFAULT_START_DATE
+        properties = {"account_name": os.environ['TAP_HARVEST_ACCOUNT_NAME'],
+                      'start_date': self.DEFAULT_START_DATE}
 
         if original:
-            return return_value
+            return properties
 
         # This test needs the new connections start date to be larger than the default
-        assert self.start_date > return_value["start_date"]
+        assert self.start_date > properties["start_date"]
 
-        return_value["start_date"] = self.start_date
-        return return_value
+        properties["start_date"] = self.start_date
+        return properties
 
     def get_credentials(self):
-        return_val = {"access_token": os.environ["TAP_HARVEST_ACCESS_TOKEN"],
-                      "client_id": os.environ["TAP_HARVEST_CLIENT_ID"],
+        return_val = {"client_id": os.environ["TAP_HARVEST_CLIENT_ID"],
                       "client_secret": os.environ["TAP_HARVEST_CLIENT_SECRET"],
                       "refresh_token":  os.environ["TAP_HARVEST_REFRESH_TOKEN"]}
         return return_val
-    
+
     def expected_metadata(self):
         """The expected streams and metadata about the streams"""
 
@@ -103,4 +96,3 @@ class TapSpec():
             #     self.FOREIGN_KEYS: {"order_id"},
             #     self.REPLICATION_METHOD: self.INCREMENTAL,
             #     self.API_LIMIT: 250}
-
