@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.8
+  * Update request headers when querying for account IDs [#41](https://github.com/singer-io/tap-harvest/pull/41)
+
 ## 2.0.7
   * Update version of `requests` to `2.20.0` in response to CVE 2018-18074
 
