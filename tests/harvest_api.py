@@ -21,7 +21,7 @@ from base import BaseTapTest
 _ACCESS_TOKEN = None
 _ACCOUNT_ID = None
 UPDATED_SINCE = datetime.datetime.strptime(TapSpec.DEFAULT_START_DATE,
-                                           "%Y-%m-%d %H:%M:%S").isoformat() + "Z"
+                                           "%Y-%m-%dT%H:%M:%SZ").isoformat()
 
 ##############################
 #  Access Token Methods      #
