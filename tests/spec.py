@@ -11,14 +11,14 @@ class TapSpec():
     API_LIMIT = "max-row-limit"
     INCREMENTAL = "INCREMENTAL"
     FULL = "FULL_TABLE"
-    START_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+    START_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
     CONFIGURATION_ENVIRONMENT = {
         "properties": {"account_name": "stitchatelendcompany"}#,
         #"credentials": {}
     }
 
-    DEFAULT_START_DATE = datetime.datetime.strftime(datetime.datetime.today(), "%Y-%m-%d 00:00:00")
+    DEFAULT_START_DATE = datetime.datetime.strftime(datetime.datetime.today(), "%Y-%m-%dT00:00:00Z")
 
     @staticmethod
     def tap_name():
@@ -51,7 +51,7 @@ class TapSpec():
                       "client_secret": os.environ["TAP_HARVEST_CLIENT_SECRET"],
                       "refresh_token":  os.environ["TAP_HARVEST_REFRESH_TOKEN"]}
         return return_val
-    
+
     def expected_metadata(self):
         """The expected streams and metadata about the streams"""
 
@@ -103,4 +103,3 @@ class TapSpec():
             #     self.FOREIGN_KEYS: {"order_id"},
             #     self.REPLICATION_METHOD: self.INCREMENTAL,
             #     self.API_LIMIT: 250}
-
