@@ -81,10 +81,8 @@ class Auth:
 
         response = requests.request('GET',
                                     url=BASE_ID_URL + 'accounts',
-                                    data={
-                                        'access_token': self._access_token,
-                                    },
-                                    headers={"User-Agent": CONFIG.get("user_agent")})
+                                    headers={'Authorization': 'Bearer ' + self._access_token,
+                                             'User-Agent': CONFIG.get("user_agent")})
 
         self._account_id = str(response.json()['accounts'][0]['id'])
 
