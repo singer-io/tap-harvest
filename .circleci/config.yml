@@ -17,6 +17,12 @@ jobs:
           command: |
             source ~/.virtualenvs/tap-harvest/bin/activate
             pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals
+      - run:
+          name: 'Unit Tests'
+          command: |
+            source ~/.virtualenvs/tap-harvest/bin/activate
+            pip install nose
+            nosetests tests/unittests/
       - add_ssh_keys
       - run:
           name: 'Integration Tests'

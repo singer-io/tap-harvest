@@ -84,9 +84,11 @@ class Auth:
                                     headers={'Authorization': 'Bearer ' + self._access_token,
                                              'User-Agent': CONFIG.get("user_agent")})
 
-        self._account_id = str(response.json()['accounts'][0]['id'])
-
-        return self._account_id
+        if response.json()['accounts']:
+            self._account_id = str(response.json()['accounts'][0]['id'])
+            return self._account_id
+        else:
+            raise Exception("No Harvest Account found")
 
 
 def get_abs_path(path):
