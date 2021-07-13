@@ -459,6 +459,8 @@ def do_sync():
     LOGGER.info("Sync complete")
 
 def do_discover():
+    # Get company for token permission validation
+    get_company()
     print('{"streams":[]}')
 
 def main_impl():
