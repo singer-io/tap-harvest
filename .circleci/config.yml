@@ -20,7 +20,7 @@ jobs:
       - run:
           name: 'Unit Tests'
           command: |
-            source /usr/local/share/virtualenvs/tap-harvest/bin/activate
+            source ~/.virtualenvs/tap-harvest/bin/activate
             pip install nose
             nosetests tests/unittests/
       - add_ssh_keys
