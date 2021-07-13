@@ -5,7 +5,6 @@ import json
 from unittest import mock
 
 def get_mock_http_response(status_code, contents):
-        print("-------------------")
         response = requests.Response()
         response.status_code = status_code
         response._content = contents.encode()
