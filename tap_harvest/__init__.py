@@ -23,6 +23,7 @@ BASE_API_URL = "https://api.harvestapp.com/v2/"
 BASE_ID_URL = "https://id.getharvest.com/api/v2/"
 CONFIG = {}
 STATE = {}
+TAP_STATE = {}
 AUTH = {}
 
 
@@ -188,6 +189,7 @@ def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_
             data = response[path]
             time_extracted = utils.now()
 
+            utils.update_state(TAP_STATE, schema_name, start)
             for row in data:
                 if map_handler is not None:
                     row = map_handler(row)
@@ -214,10 +216,10 @@ def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_
                     if for_each_handler is not None:
                         for_each_handler(row, time_extracted=time_extracted)
 
-                    utils.update_state(STATE, schema_name, item[bookmark_property])
+                    utils.update_state(TAP_STATE, schema_name, item[bookmark_property])
             page = response['next_page']
 
-    singer.write_state(STATE)
+    singer.write_state(TAP_STATE)
 
 
 def sync_time_entries():
