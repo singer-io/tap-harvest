@@ -87,8 +87,8 @@ class Auth:
         if response.json()['accounts']:
             self._account_id = str(response.json()['accounts'][0]['id'])
             return self._account_id
-        else:
-            raise Exception("No Harvest Account found")
+
+        raise Exception("No Harvest Account found")
 
 
 def get_abs_path(path):
