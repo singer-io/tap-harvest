@@ -184,7 +184,6 @@ def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_
             url = get_url(endpoint or schema_name)
             params = {"updated_since": updated_since} if with_updated_since else {}
             params['page'] = page
-            # params['per_page'] = 1
             response = request(url, params)
             path = path or schema_name
             data = response[path]

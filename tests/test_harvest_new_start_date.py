@@ -64,25 +64,40 @@ class TestNewStartDate(BaseTapTest):
         return "tap_tester_harvest_new_start_date"
 
 
+    def get_second_updated_at(self, records):
+        # get the invoice id that is perviously updated than 1st invoice
+        first_invoice_updated_at = records.get("invoices").get("messages")[0].get("data").get("updated_at")
+        for invoice in records.get("invoices").get("messages"):
+            if invoice.get("data").get("updated_at") < first_invoice_updated_at:
+                return invoice.get("data").get("id")
+
     def do_test(self, conn_id):
         sync_record_count = self.run_sync(conn_id)
 
         # Count actual rows synced
         sync_records = runner.get_records_from_target_output()
 
-        # getting id of 2nd invoice because invoices are returned in order of created date
-        second_invoice_id = sync_records.get("invoices").get("messages")[1].get("data").get("id")
+        all_invoice_ids = [invoice["id"] for invoice in self._teardown_delete["invoices"]]
 
         for stream in self.expected_streams():
             if stream not in ["invoice_payments"]:
                 continue
 
             # getting invoice ids of all the invoice_payments
-            invoice_ids = [invoice.get("data").get("invoice_id") for invoice in sync_records.get("invoice_payments").get("messages")]
+            invoice_ids_collected_from_sync = [invoice.get("data").get("invoice_id") for invoice in sync_records.get("invoice_payments").get("messages")]
 
             record_count_sync = sync_record_count.get(stream, 0)
             self.assertGreater(record_count_sync, 1)
 
-            self.assertTrue(second_invoice_id in invoice_ids)
+            # check if all the invoices we created
+            # are collected in the invoice payment data
+            for all_invoice_id in all_invoice_ids:
+                self.assertTrue(all_invoice_id in invoice_ids_collected_from_sync)
+
+            second_updated_invoice_id = self.get_second_updated_at(sync_records)
+
+            # check if the second highest updated invoice is present
+            # in the invoice ids collected from invoice payments
+            self.assertTrue(second_updated_invoice_id in invoice_ids_collected_from_sync)
 
 SCENARIOS.add(TestNewStartDate)
