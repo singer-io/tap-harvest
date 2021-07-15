@@ -73,11 +73,11 @@ class PaginationTest(BaseTapTest):
             cls._master["projects"]["total"] -= 1
 
         # Create dummy data in specifc streams prior to first sync to ensure they are captured        
-        for itter in range(2):
+        for itter in range(101):
             logging.info("Creating {} round(s) of data ...".format(itter + 1))
 
             # Clients            
-            if cls._master["clients"]["total"] < 2:
+            if cls._master["clients"]["total"] < 101:
                 logging.info("  Creating Client")
                 client = create_client()
                 cls._master["clients"]["total"] += 1
@@ -88,7 +88,7 @@ class PaginationTest(BaseTapTest):
                 cls._master["clients"]["delete_me"].append({"id": client['id']})
 
             # Contacts
-            if cls._master["contacts"]["total"] < 2:
+            if cls._master["contacts"]["total"] < 101:
                 logging.info("  Creating Contact")
                 contact = create_contact(get_random('clients'))
                 cls._master["contacts"]["total"] += 1
@@ -98,7 +98,7 @@ class PaginationTest(BaseTapTest):
                 cls._master["contacts"]["delete_me"].append({"id": contact['id']})
 
             # Roles
-            if cls._master["roles"]["total"] < 2:
+            if cls._master["roles"]["total"] < 101:
                 logging.info("  Creating Role")
                 role = create_role()
                 cls._master["roles"]["total"] += 1
@@ -117,8 +117,8 @@ class PaginationTest(BaseTapTest):
                 cls._master["projects"]["delete_me"].append({"id": project['id']})
 
             # Tasks
-            if cls._master["tasks"]["total"] < 2 or cls._master["project_tasks"]["total"] < 2 or \
-               cls._master["time_entries"]["total"] < 2 or cls._master["external_reference"]["total"] < 2:
+            if cls._master["tasks"]["total"] < 101 or cls._master["project_tasks"]["total"] < 101 or \
+               cls._master["time_entries"]["total"] < 101 or cls._master["external_reference"]["total"] < 101:
                 logging.info("  Creating Task")
                 task = create_task()
                 cls._master["tasks"]["total"] += 1
@@ -159,8 +159,8 @@ class PaginationTest(BaseTapTest):
                                                                                         "external_reference_id"})
                 
             # Invoices
-            if cls._master["invoices"]["total"] < 2 or cls._master["invoice_line_items"]["total"] < 2:
-                # or cls._master["invoice_messages"]["total"] < 2 or cls._master["invoice_payments"]["total"] < 2:
+            if cls._master["invoices"]["total"] < 101 or cls._master["invoice_line_items"]["total"] < 101:
+                # or cls._master["invoice_messages"]["total"] < 101 or cls._master["invoice_payments"]["total"] < 101:
                 logging.info("  Creating Invoice")
                 invoice = create_invoice(client_id=get_all('projects')[0]['client']['id'],
                                          project_id=get_all('projects')[0]['id'])
@@ -192,7 +192,7 @@ class PaginationTest(BaseTapTest):
                 # cls._master["invoice_payments"]["delete_me"].append({"id": invoice_payment['id']})
 
             # Expenses
-            if cls._master["expenses"]["total"] < 2:
+            if cls._master["expenses"]["total"] < 101:
                 logging.info("  Creating Expense")
                 expense = create_expense(get_all('projects')[0]['id'])
                 cls._master["expenses"]["total"] += 1
@@ -206,7 +206,7 @@ class PaginationTest(BaseTapTest):
                 cls._master["expenses"]["delete_me"].append({"id": expense['id']})
 
             # Invoice Item Categories
-            if cls._master["invoice_item_categories"]["total"] < 2:
+            if cls._master["invoice_item_categories"]["total"] < 101:
                 logging.info("  Creating Invoice Item Category")
                 invoice_category = create_invoice_item_category()
                 cls._master["invoice_item_categories"]["total"] += 1
@@ -214,7 +214,7 @@ class PaginationTest(BaseTapTest):
                 cls._master["invoice_item_categories"]["delete_me"].append({"id": invoice_category['id']})
 
             # Expense Categories
-            if cls._master["expense_categories"]["total"] < 2:
+            if cls._master["expense_categories"]["total"] < 101:
                 logging.info("  Creating Expense Category")
                 category = create_expense_category()
                 cls._master["expense_categories"]["total"] += 1
@@ -223,7 +223,7 @@ class PaginationTest(BaseTapTest):
                 
 
             # Estimates
-            if cls._master["estimates"]["total"] < 2: # or cls._master["estimate_messages"]["total"] < 2:
+            if cls._master["estimates"]["total"] < 101: # or cls._master["estimate_messages"]["total"] < 101:
                 logging.info("  Creating Estimate")
                 estimate = create_estimate(get_random("clients"))
                 cls._master["estimates"]["total"] += 1
@@ -246,7 +246,7 @@ class PaginationTest(BaseTapTest):
                 # cls._master["estimate_messages"]["delete_me"].append({"id": estimate_message['id']})
 
             # Estimate Item Categories
-            if cls._master["estimate_item_categories"]["total"] < 2:
+            if cls._master["estimate_item_categories"]["total"] < 101:
                 logging.info("  Creating Estimate Item Category")
                 category = create_estimate_item_category()
                 cls._master["estimate_item_categories"]["total"] += 1
@@ -349,7 +349,6 @@ class PaginationTest(BaseTapTest):
         record_count_by_stream = self.run_sync(conn_id)
 
         actual_fields_by_stream = runner.examine_target_output_for_fields()
-        synced_records = runner.get_records_from_target_output()
 
         untested_streams = [stream for stream in self._master if not self._master[stream]['test']]
         
@@ -359,28 +358,8 @@ class PaginationTest(BaseTapTest):
                 # verify that we can paginate with all fields selected
                 self.assertGreater(
                     record_count_by_stream.get(stream, -1),
-                    # self.expected_metadata().get(stream, {}).get(self.API_LIMIT, 0),
-                    1,
+                    self.expected_metadata().get(stream, {}).get(self.API_LIMIT, 0),
                     msg="The number of records is not over the stream max limit")
-
-                expected_primary_keys = self.expected_primary_keys()
-
-                # collect information for assertions from sync based on expected values
-                record_count_sync = record_count_by_stream.get(stream, 0)
-                primary_keys_list = [(message.get('data').get(expected_pk) for expected_pk in expected_primary_keys)
-                                       for message in synced_records.get(stream).get('messages')
-                                       if message.get('action') == 'upsert']
-
-
-                if record_count_sync > 1:
-                    primary_keys_list_1 = primary_keys_list[:1]
-                    primary_keys_list_2 = primary_keys_list[1:2*1]
-
-                    primary_keys_page_1 = set(primary_keys_list_1)
-                    primary_keys_page_2 = set(primary_keys_list_2)
-
-                    # Verify by private keys that data is unique for page
-                    self.assertTrue(primary_keys_page_1.isdisjoint(primary_keys_page_2))
 
                 # TODO - change following assertion to assertEqual and capture all fields
                 # Note - This ^ is nontrivial for fileds which span multiple streams
