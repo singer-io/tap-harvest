@@ -308,11 +308,11 @@ def sync_invoices():
 
 
 def sync_estimates():
-    def map_estimate_message(message):
-        message['estimate_id'] = message['id']
-        return message
-
     def for_each_estimate(estimate, time_extracted):
+        def map_estimate_message(message):
+            message['estimate_id'] = estimate['id']
+            return message
+
         # Sync estimate messages
         sync_endpoint("estimate_messages",
                       endpoint=("estimates/{}/messages".format(estimate['id'])),
