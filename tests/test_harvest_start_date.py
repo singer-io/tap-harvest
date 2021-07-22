@@ -248,15 +248,17 @@ class StartDateTest(BaseTapTest):
         logging.info("   Time Entries")
         updated_time_entry = update_time_entry(self._teardown_delete['time_entries'][0]['id'])
         
-        # create a new connection with the new start_date
-        conn_id = self.create_connection(original_properties=False)
+        # # create a new connection with the new start_date
+        # conn_id = self.create_connection(original_properties=False)
 
-        # Select all streams and all fields within streams
-        found_catalogs = menagerie.get_catalogs(conn_id)
-        our_catalogs = [catalog for catalog in found_catalogs if
-                        catalog.get('tap_stream_id') in incremental_streams.difference(
-                            untested_streams)]
-        # self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
+        # # Select all streams and all fields within streams
+        # found_catalogs = menagerie.get_catalogs(conn_id)
+        # our_catalogs = [catalog for catalog in found_catalogs if
+        #                 catalog.get('tap_stream_id') in incremental_streams.difference(
+        #                     untested_streams)]
+        # # self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
+        state = menagerie.get_state(conn_id)
+        menagerie.set_state(conn_id, state)
 
         # Run a sync job using orchestrator
         second_sync_record_count = self.run_sync(conn_id)
