@@ -24,5 +24,5 @@ class TestAccountAvailability(unittest.TestCase):
         try: 
             auth.get_account_id()
         except Exception as err:
-            expected_message = "No Harvest Account found"
+            expected_message = "No Active Harvest Account found"
             self.assertEquals(str(err), str(expected_message))
