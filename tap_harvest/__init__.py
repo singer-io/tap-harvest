@@ -309,6 +309,8 @@ def sync_invoices():
 
 def sync_estimates():
     def for_each_estimate(estimate, time_extracted):
+        # create "estimate_id" field in the child stream records
+        # and set estimate id as value
         def map_estimate_message(message):
             message['estimate_id'] = estimate['id']
             return message
