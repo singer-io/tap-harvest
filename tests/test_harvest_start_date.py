@@ -6,7 +6,6 @@ from functools import reduce
 from dateutil.parser import parse
 
 from tap_tester import menagerie, runner
-from tap_tester.scenario import SCENARIOS
 
 from harvest_api import *
 from base import BaseTapTest
@@ -291,5 +290,3 @@ class StartDateTest(BaseTapTest):
                         print("bookmarks cannot be converted to dates, "
                               "can't test start_date for {}".format(stream))
 
-
-SCENARIOS.add(StartDateTest)

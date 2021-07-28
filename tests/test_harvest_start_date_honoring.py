@@ -2,7 +2,6 @@
 Test that the start_date is respected for some streams
 """
 from tap_tester import runner
-from tap_tester.scenario import SCENARIOS
 
 from harvest_api import *
 from base import BaseTapTest
@@ -108,5 +107,3 @@ class TestStartDateHonoring(BaseTapTest):
             # check if the second highest updated invoice ids or estimate ids
             # is present in the ids collected from the synced records
             self.assertTrue(second_updated_parent_id in parent_ids_collected_from_sync)
-
-SCENARIOS.add(TestStartDateHonoring)
