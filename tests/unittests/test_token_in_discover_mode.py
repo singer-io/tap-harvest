@@ -10,7 +10,7 @@ def get_mock_http_response(status_code, content={}):
     contents = json.dumps(content)
     response = requests.Response()
     response.status_code = status_code
-    response.headers = {"X-RateLimit-Reset": 2, "X-Rate-Limit-Problem": "minute"}
+    response.headers = {}
     response._content = contents.encode()
     return response
 
