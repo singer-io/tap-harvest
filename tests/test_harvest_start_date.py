@@ -202,7 +202,6 @@ class StartDateTest(BaseTapTest):
             raise ValueError
 
         largest_bookmark = reduce(lambda a, b: a if a > b else b, bookmark_dates)
-        # self.start_date = self.local_to_utc(largest_bookmark).strftime(self.START_DATE_FORMAT)
 
         # Update Data prior to the 2nd sync
         logging.info("Updating streams prior to 2nd sync job")
