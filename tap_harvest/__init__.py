@@ -23,6 +23,7 @@ BASE_API_URL = "https://api.harvestapp.com/v2/"
 BASE_ID_URL = "https://id.getharvest.com/api/v2/"
 CONFIG = {}
 STATE = {}
+# maintaining a new state rather than updating the 'STATE' which leads to data loss as it is updated after every sync
 TAP_STATE = {}
 AUTH = {}
 
@@ -189,6 +190,7 @@ def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_
             data = response[path]
             time_extracted = utils.now()
 
+            # update state with 'start' to add bookmark if no record is returned
             utils.update_state(TAP_STATE, schema_name, start)
             for row in data:
                 if map_handler is not None:
