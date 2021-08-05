@@ -23,7 +23,8 @@ BASE_API_URL = "https://api.harvestapp.com/v2/"
 BASE_ID_URL = "https://id.getharvest.com/api/v2/"
 CONFIG = {}
 STATE = {}
-# maintaining a new state rather than updating the 'STATE' which leads to data loss as it is updated after every sync
+# maintaining a new state rather than updating the 'STATE'
+# which leads to data loss as it is updated after every sync
 TAP_STATE = {}
 AUTH = {}
 
