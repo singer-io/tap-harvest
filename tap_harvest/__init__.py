@@ -474,6 +474,9 @@ def main_impl():
     global AUTH  # pylint: disable=global-statement
     AUTH = Auth(CONFIG['client_id'], CONFIG['client_secret'], CONFIG['refresh_token'])
     STATE.update(args.state)
+    # making a copy of STATE for saving child stream bookmark
+    # when data is not available for parent stream
+    TAP_STATE.update(args.state)
     if args.discover:
         do_discover()
     else:
