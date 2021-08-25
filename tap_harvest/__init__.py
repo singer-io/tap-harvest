@@ -25,7 +25,8 @@ def do_discover(client):
 
     LOGGER.info("Discover complete")
 
-def main_impl():
+@singer.utils.handle_top_exception(LOGGER)
+def main():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
     config = args.config
     client = HarvestClient(config['client_id'],
@@ -38,14 +39,6 @@ def main_impl():
     else:
         catalog = args.catalog if args.catalog else discover(client)
         sync(client, args.config, catalog, args.state)
-
-def main():
-    try:
-        main_impl()
-    except Exception as exc:
-        LOGGER.critical(exc)
-        raise exc
-
 
 if __name__ == "__main__":
     main()

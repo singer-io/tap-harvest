@@ -28,8 +28,6 @@ class HarvestDiscovery(BaseTapTest):
         """
         streams_to_test = self.expected_streams()
 
-        # conn_id = connections.ensure_connection(self)
-
         found_catalogs = menagerie.get_catalogs(conn_id)
         # Verify stream names follow naming convention
         # streams should only have lowercase alphas and underscores
