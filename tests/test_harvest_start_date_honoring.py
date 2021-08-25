@@ -1,7 +1,7 @@
 """
 Test that the start_date is respected for some streams
 """
-from tap_tester import runner, menagerie
+from tap_tester import runner, menagerie, connections
 
 from harvest_api import *
 from base import BaseTapTest
@@ -71,17 +71,17 @@ class TestStartDateHonoring(BaseTapTest):
             if data.get("data").get("updated_at") < highest_updated_at:
                 return data.get("data").get("id")
 
-    def do_test(self, conn_id):
+    def test_run(self):
 
+        conn_id = connections.ensure_connection(self)
         # table and field selection
         expected_streams = ["invoices", "invoice_payments", "invoice_messages", "estimates", "estimate_messages"]
-        found_catalogs = menagerie.get_catalogs(conn_id)
+        found_catalogs = self.run_and_verify_check_mode(conn_id)
         test_catalogs = [catalog for catalog in found_catalogs
                                       if catalog.get('stream_name') in expected_streams]
-        self.select_all_streams_and_fields(conn_id, test_catalogs, select_all_fields=True)
-        # self.perform_and_verify_table_and_field_selection(conn_id, test_catalogs)
+        self.perform_and_verify_table_and_field_selection(conn_id, test_catalogs)
 
-        sync_record_count = self.run_sync(conn_id)
+        sync_record_count = self.run_and_verify_sync(conn_id)
 
         # Count actual rows synced
         sync_records = runner.get_records_from_target_output()
