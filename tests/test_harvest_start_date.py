@@ -6,7 +6,6 @@ from functools import reduce
 from dateutil.parser import parse
 
 from tap_tester import menagerie, runner
-from tap_tester.scenario import SCENARIOS
 
 from harvest_api import *
 from base import BaseTapTest
@@ -169,6 +168,7 @@ class StartDateTest(BaseTapTest):
         # REPLACE THE EMPTY SET BELOW WITH THOSE STREAM
         untested_streams = self.child_streams().union({
             "users",
+            "user_projects",
             "estimate_messages",
             "invoice_messages",
             "invoice_payments"
@@ -178,7 +178,7 @@ class StartDateTest(BaseTapTest):
                         catalog.get('tap_stream_id') in incremental_streams.difference(
                             untested_streams)]
 
-        # self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
+        self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
         
         # Run a sync job using orchestrator
         first_sync_record_count = self.run_sync(conn_id)
@@ -256,7 +256,7 @@ class StartDateTest(BaseTapTest):
         our_catalogs = [catalog for catalog in found_catalogs if
                         catalog.get('tap_stream_id') in incremental_streams.difference(
                             untested_streams)]
-        # self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
+        self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
 
         # Run a sync job using orchestrator
         second_sync_record_count = self.run_sync(conn_id)
@@ -295,6 +295,3 @@ class StartDateTest(BaseTapTest):
                     except (OverflowError, ValueError, TypeError):
                         print("bookmarks cannot be converted to dates, "
                               "can't test start_date for {}".format(stream))
-
-
-SCENARIOS.add(StartDateTest)

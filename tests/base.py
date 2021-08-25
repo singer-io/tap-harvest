@@ -191,6 +191,19 @@ class BaseTapTest(TapSpec, unittest.TestCase):
         return min_bookmarks
 
     @staticmethod
+    def get_selected_fields_from_metadata(metadata):
+        selected_fields = set()
+        for field in metadata:
+            is_field_metadata = len(field['breadcrumb']) > 1
+            inclusion_automatic_or_selected = (
+                field['metadata']['selected'] is True or \
+                field['metadata']['inclusion'] == 'automatic'
+            )
+            if is_field_metadata and inclusion_automatic_or_selected:
+                selected_fields.add(field['breadcrumb'][1])
+        return selected_fields
+
+    @staticmethod
     def select_all_streams_and_fields(conn_id, catalogs, select_all_fields: bool = True):
         """Select all streams and all fields within streams"""
         for catalog in catalogs:
