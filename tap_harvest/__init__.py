@@ -23,7 +23,7 @@ def do_discover(client):
     # dump catalog
     write_catalog(catalog)
 
-    LOGGER.info("Discover complete")
+    LOGGER.info("Discover completed")
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
