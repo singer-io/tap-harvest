@@ -57,7 +57,7 @@ class BaseStream:
     def __init__(self, client: HarvestClient):
         self.client = client
 
-    def sync_endpoint(self, schema, config, state, tap_state):
+    def sync_endpoint(self, schema, mdata, config, state, tap_state):
 
         singer.write_schema(self.tap_stream_id,
                             schema,
@@ -69,7 +69,6 @@ class BaseStream:
         start_dt = pendulum.parse(start)
         updated_since = start_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        # tap_state = state.copy()
         with Transformer() as transformer:
             page = 1
             while page is not None:
@@ -94,7 +93,7 @@ class BaseStream:
 
                     remove_empty_date_times(row, schema)
 
-                    item = transformer.transform(row, schema)
+                    item = transformer.transform(row, schema, mdata)
 
                     append_times_to_dates(item, self.date_fields)
 
@@ -112,8 +111,8 @@ class BaseStream:
 
         singer.write_state(tap_state)
 
-    def sync(self, schema, config, state, tap_state):
-        self.sync_endpoint(schema ,config, state, tap_state)
+    def sync(self, schema, mdata, config, state, tap_state):
+        self.sync_endpoint(schema, mdata, config, state, tap_state)
 
 class Clients(BaseStream):
     tap_stream_id = 'clients'
@@ -147,7 +146,7 @@ class UserRoles(BaseStream):
 class Roles(BaseStream):
     tap_stream_id = 'roles'
 
-    def sync(self, schema, config, state, tap_state):
+    def sync(self, schema, mdata, config, state, tap_state):
         def for_each_role(role, time_extracted):
 
             if schema.get('user_roles'):
@@ -156,7 +155,7 @@ class Roles(BaseStream):
                 user_roles_obj.sync_user_roles(schema.get('user_roles'), role, time_extracted)
 
         self.for_each_handler = for_each_role
-        self.sync_endpoint(schema.get('roles'), config, state, tap_state)
+        self.sync_endpoint(schema.get('roles'), mdata.get('roles'), config, state, tap_state)
 
 class Projects(BaseStream):
     tap_stream_id = 'projects'
@@ -208,7 +207,7 @@ class UserProjects(BaseStream):
 class Users(BaseStream):
     tap_stream_id = 'users'
 
-    def sync(self, schema, config, state, tap_state):
+    def sync(self, schema, mdata, config, state, tap_state):
         def for_each_user(user, time_extracted): #pylint: disable=unused-argument
             def map_user_projects(project_assignment):
                 project_assignment['user'] = user
@@ -229,10 +228,14 @@ class Users(BaseStream):
                 user_projects_obj.map_handler = map_user_projects
                 user_projects_obj.for_each_handler = for_each_user_project
                 user_projects_obj.endpoint = "users/{}/project_assignments".format(user['id'])
-                user_projects_obj.sync(schema.get('user_projects'), config, state, tap_state)
+                user_projects_obj.sync(schema.get('user_projects'),
+                                                  mdata.get('user_projects'),
+                                                  config,
+                                                  state,
+                                                  tap_state)
 
         self.for_each_handler = for_each_user
-        self.sync_endpoint(schema.get('users'), config, state, tap_state)
+        self.sync_endpoint(schema.get('users'), mdata.get('users'), config, state, tap_state)
 
 class ExpenseCategories(BaseStream):
     tap_stream_id = 'expense_categories'
@@ -241,7 +244,7 @@ class Expenses(BaseStream):
     tap_stream_id = 'expenses'
     object_to_id =['client', 'project', 'expense_category', 'user', 'user_assignment', 'invoice']
 
-    def sync(self, schema, config, state, tap_state):
+    def sync(self, schema, mdata, config, state, tap_state):
         def map_expense(expense):
             if expense['receipt'] is None:
                 expense['receipt_url'] = None
@@ -256,7 +259,7 @@ class Expenses(BaseStream):
             return expense
 
         self.map_handler = map_expense
-        self.sync_endpoint(schema, config, state, tap_state)
+        self.sync_endpoint(schema, mdata, config, state, tap_state)
 
 class InvoiceItemCategories(BaseStream):
     tap_stream_id = 'invoice_item_categories'
@@ -278,7 +281,7 @@ class InvoiceLineItems(BaseStream):
     replication_method = 'FULL_TABLE'
     valid_replication_keys = []
 
-    def sync_line_items(self, line_items_schema, invoice, time_extracted):
+    def sync_line_items(self, line_items_schema, line_items_mdata, invoice, time_extracted):
         singer.write_schema('invoice_line_items',
                             line_items_schema,
                             self.key_properties)
@@ -290,7 +293,7 @@ class InvoiceLineItems(BaseStream):
                     line_item['project_id'] = line_item['project']['id']
                 else:
                     line_item['project_id'] = None
-                line_item = transformer.transform(line_item, line_items_schema)
+                line_item = transformer.transform(line_item, line_items_schema, line_items_mdata)
 
                 singer.write_record("invoice_line_items",
                                     line_item,
@@ -300,7 +303,7 @@ class Invoices(BaseStream):
     tap_stream_id = 'invoices'
     object_to_id = ['client', 'estimate', 'retainer', 'creator']
 
-    def sync(self, schema, config, state, tap_state):
+    def sync(self, schema, mdata, config, state, tap_state):
         def for_each_invoice(invoice, time_extracted):
             def map_invoice_message(message):
                 message['invoice_id'] = invoice['id']
@@ -317,24 +320,33 @@ class Invoices(BaseStream):
                 invoice_message_obj = InvoiceMessages(self.client)
                 invoice_message_obj.map_handler = map_invoice_message
                 invoice_message_obj.endpoint = "invoices/{}/messages".format(invoice['id'])
-                invoice_message_obj.sync(schema.get('invoice_messages'), config, state, tap_state)
+                invoice_message_obj.sync(schema.get('invoice_messages'),
+                                         mdata.get('invoice_messages'),
+                                         config,
+                                         state,
+                                         tap_state)
 
             if schema.get('invoice_payments'):
                 # Sync invoice payments
                 invoice_payment_obj = InvoicePayments(self.client)
                 invoice_payment_obj.map_handler = map_invoice_payment
                 invoice_payment_obj.endpoint = "invoices/{}/payments".format(invoice['id'])
-                invoice_payment_obj.sync(schema.get('invoice_payments'), config, state, tap_state)
+                invoice_payment_obj.sync(schema.get('invoice_payments'),
+                                         mdata.get('invoice_payments'),
+                                         config,
+                                         state,
+                                         tap_state)
 
             if schema.get('invoice_line_items'):
                 # Extract all invoice_line_items
                 invoice_line_items_obj = InvoiceLineItems(self.client)
                 invoice_line_items_obj.sync_line_items(schema.get('invoice_line_items'),
+                                                       mdata.get('invoice_line_items'),
                                                        invoice,
                                                        time_extracted)
 
         self.for_each_handler = for_each_invoice
-        self.sync_endpoint(schema.get('invoices'), config, state, tap_state)
+        self.sync_endpoint(schema.get('invoices'), mdata.get('invoices'), config, state, tap_state)
 
 class EstimateItemCategories(BaseStream):
     tap_stream_id = 'estimate_item_categories'
@@ -350,7 +362,7 @@ class EstimateLineItems(BaseStream):
     replication_method = 'FULL_TABLE'
     valid_replication_keys = []
 
-    def sync_line_items(self, line_items_schema, estimate, time_extracted):
+    def sync_line_items(self, line_items_schema, line_items_mdata, estimate, time_extracted):
 
         singer.write_schema('estimate_line_items',
                             line_items_schema,
@@ -359,7 +371,7 @@ class EstimateLineItems(BaseStream):
         with Transformer() as transformer:
             for line_item in estimate['line_items']:
                 line_item['estimate_id'] = estimate['id']
-                line_item = transformer.transform(line_item, line_items_schema)
+                line_item = transformer.transform(line_item, line_items_schema, line_items_mdata)
 
                 singer.write_record("estimate_line_items",
                                     line_item,
@@ -370,7 +382,7 @@ class Estimates(BaseStream):
     date_fields = ["issue_date"]
     object_to_id = ['client', 'creator']
 
-    def sync(self, schema, config, state, tap_state):
+    def sync(self, schema, mdata, config, state, tap_state):
         def for_each_estimate(estimate, time_extracted):
             # create "estimate_id" field in the child stream records
             # and set estimate id as value
@@ -382,23 +394,32 @@ class Estimates(BaseStream):
                 estimate_message_obj = EstimateMessages(self.client)
                 estimate_message_obj.map_handler = map_estimate_message
                 estimate_message_obj.endpoint = "estimates/{}/messages".format(estimate['id'])
-                estimate_message_obj.sync(schema.get('estimate_messages'), config, state, tap_state)
+                estimate_message_obj.sync(schema.get('estimate_messages'),
+                                          mdata.get('estimate_messages'),
+                                          config,
+                                          state,
+                                          tap_state)
 
             if schema.get('estimate_line_items'):
                 estimate_line_items_obj = EstimateLineItems(self.client)
                 estimate_line_items_obj.sync_line_items(schema.get('estimate_line_items'),
+                                                        mdata.get('estimate_line_items'),
                                                         estimate,
                                                         time_extracted)
 
         self.for_each_handler=for_each_estimate
-        self.sync_endpoint(schema.get('estimates'), config, state, tap_state)
+        self.sync_endpoint(schema.get('estimates'),
+                           mdata.get('estimates'),
+                           config,
+                           state,
+                           tap_state)
 
 class ExternalReferences(BaseStream):
     tap_stream_id = 'external_reference'
     replication_method = 'FULL_TABLE'
     valid_replication_keys = []
 
-    def sync_references(self, external_reference_schema, time_entry, time_extracted):
+    def sync_references(self, external_reference_schema, ref_mdata, time_entry, time_extracted):
         singer.write_schema('external_reference',
                             external_reference_schema,
                             self.key_properties)
@@ -406,7 +427,8 @@ class ExternalReferences(BaseStream):
         with Transformer() as transformer:
             external_reference = time_entry['external_reference']
             external_reference = transformer.transform(external_reference,
-                                                        external_reference_schema)
+                                                       external_reference_schema,
+                                                       ref_mdata)
 
             singer.write_record("external_reference",
                                 external_reference,
@@ -440,7 +462,7 @@ class TimeEntries(BaseStream):
     object_to_id = ['user', 'user_assignment', 'client', 'project', 'task',
                     'task_assignment', 'external_reference', 'invoice']
 
-    def sync(self, schema, config, state, tap_state):
+    def sync(self, schema, mdata, config, state, tap_state):
         def for_each_time_entry(time_entry, time_extracted):
             # Extract external_reference
 
@@ -449,17 +471,22 @@ class TimeEntries(BaseStream):
                 if schema.get('external_reference'):
                     external_reference_obj = ExternalReferences(self.client)
                     external_reference_obj.sync_references(schema.get('external_reference'),
+                                                           mdata.get('external_reference'),
                                                            time_entry,
                                                            time_extracted)
 
                 if schema.get('time_entry_external_reference'):
                     time_ext_ref_obj = TimeEntryExternalReferences(self.client)
                     time_ext_ref_obj.sync_references(schema.get('time_entry_external_reference'),
-                                                          time_entry,
-                                                          time_extracted)
+                                                     time_entry,
+                                                     time_extracted)
 
         self.for_each_handler = for_each_time_entry
-        self.sync_endpoint(schema.get('time_entries'), config, state, tap_state)
+        self.sync_endpoint(schema.get('time_entries'),
+                           mdata.get('time_entries'),
+                           config,
+                           state,
+                           tap_state)
 
 
 STREAMS = {

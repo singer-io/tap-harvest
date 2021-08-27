@@ -1,4 +1,6 @@
 import singer
+from singer import metadata
+
 from tap_harvest.streams import STREAMS
 
 LOGGER = singer.get_logger()
@@ -55,6 +57,7 @@ def sync(client, config, catalog, state):
 
         tap_stream_id = stream.tap_stream_id
         stream_schema = stream.schema.to_dict()
+        stream_mdata = metadata.to_map(stream.metadata)
 
         # if it is a "sub_stream", it will be sync'd by its parent
         if tap_stream_id in SUB_STREAMS_LIST:
@@ -64,13 +67,17 @@ def sync(client, config, catalog, state):
         sub_streams_ids = SUB_STREAMS.get(tap_stream_id, None)
 
         if not sub_streams_ids:
-            stream_obj.sync(stream_schema, config, state, tap_state)
+            stream_obj.sync(stream_schema, stream_mdata, config, state, tap_state)
         else:
             stream_schemas = {tap_stream_id: stream_schema}
+            stream_mdatas = {tap_stream_id: stream_mdata}
 
             for sub_stream in sub_streams_ids:
                 if sub_stream in selected_streams_ids:
                     sub_stream_schema = get_stream_from_catalog(sub_stream, selected_streams)
                     stream_schemas[sub_stream] = sub_stream_schema.schema.to_dict()
+                    stream_mdatas[sub_stream] = metadata.to_map(sub_stream_schema.metadata)
 
-            stream_obj.sync(stream_schemas, config, state, tap_state)
+            stream_obj.sync(stream_schemas, stream_mdatas, config, state, tap_state)
+
+    LOGGER.info("Sync completed")
