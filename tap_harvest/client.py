@@ -10,6 +10,83 @@ LOGGER = singer.get_logger()
 BASE_ID_URL = "https://id.getharvest.com/api/v2/"
 BASE_API_URL = "https://api.harvestapp.com/v2/"
 
+class HarvestError(Exception):
+    pass
+
+class Server5xxError(Exception):
+    pass
+
+class HarvestBadRequestError(HarvestError):
+    pass
+
+class HarvestUnauthorizedError(HarvestError):
+    pass
+
+class HarvestNotFoundError(HarvestError):
+    pass
+
+class HarvestForbiddenError(HarvestError):
+    pass
+
+class HarvestUnprocessableEntityError(HarvestError):
+    pass
+
+class HarvestRateLimitExceeededError(HarvestError):
+    pass
+
+class HarvestInternalServiceError(Server5xxError):
+    pass
+
+ERROR_CODE_EXCEPTION_MAPPING = {
+    400: {
+        "raise_exception": HarvestBadRequestError,
+        "message": "The request is missing or has a bad parameter."
+    },
+    401: {
+        "raise_exception": HarvestUnauthorizedError,
+        "message": "Invalid authorization credentials."
+    },
+    403: {
+        "raise_exception": HarvestForbiddenError,
+        "message": "User does not have permission to access the resource or related feature is disabled."
+    },
+    404: {
+        "raise_exception": HarvestNotFoundError,
+        "message": "The resource you have specified cannot be found. Either the accounts provided are invalid or you do not have access to the Ad Account."
+    },
+    422: {
+        "raise_exception": HarvestUnprocessableEntityError,
+        "message": "The request was not able to process right now."
+    },
+    429: {
+        "raise_exception": HarvestRateLimitExceeededError,
+        "message": "API rate limit exceeded."
+    },
+    500: {
+        "raise_exception": HarvestInternalServiceError,
+        "message": "An error has occurred at Harvest's end."
+    }
+}
+
+def raise_for_error(response):
+    # Forming a custom response message for raising exception
+
+    try:
+        response_json = response.json()
+    except Exception:
+        response_json = {}
+
+    error_code = response.status_code
+    error_message = response_json.get(
+        "message", response_json.get(
+            "error_description", ERROR_CODE_EXCEPTION_MAPPING.get(
+                error_code, {}).get("message", "An Unknown Error occurred, please try after some time.")))
+    message = "HTTP-error-code: {}, Error: {}".format(
+        error_code, error_message)
+
+    ex = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", HarvestError)
+    raise ex(message) from None
+
 class HarvestClient:#pylint: disable=too-many-instance-attributes
     def __init__(self, client_id, client_secret, refresh_token, user_agent):
         self._client_id = client_id
@@ -22,12 +99,11 @@ class HarvestClient:#pylint: disable=too-many-instance-attributes
 
     @backoff.on_exception(
         backoff.expo,
-        requests.exceptions.RequestException,
+        (HarvestRateLimitExceeededError, Server5xxError),
         max_tries=5,
-        giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
         factor=2)
     def _make_refresh_token_request(self):
-        return requests.request('POST',
+        resp = requests.request('POST',
                                 url=BASE_ID_URL + 'oauth2/token',
                                 data={
                                     'client_id': self._client_id,
@@ -36,6 +112,9 @@ class HarvestClient:#pylint: disable=too-many-instance-attributes
                                     'grant_type': 'refresh_token',
                                 },
                                 headers={"User-Agent": self._user_agent})
+        if resp.status_code not in [200, 201]:
+            raise_for_error(resp)
+        return resp
 
     def _refresh_access_token(self):
         LOGGER.info("Refreshing access token")
@@ -78,9 +157,8 @@ class HarvestClient:#pylint: disable=too-many-instance-attributes
 
     @backoff.on_exception(
         backoff.expo,
-        requests.exceptions.RequestException,
+        (HarvestRateLimitExceeededError, Server5xxError),
         max_tries=5,
-        giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
         factor=2)
     @utils.ratelimit(100, 15)
     def request(self, url, params=None):
@@ -93,5 +171,8 @@ class HarvestClient:#pylint: disable=too-many-instance-attributes
         req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
         LOGGER.info("GET {}".format(req.url))
         resp = self.session.send(req)
-        resp.raise_for_status()
+
+        if resp.status_code != 200:
+            raise_for_error(resp)
+
         return resp.json()
