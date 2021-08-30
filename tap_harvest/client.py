@@ -48,11 +48,14 @@ ERROR_CODE_EXCEPTION_MAPPING = {
     },
     403: {
         "raise_exception": HarvestForbiddenError,
-        "message": "User does not have permission to access the resource or related feature is disabled."
+        "message": "User does not have permission to access the resource or "\
+                   "related feature is disabled."
     },
     404: {
         "raise_exception": HarvestNotFoundError,
-        "message": "The resource you have specified cannot be found. Either the accounts provided are invalid or you do not have access to the Ad Account."
+        "message": "The resource you have specified cannot be found. "\
+                   "Either the accounts provided are invalid or "\
+                   "you do not have access to the Ad Account."
     },
     422: {
         "raise_exception": HarvestUnprocessableEntityError,
@@ -80,7 +83,8 @@ def raise_for_error(response):
     error_message = response_json.get(
         "message", response_json.get(
             "error_description", ERROR_CODE_EXCEPTION_MAPPING.get(
-                error_code, {}).get("message", "An Unknown Error occurred, please try after some time.")))
+                error_code, {}).get(
+                    "message", "An Unknown Error occurred, please try after some time.")))
     message = "HTTP-error-code: {}, Error: {}".format(
         error_code, error_message)
 
