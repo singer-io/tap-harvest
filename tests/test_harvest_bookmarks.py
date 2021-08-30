@@ -10,7 +10,6 @@ from dateutil.parser import parse
 import random
 
 from tap_tester import menagerie, runner
-from tap_tester.scenario import SCENARIOS
 
 from harvest_api import *
 from base import BaseTapTest
@@ -659,5 +658,3 @@ class BookmarkTest(BaseTapTest):
                     # Since the api sends data in created_at desc order we made the updated_at not in order to test
                     # if we send the correct value even when the latest record doesn't have the latest updatye_at value
                     self.assertEqual(final_bookmark, final_state_value)
-
-SCENARIOS.add(BookmarkTest)

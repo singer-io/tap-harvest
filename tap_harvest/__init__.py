@@ -23,6 +23,9 @@ BASE_API_URL = "https://api.harvestapp.com/v2/"
 BASE_ID_URL = "https://id.getharvest.com/api/v2/"
 CONFIG = {}
 STATE = {}
+# maintaining a new state rather than updating the 'STATE'
+# which leads to data loss as it is updated after every sync
+TAP_STATE = {}
 AUTH = {}
 
 
@@ -190,6 +193,8 @@ def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_
             data = response[path]
             time_extracted = utils.now()
 
+            # update state with 'start' to add bookmark if no record is returned
+            utils.update_state(TAP_STATE, schema_name, start)
             for row in data:
                 if map_handler is not None:
                     row = map_handler(row)
@@ -216,10 +221,10 @@ def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_
                     if for_each_handler is not None:
                         for_each_handler(row, time_extracted=time_extracted)
 
-                    utils.update_state(STATE, schema_name, item[bookmark_property])
+                    utils.update_state(TAP_STATE, schema_name, item[bookmark_property])
             page = response['next_page']
 
-    singer.write_state(STATE)
+    singer.write_state(TAP_STATE)
 
 
 def sync_time_entries():
@@ -308,11 +313,13 @@ def sync_invoices():
 
 
 def sync_estimates():
-    def map_estimate_message(message):
-        message['estimate_id'] = message['id']
-        return message
-
     def for_each_estimate(estimate, time_extracted):
+        # create "estimate_id" field in the child stream records
+        # and set estimate id as value
+        def map_estimate_message(message):
+            message['estimate_id'] = estimate['id']
+            return message
+
         # Sync estimate messages
         sync_endpoint("estimate_messages",
                       endpoint=("estimates/{}/messages".format(estimate['id'])),
@@ -469,6 +476,9 @@ def main_impl():
     global AUTH  # pylint: disable=global-statement
     AUTH = Auth(CONFIG['client_id'], CONFIG['client_secret'], CONFIG['refresh_token'])
     STATE.update(args.state)
+    # making a copy of STATE for saving child stream bookmark
+    # when data is not available for parent stream
+    TAP_STATE.update(args.state)
     if args.discover:
         do_discover()
     else:

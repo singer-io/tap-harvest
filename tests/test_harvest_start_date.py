@@ -6,7 +6,6 @@ from functools import reduce
 from dateutil.parser import parse
 
 from tap_tester import menagerie, runner
-from tap_tester.scenario import SCENARIOS
 
 from harvest_api import *
 from base import BaseTapTest
@@ -203,7 +202,6 @@ class StartDateTest(BaseTapTest):
             raise ValueError
 
         largest_bookmark = reduce(lambda a, b: a if a > b else b, bookmark_dates)
-        self.start_date = self.local_to_utc(largest_bookmark).strftime(self.START_DATE_FORMAT)
 
         # Update Data prior to the 2nd sync
         logging.info("Updating streams prior to 2nd sync job")
@@ -248,15 +246,10 @@ class StartDateTest(BaseTapTest):
         logging.info("   Time Entries")
         updated_time_entry = update_time_entry(self._teardown_delete['time_entries'][0]['id'])
         
-        # create a new connection with the new start_date
-        conn_id = self.create_connection(original_properties=False)
-
-        # Select all streams and all fields within streams
-        found_catalogs = menagerie.get_catalogs(conn_id)
-        our_catalogs = [catalog for catalog in found_catalogs if
-                        catalog.get('tap_stream_id') in incremental_streams.difference(
-                            untested_streams)]
-        # self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
+        # get state
+        state = menagerie.get_state(conn_id)
+        # set state for next sync
+        menagerie.set_state(conn_id, state)
 
         # Run a sync job using orchestrator
         second_sync_record_count = self.run_sync(conn_id)
@@ -272,7 +265,7 @@ class StartDateTest(BaseTapTest):
             with self.subTest(stream=stream):
 
                 # verify that each stream has less records than the first connection sync
-                self.assertGreater(
+                self.assertGreaterEqual(
                     first_sync_record_count.get(stream, 0),
                     second_sync_record_count.get(stream, 0),
                     msg="second had more records, start_date usage not verified")
@@ -290,11 +283,9 @@ class StartDateTest(BaseTapTest):
                         # verify that the minimum bookmark sent to the target for the second sync
                         # is greater than or equal to the start date
                         self.assertGreaterEqual(target_value,
-                                                self.local_to_utc(parse(self.start_date)))
+                                                self.local_to_utc(parse(state[stream])))
 
                     except (OverflowError, ValueError, TypeError):
                         print("bookmarks cannot be converted to dates, "
                               "can't test start_date for {}".format(stream))
 
-
-SCENARIOS.add(StartDateTest)

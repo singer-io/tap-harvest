@@ -7,7 +7,6 @@ import random
 from tap_tester import menagerie, runner
 
 from harvest_api import *
-from tap_tester.scenario import SCENARIOS
 from base import BaseTapTest
 
 
@@ -381,5 +380,3 @@ class PaginationTest(BaseTapTest):
                         msg="The fields sent to the target don't include all automatic fields"
                     )
 
-
-SCENARIOS.add(PaginationTest)
