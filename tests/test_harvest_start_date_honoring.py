@@ -1,13 +1,21 @@
 """
 Test that the start_date is respected for some streams
 """
+<<<<<<< HEAD
 from tap_tester import runner, menagerie
+=======
+from tap_tester import runner
+>>>>>>> 40512507556ab639329cafdb88453af76a7c2c92
 
 from harvest_api import *
 from base import BaseTapTest
 
 class TestStartDateHonoring(BaseTapTest):
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 40512507556ab639329cafdb88453af76a7c2c92
     @classmethod
     def setUpClass(cls):
         logging.info("Start Setup")
@@ -101,7 +109,6 @@ class TestStartDateHonoring(BaseTapTest):
 
             # getting invoice ids of all the invoice_payments, invoice_messages
             # or estimate ids of all estimate_messages
-
             parent_ids_collected_from_sync = [message.get("data").get(parent_stream_pk) for message in sync_records.get(stream).get("messages")]
 
             record_count_sync = sync_record_count.get(stream, 0)

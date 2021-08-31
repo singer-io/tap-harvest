@@ -203,7 +203,6 @@ class StartDateTest(BaseTapTest):
             raise ValueError
 
         largest_bookmark = reduce(lambda a, b: a if a > b else b, bookmark_dates)
-        self.start_date = self.local_to_utc(largest_bookmark).strftime(self.START_DATE_FORMAT)
 
         # Update Data prior to the 2nd sync
         logging.info("Updating streams prior to 2nd sync job")
@@ -272,7 +271,7 @@ class StartDateTest(BaseTapTest):
             with self.subTest(stream=stream):
 
                 # verify that each stream has less records than the first connection sync
-                self.assertGreater(
+                self.assertGreaterEqual(
                     first_sync_record_count.get(stream, 0),
                     second_sync_record_count.get(stream, 0),
                     msg="second had more records, start_date usage not verified")
@@ -290,7 +289,7 @@ class StartDateTest(BaseTapTest):
                         # verify that the minimum bookmark sent to the target for the second sync
                         # is greater than or equal to the start date
                         self.assertGreaterEqual(target_value,
-                                                self.local_to_utc(parse(self.start_date)))
+                                                self.local_to_utc(parse(state[stream])))
 
                     except (OverflowError, ValueError, TypeError):
                         print("bookmarks cannot be converted to dates, "
