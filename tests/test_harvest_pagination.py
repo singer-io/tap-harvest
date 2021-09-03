@@ -379,7 +379,3 @@ class PaginationTest(BaseTapTest):
                             self.expected_foreign_keys().get(stream, set())),
                         msg="The fields sent to the target don't include all automatic fields"
                     )
-<<<<<<< HEAD
-=======
-
->>>>>>> 40512507556ab639329cafdb88453af76a7c2c92

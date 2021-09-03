@@ -1,21 +1,13 @@
 """
 Test that the start_date is respected for some streams
 """
-<<<<<<< HEAD
 from tap_tester import runner, menagerie
-=======
-from tap_tester import runner
->>>>>>> 40512507556ab639329cafdb88453af76a7c2c92
 
 from harvest_api import *
 from base import BaseTapTest
 
 class TestStartDateHonoring(BaseTapTest):
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 40512507556ab639329cafdb88453af76a7c2c92
     @classmethod
     def setUpClass(cls):
         logging.info("Start Setup")
