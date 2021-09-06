@@ -1,5 +1,6 @@
 import singer
 import pendulum
+import copy
 from singer import Transformer, utils
 
 from tap_harvest.client import HarvestClient
@@ -93,7 +94,9 @@ class BaseStream:
 
                     remove_empty_date_times(row, schema)
 
-                    item = transformer.transform(row, schema, mdata)
+                    # Transfrom is changing list order of 'types' order so passing copy of schema
+                    schema_copy = copy.deepcopy(schema)
+                    item = transformer.transform(row, schema_copy, mdata)
 
                     append_times_to_dates(item, self.date_fields)
 
@@ -293,7 +296,8 @@ class InvoiceLineItems(BaseStream):
                     line_item['project_id'] = line_item['project']['id']
                 else:
                     line_item['project_id'] = None
-                line_item = transformer.transform(line_item, line_items_schema, line_items_mdata)
+                schema_copy = copy.deepcopy(line_items_schema)
+                line_item = transformer.transform(line_item, schema_copy, line_items_mdata)
 
                 singer.write_record("invoice_line_items",
                                     line_item,
@@ -371,7 +375,8 @@ class EstimateLineItems(BaseStream):
         with Transformer() as transformer:
             for line_item in estimate['line_items']:
                 line_item['estimate_id'] = estimate['id']
-                line_item = transformer.transform(line_item, line_items_schema, line_items_mdata)
+                schema_copy = copy.deepcopy(line_items_schema)
+                line_item = transformer.transform(line_item, schema_copy, line_items_mdata)
 
                 singer.write_record("estimate_line_items",
                                     line_item,
@@ -426,8 +431,9 @@ class ExternalReferences(BaseStream):
 
         with Transformer() as transformer:
             external_reference = time_entry['external_reference']
+            schema_copy = copy.deepcopy(external_reference_schema)
             external_reference = transformer.transform(external_reference,
-                                                       external_reference_schema,
+                                                       schema_copy,
                                                        ref_mdata)
 
             singer.write_record("external_reference",

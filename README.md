@@ -54,13 +54,19 @@ API V2 Author: Steven Hernandez (steven.hernandez@fostermade.co)
         "users": "2000-01-01T00:00:00Z"
     }
     ```
-
-4. Run the application
-
-    `tap-harvest` can be run with:
+4. Run the Tap in Discovery Mode
 
     ```bash
-    tap-harvest --config config.json [--state state.json]
+    tap-harvest --config config.json --discover > catalog.json
+    ```
+
+    See the Singer docs on discovery mode
+   [here](https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#discovery-mode).
+
+5. Run the Tap in Sync Mode
+
+    ```bash
+    tap-harvest --config config.json --catalog catalog.json [--state state.json]
     ```
 
 ---
