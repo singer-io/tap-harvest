@@ -89,6 +89,12 @@ class HarvestDiscovery(BaseTapTest):
                     expected_primary_keys, actual_primary_keys,
                 )
 
+                # verify that if there is a replication key then it's INCREMENTAL otherwise FULL TABLE stream
+                if actual_replication_keys:
+                    self.assertEqual(self.INCREMENTAL, actual_replication_method)
+                else:
+                    self.assertEqual(self.FULL, actual_replication_method)
+
                 # verify the replication method matches our expectations
                 self.assertEqual(
                     expected_replication_method, actual_replication_method
