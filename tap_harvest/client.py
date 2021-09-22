@@ -173,7 +173,7 @@ class HarvestClient:#pylint: disable=too-many-instance-attributes
                 "Authorization": "Bearer " + access_token,
                 "User-Agent": self._user_agent}
         req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
-        LOGGER.info("GET {}".format(req.url))
+        LOGGER.info("GET %s", req.url)
         resp = self.session.send(req)
 
         if resp.status_code != 200:

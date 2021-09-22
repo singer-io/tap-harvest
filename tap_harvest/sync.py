@@ -59,7 +59,7 @@ def sync(client, config, catalog, state):
         stream_schema = stream.schema.to_dict()
         stream_mdata = metadata.to_map(stream.metadata)
 
-        # if it is a "sub_stream", it will be sync'd by its parent
+        # if it is a "sub_stream", it will be synced by its parent
         if tap_stream_id in SUB_STREAMS_LIST:
             continue
 

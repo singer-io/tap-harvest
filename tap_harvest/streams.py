@@ -94,7 +94,8 @@ class BaseStream:
 
                     remove_empty_date_times(row, schema)
 
-                    # Transfrom is changing list order of 'types' order so passing copy of schema
+                    # Transform is changing order of elements inside list of 'types
+                    # so passing copy of schema
                     schema_copy = copy.deepcopy(schema)
                     item = transformer.transform(row, schema_copy, mdata)
 
@@ -232,10 +233,10 @@ class Users(BaseStream):
                 user_projects_obj.for_each_handler = for_each_user_project
                 user_projects_obj.endpoint = "users/{}/project_assignments".format(user['id'])
                 user_projects_obj.sync(schema.get('user_projects'),
-                                                  mdata.get('user_projects'),
-                                                  config,
-                                                  state,
-                                                  tap_state)
+                                       mdata.get('user_projects'),
+                                       config,
+                                       state,
+                                       tap_state)
 
         self.for_each_handler = for_each_user
         self.sync_endpoint(schema.get('users'), mdata.get('users'), config, state, tap_state)

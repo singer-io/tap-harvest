@@ -12,6 +12,7 @@ jobs:
             source ~/.virtualenvs/tap-harvest/bin/activate
             pip install .
             pip install pylint
+            pip install nose
       - run:
           name: 'Pylint'
           command: |
@@ -21,7 +22,6 @@ jobs:
           name: 'Unit Tests'
           command: |
             source ~/.virtualenvs/tap-harvest/bin/activate
-            pip install nose
             nosetests tests/unittests/
       - add_ssh_keys
       - run:
