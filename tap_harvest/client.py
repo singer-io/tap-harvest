@@ -85,8 +85,7 @@ def raise_for_error(response):
             "error_description", ERROR_CODE_EXCEPTION_MAPPING.get(
                 error_code, {}).get(
                     "message", "An Unknown Error occurred, please try after some time.")))
-    message = "HTTP-error-code: {}, Error: {}".format(
-        error_code, error_message)
+    message = f"HTTP-error-code: {error_code}, Error: {error_message}"
 
     ex = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", HarvestError)
     raise ex(message) from None

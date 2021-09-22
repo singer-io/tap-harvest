@@ -231,7 +231,7 @@ class Users(BaseStream):
                 user_projects_obj = UserProjects(self.client)
                 user_projects_obj.map_handler = map_user_projects
                 user_projects_obj.for_each_handler = for_each_user_project
-                user_projects_obj.endpoint = "users/{}/project_assignments".format(user['id'])
+                user_projects_obj.endpoint = f"users/{user['id']}/project_assignments"
                 user_projects_obj.sync(schema.get('user_projects'),
                                        mdata.get('user_projects'),
                                        config,
@@ -324,7 +324,7 @@ class Invoices(BaseStream):
                 # Sync invoice messages
                 invoice_message_obj = InvoiceMessages(self.client)
                 invoice_message_obj.map_handler = map_invoice_message
-                invoice_message_obj.endpoint = "invoices/{}/messages".format(invoice['id'])
+                invoice_message_obj.endpoint = f"invoices/{invoice['id']}/messages"
                 invoice_message_obj.sync(schema.get('invoice_messages'),
                                          mdata.get('invoice_messages'),
                                          config,
@@ -335,7 +335,7 @@ class Invoices(BaseStream):
                 # Sync invoice payments
                 invoice_payment_obj = InvoicePayments(self.client)
                 invoice_payment_obj.map_handler = map_invoice_payment
-                invoice_payment_obj.endpoint = "invoices/{}/payments".format(invoice['id'])
+                invoice_payment_obj.endpoint = f"invoices/{invoice['id']}/payments"
                 invoice_payment_obj.sync(schema.get('invoice_payments'),
                                          mdata.get('invoice_payments'),
                                          config,
@@ -399,7 +399,7 @@ class Estimates(BaseStream):
             if schema.get('estimate_messages'):
                 estimate_message_obj = EstimateMessages(self.client)
                 estimate_message_obj.map_handler = map_estimate_message
-                estimate_message_obj.endpoint = "estimates/{}/messages".format(estimate['id'])
+                estimate_message_obj.endpoint = f"estimates/{estimate['id']}/messages"
                 estimate_message_obj.sync(schema.get('estimate_messages'),
                                           mdata.get('estimate_messages'),
                                           config,
