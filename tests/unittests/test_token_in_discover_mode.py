@@ -63,7 +63,7 @@ class TestAccessTokeninDiscover(unittest.TestCase):
         try:
             tap_harvest.do_discover(harvest_client)
         except client.HarvestNotFoundError as e:
-            self.assertEqual(str(e), "HTTP-error-code: 404, Error: The resource you have specified cannot be found. Either the accounts provided are invalid or you do not have access to the Ad Account.")
+            self.assertEqual(str(e), "HTTP-error-code: 404, Error: The resource you have specified cannot be found.")
             self.assertEqual(mocked_write_catalog.call_count, 0)
 
     def test_422_error(self, mocked_write_catalog, mocked_get_account, mocked_refresh_token, mocked_get_token, mocked_request, mocked_send_request):
