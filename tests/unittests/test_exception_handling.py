@@ -61,7 +61,7 @@ class TestRequest(unittest.TestCase):
         try:
             harvest_client.request('http://test')
         except client.HarvestNotFoundError as e:
-            self.assertEqual(str(e), "HTTP-error-code: 404, Error: The resource you have specified cannot be found. Either the accounts provided are invalid or you do not have access to the Ad Account.")
+            self.assertEqual(str(e), "HTTP-error-code: 404, Error: The resource you have specified cannot be found.")
 
     def test_422_error(self, mocked_get_account, mocked_refresh_token, mocked_get_token, mocked_request, mocked_send_request):
         mocked_send_request.return_value = get_mock_http_response(422, {})
@@ -134,7 +134,7 @@ class TestMakeRequestToken(unittest.TestCase):
         try:
             harvest_client = client.HarvestClient("test", "test", "test", "test")
         except client.HarvestNotFoundError as e:
-            self.assertEqual(str(e), "HTTP-error-code: 404, Error: The resource you have specified cannot be found. Either the accounts provided are invalid or you do not have access to the Ad Account.")
+            self.assertEqual(str(e), "HTTP-error-code: 404, Error: The resource you have specified cannot be found.")
 
     def test_422_error(self, mocked_request):
         mocked_request.return_value = get_mock_http_response(422, {})

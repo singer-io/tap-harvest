@@ -53,9 +53,7 @@ ERROR_CODE_EXCEPTION_MAPPING = {
     },
     404: {
         "raise_exception": HarvestNotFoundError,
-        "message": "The resource you have specified cannot be found. "\
-                   "Either the accounts provided are invalid or "\
-                   "you do not have access to the Ad Account."
+        "message": "The resource you have specified cannot be found."
     },
     422: {
         "raise_exception": HarvestUnprocessableEntityError,
