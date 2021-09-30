@@ -14,7 +14,7 @@ setup(name='tap-harvest',
           'requests==2.20.0',
           'pendulum==1.2.0',
           'backoff==1.8.0',
-          'pytz==2021.1',
+          'pytz==2018.4',
       ],
       entry_points='''
           [console_scripts]
