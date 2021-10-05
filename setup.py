@@ -13,7 +13,8 @@ setup(name='tap-harvest',
           'singer-python==5.12.1',
           'requests==2.20.0',
           'pendulum==1.2.0',
-          'backoff==1.8.0'
+          'backoff==1.8.0',
+          'pytz==2018.4',
       ],
       entry_points='''
           [console_scripts]
