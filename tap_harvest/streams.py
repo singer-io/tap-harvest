@@ -8,10 +8,10 @@ from tap_harvest.client import HarvestClient
 LOGGER = singer.get_logger()
 BASE_API_URL = "https://api.harvestapp.com/v2/"
 
-# Any date-times values can either be a string or a null.
-# If null, parsing the date results in an error.
-# Instead, removing the attribute before parsing ignores this error.
 def remove_empty_date_times(item, schema):
+    # Any date-times values can either be a string or a null.
+    # If null, parsing the date results in an error.
+    # Instead, removing the attribute before parsing ignores this error.
     fields = []
 
     for key in schema['properties']:
@@ -25,6 +25,7 @@ def remove_empty_date_times(item, schema):
 
 
 def append_times_to_dates(item, date_fields):
+    # Conver date field into the standard format
     if date_fields:
         for date_field in date_fields:
             if item.get(date_field):
@@ -34,7 +35,7 @@ def get_url(endpoint):
     return BASE_API_URL + endpoint
 
 def get_start(stream, config, state):
-
+    # Get bookmark, if not available return start date
     if stream not in state:
         return config['start_date']
 
@@ -59,13 +60,14 @@ class BaseStream:
         self.client = client
 
     def sync_endpoint(self, schema, mdata, config, state, tap_state):
-
+        # Get Bookmark and based on that retrieve stream's data via API call.
+        # Update the latest state based on retrieved data.
         singer.write_schema(self.tap_stream_id,
                             schema,
                             self.key_properties,
                             self.valid_replication_keys)
 
-        start = get_start(self.tap_stream_id, config, state)
+        start = get_start(self.tap_stream_id, config, state) # Get bookmark
 
         start_dt = pendulum.parse(start)
         updated_since = start_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -368,7 +370,7 @@ class EstimateLineItems(BaseStream):
     valid_replication_keys = []
 
     def sync_line_items(self, line_items_schema, line_items_mdata, estimate, time_extracted):
-
+        # Extract estimate line items 
         singer.write_schema('estimate_line_items',
                             line_items_schema,
                             self.key_properties)
@@ -426,6 +428,7 @@ class ExternalReferences(BaseStream):
     valid_replication_keys = []
 
     def sync_references(self, external_reference_schema, ref_mdata, time_entry, time_extracted):
+        # Extract external references
         singer.write_schema('external_reference',
                             external_reference_schema,
                             self.key_properties)
@@ -448,6 +451,7 @@ class TimeEntryExternalReferences(BaseStream):
     valid_replication_keys = []
 
     def sync_references(self, external_reference_schema, time_entry, time_extracted):
+        # Extract time entry external reference
         singer.write_schema('time_entry_external_reference',
                             external_reference_schema,
                             self.key_properties)

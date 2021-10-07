@@ -88,7 +88,8 @@ def raise_for_error(response):
     ex = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", HarvestError)
     raise ex(message) from None
 
-class HarvestClient:#pylint: disable=too-many-instance-attributes
+class HarvestClient: #pylint: disable=too-many-instance-attributes
+
     def __init__(self, client_id, client_secret, refresh_token, user_agent):
         self._client_id = client_id
         self._client_secret = client_secret
@@ -142,6 +143,8 @@ class HarvestClient:#pylint: disable=too-many-instance-attributes
         return self._access_token
 
     def get_account_id(self):
+        # Get the account Id of the Active Harvest account. 
+        # It will throw an exception if no active harvest account is found.
         if self._account_id is not None:
             return self._account_id
 
@@ -163,6 +166,7 @@ class HarvestClient:#pylint: disable=too-many-instance-attributes
         factor=2)
     @utils.ratelimit(100, 15)
     def request(self, url, params=None):
+        # Retrive API data in JSON form.
         params = params or {}
         access_token = self.get_access_token()
         headers = {"Accept": "application/json",

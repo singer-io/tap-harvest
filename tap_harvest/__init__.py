@@ -17,6 +17,7 @@ REQUIRED_CONFIG_KEYS = [
 ]
 
 def do_discover(client):
+    # Discover schemas for all streams and dump catalog
     LOGGER.info("Starting discover")
 
     catalog = discover(client)
@@ -27,6 +28,7 @@ def do_discover(client):
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
+    # Main starting poin of tap.
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
     config = args.config
     client = HarvestClient(config['client_id'],
@@ -34,9 +36,9 @@ def main():
                            config['refresh_token'],
                            config['user_agent'])
 
-    if args.discover:
+    if args.discover: # When discover mode called
         do_discover(client)
-    else:
+    else: # When sync mode code called
         catalog = args.catalog if args.catalog else discover(client)
         sync(client, args.config, catalog, args.state)
 
