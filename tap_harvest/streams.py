@@ -25,7 +25,7 @@ def remove_empty_date_times(item, schema):
 
 
 def append_times_to_dates(item, date_fields):
-    # Conver date field into the standard format
+    # Convert date field into the standard format
     if date_fields:
         for date_field in date_fields:
             if item.get(date_field):
