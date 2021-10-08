@@ -21,8 +21,12 @@ def get_mock_http_response(status_code, content={}):
 @mock.patch("tap_harvest.client.HarvestClient.get_account_id")
 @mock.patch("tap_harvest.write_catalog")
 class TestAccessTokeninDiscover(unittest.TestCase):
+    '''
+        Test cases to verify API calls in discover mode
+    '''
 
     def test_200_response(self, mocked_write_catalog, mocked_get_account, mocked_refresh_token, mocked_get_token, mocked_request, mocked_send_request):
+        # Verify no exception is thrown when the do_discover call returns the response with status 200. 
         valid_res = {'expense_feature': True, 'invoice_feature': True, 'estimate_feature': True}
         mocked_send_request.return_value = get_mock_http_response(200, valid_res)
         harvest_client = client.HarvestClient("test", "test", "test", "test")
@@ -31,6 +35,8 @@ class TestAccessTokeninDiscover(unittest.TestCase):
         self.assertEqual(mocked_write_catalog.call_count, 1)
 
     def test_400_error(self, mocked_write_catalog, mocked_get_account, mocked_refresh_token, mocked_get_token, mocked_request, mocked_send_request):
+        # Verify the exception is thrown with the proper message when the do_discover call returns the response with status 400.
+        # Verify write catalog method won't call. 
         mocked_send_request.return_value = get_mock_http_response(400, {})
         harvest_client = client.HarvestClient("test", "test", "test", "test")
         try:
@@ -40,6 +46,8 @@ class TestAccessTokeninDiscover(unittest.TestCase):
             self.assertEqual(mocked_write_catalog.call_count, 0)
 
     def test_401_error(self, mocked_write_catalog, mocked_get_account, mocked_refresh_token, mocked_get_token, mocked_request, mocked_send_request):
+        # Verify the exception is thrown with the proper message when the do_discover call returns the response with status 401.
+        # Verify write catalog method won't call. 
         mocked_send_request.return_value = get_mock_http_response(401, {})
         harvest_client = client.HarvestClient("test", "test", "test", "test")
         try:
@@ -49,6 +57,8 @@ class TestAccessTokeninDiscover(unittest.TestCase):
             self.assertEqual(mocked_write_catalog.call_count, 0)
 
     def test_403_error(self, mocked_write_catalog, mocked_get_account, mocked_refresh_token, mocked_get_token, mocked_request, mocked_send_request):
+        # Verify the exception is thrown with the proper message when the do_discover call returns the response with status 403.
+        # Verify write catalog method won't call. 
         mocked_send_request.return_value = get_mock_http_response(403, {})
         harvest_client = client.HarvestClient("test", "test", "test", "test")
         try:
@@ -58,6 +68,8 @@ class TestAccessTokeninDiscover(unittest.TestCase):
             self.assertEqual(mocked_write_catalog.call_count, 0)
 
     def test_404_error(self, mocked_write_catalog, mocked_get_account, mocked_refresh_token, mocked_get_token, mocked_request, mocked_send_request):
+        # Verify the exception is thrown with the proper message when the do_discover call returns the response with status 404.
+        # Verify write catalog method won't call. 
         mocked_send_request.return_value = get_mock_http_response(404, {})
         harvest_client = client.HarvestClient("test", "test", "test", "test")
         try:
@@ -67,6 +79,8 @@ class TestAccessTokeninDiscover(unittest.TestCase):
             self.assertEqual(mocked_write_catalog.call_count, 0)
 
     def test_422_error(self, mocked_write_catalog, mocked_get_account, mocked_refresh_token, mocked_get_token, mocked_request, mocked_send_request):
+        # Verify the exception is thrown with the proper message when the do_discover call returns the response with status 422.
+        # Verify write catalog method won't call. 
         mocked_send_request.return_value = get_mock_http_response(422, {})
         harvest_client = client.HarvestClient("test", "test", "test", "test")
         try:
@@ -77,6 +91,8 @@ class TestAccessTokeninDiscover(unittest.TestCase):
 
     @mock.patch("time.sleep")
     def test_429_error(self, mocked_sleep, mocked_write_catalog, mocked_get_account, mocked_refresh_token, mocked_get_token, mocked_request, mocked_send_request):
+        # Verify the exception is thrown with the proper message when the do_discover call returns the response with status 429.
+        # Verify write catalog method won't call. 
         mocked_send_request.return_value = get_mock_http_response(429, {})
         harvest_client = client.HarvestClient("test", "test", "test", "test")
         try:
@@ -87,6 +103,8 @@ class TestAccessTokeninDiscover(unittest.TestCase):
 
     @mock.patch("time.sleep")
     def test_500_error(self, mocked_sleep, mocked_write_catalog, mocked_get_account, mocked_refresh_token, mocked_get_token, mocked_request, mocked_send_request):
+        # Verify the exception is thrown with the proper message when the do_discover call returns the response with status 500.
+        # Verify write catalog method won't call. 
         mocked_send_request.return_value = get_mock_http_response(500, {})
         harvest_client = client.HarvestClient("test", "test", "test", "test")
         try:

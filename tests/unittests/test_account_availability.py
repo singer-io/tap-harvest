@@ -15,6 +15,7 @@ class TestAccountAvailability(unittest.TestCase):
     @mock.patch("tap_harvest.client.HarvestClient._refresh_access_token")
     @mock.patch('requests.request')
     def test_get_account_id(self,mock_request,mock_refresh_access_token):
+        # Verify the exception message when no active account is found.
         client_id="test"
         client_secret="test"
         refresh_token="test"
