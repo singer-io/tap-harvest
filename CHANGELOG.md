@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.1.0
+  * Add support for python 3.9.6 [#48](https://github.com/singer-io/tap-harvest/pull/48)
+
 ## 2.0.8
   * Update request headers when querying for account IDs [#41](https://github.com/singer-io/tap-harvest/pull/41)
 
