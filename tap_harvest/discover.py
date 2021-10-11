@@ -41,11 +41,12 @@ ESTIMATES_STREAMS = [
 BASE_API_URL = "https://api.harvestapp.com/v2/"
 
 def discover(client):
-    # Discover schemas, build metadata for all the steams and return catalog 
+    # Discover schemas, build metadata for all the steams and return catalog
     schemas, field_metadata = get_schemas()
     catalog_entries = []
 
-    company = client.request(BASE_API_URL + 'company') # API call of the company for the selection of streams. 
+    # API call of the company for the selection of streams.
+    company = client.request(BASE_API_URL + 'company')
 
     available_streams = COMMON_STREAMS
 

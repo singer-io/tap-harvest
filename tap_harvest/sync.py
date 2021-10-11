@@ -22,7 +22,7 @@ class DependencyException(Exception):
     pass
 
 def validate_dependencies(selected_stream_ids):
-    # Verify Parent stream's selection to retrieve child stream's data. 
+    # Verify Parent stream's selection to retrieve child stream's data.
     # Throw an exception if child stream is selected but correspondent parent stream isn't selected.
     errs = []
     msg_tmpl = ("Unable to extract '{0}' data, "
@@ -47,7 +47,8 @@ def get_stream_from_catalog(stream_id, catalog):
 def sync(client, config, catalog, state):
     LOGGER.info("Starting sync")
 
-    selected_streams = list(catalog.get_selected_streams(state)) # Get list of selected streams from catalog
+    # Get list of selected streams from catalog
+    selected_streams = list(catalog.get_selected_streams(state))
     selected_streams_ids = [stream.tap_stream_id for stream in selected_streams]
 
     validate_dependencies(selected_streams_ids)
@@ -77,7 +78,8 @@ def sync(client, config, catalog, state):
 
             for sub_stream in sub_streams_ids:
                 if sub_stream in selected_streams_ids:
-                    sub_stream_schema = get_stream_from_catalog(sub_stream, selected_streams) # Get sub stream schema
+                    # Get sub stream schema
+                    sub_stream_schema = get_stream_from_catalog(sub_stream, selected_streams)
                     stream_schemas[sub_stream] = sub_stream_schema.schema.to_dict()
                     stream_mdatas[sub_stream] = metadata.to_map(sub_stream_schema.metadata)
 

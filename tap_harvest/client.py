@@ -143,7 +143,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         return self._access_token
 
     def get_account_id(self):
-        # Get the account Id of the Active Harvest account. 
+        # Get the account Id of the Active Harvest account.
         # It will throw an exception if no active harvest account is found.
         if self._account_id is not None:
             return self._account_id

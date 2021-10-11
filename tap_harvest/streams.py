@@ -370,7 +370,7 @@ class EstimateLineItems(BaseStream):
     valid_replication_keys = []
 
     def sync_line_items(self, line_items_schema, line_items_mdata, estimate, time_extracted):
-        # Extract estimate line items 
+        # Extract estimate line items
         singer.write_schema('estimate_line_items',
                             line_items_schema,
                             self.key_properties)
