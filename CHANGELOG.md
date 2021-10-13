@@ -1,5 +1,7 @@
 # Changelog
 
+## 2.1.1
+  * Fixed list index out of range problem when no account [#44](https://github.com/singer-io/tap-harvest/pull/44)
 ## 2.1.0
   * Add support for python 3.9.6 [#48](https://github.com/singer-io/tap-harvest/pull/48)
 
