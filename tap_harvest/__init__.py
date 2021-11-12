@@ -131,7 +131,8 @@ def get_request_timeout():
     if config_request_timeout and float(config_request_timeout):
         request_timeout = float(config_request_timeout)
     else:
-        request_timeout = REQUEST_TIMEOUT # If value is 0,"0","" or not passed then it set default to 300 seconds.
+        # If value is 0,"0","" or not passed then it set default to 300 seconds.
+        request_timeout = REQUEST_TIMEOUT
     return request_timeout
 
 # backoff for Timeout error is already included in "requests.exceptions.RequestException"
