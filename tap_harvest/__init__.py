@@ -27,7 +27,8 @@ STATE = {}
 # which leads to data loss as it is updated after every sync
 TAP_STATE = {}
 AUTH = {}
-
+# timeout request after 300 seconds
+REQUEST_TIMEOUT = 300
 
 class Auth:
     def __init__(self, client_id, client_secret, refresh_token):
@@ -37,6 +38,8 @@ class Auth:
         self._account_id = None
         self._refresh_access_token()
 
+    # backoff for Timeout error is already included in "requests.exceptions.RequestException"
+    # as it is a parent class of "Timeout" error
     @backoff.on_exception(
         backoff.expo,
         requests.exceptions.RequestException,
@@ -52,7 +55,8 @@ class Auth:
                                     'refresh_token': self._refresh_token,
                                     'grant_type': 'refresh_token',
                                 },
-                                headers={"User-Agent": CONFIG.get("user_agent")})
+                                headers={"User-Agent": CONFIG.get("user_agent")},
+                                timeout=get_request_timeout())
 
     def _refresh_access_token(self):
         LOGGER.info("Refreshing access token")
@@ -85,7 +89,8 @@ class Auth:
         response = requests.request('GET',
                                     url=BASE_ID_URL + 'accounts',
                                     headers={'Authorization': 'Bearer ' + self._access_token,
-                                             'User-Agent': CONFIG.get("user_agent")})
+                                             'User-Agent': CONFIG.get("user_agent")},
+                                    timeout=get_request_timeout())
 
         if response.json().get('accounts'):
             self._account_id = str(response.json()['accounts'][0]['id'])
@@ -118,7 +123,20 @@ def get_start(key):
 def get_url(endpoint):
     return BASE_API_URL + endpoint
 
+def get_request_timeout():
+    # Get `request_timeout` value from config.
+    config_request_timeout = CONFIG.get('request_timeout')
 
+    # if config request_timeout is other than 0,"0" or "" then use request_timeout
+    if config_request_timeout and float(config_request_timeout):
+        request_timeout = float(config_request_timeout)
+    else:
+        # If value is 0,"0","" or not passed then it set default to 300 seconds.
+        request_timeout = REQUEST_TIMEOUT
+    return request_timeout
+
+# backoff for Timeout error is already included in "requests.exceptions.RequestException"
+# as it is a parent class of "Timeout" error
 @backoff.on_exception(
     backoff.expo,
     requests.exceptions.RequestException,
@@ -135,7 +153,7 @@ def request(url, params=None):
                "User-Agent": CONFIG.get("user_agent")}
     req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
     LOGGER.info("GET {}".format(req.url))
-    resp = SESSION.send(req)
+    resp = SESSION.send(req, timeout=get_request_timeout())
     resp.raise_for_status()
     return resp.json()
 
