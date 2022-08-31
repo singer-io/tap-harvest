@@ -8,10 +8,13 @@ class TapSpec():
     PRIMARY_KEYS = "table-key-properties"
     FOREIGN_KEYS = "table-foreign-key-properties"
     REPLICATION_METHOD = "forced-replication-method"
-    API_LIMIT = "max-row-limit"
+    API_LIMIT = 100
     INCREMENTAL = "INCREMENTAL"
     FULL = "FULL_TABLE"
     START_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+    OBEYS_START_DATE = "obey-start-date"
+    RECORD_REPLICATION_KEY_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+    start_date = ""
 
     DEFAULT_START_DATE = datetime.datetime.strftime(datetime.datetime.today(), "%Y-%m-%dT00:00:00Z")
 
@@ -34,6 +37,7 @@ class TapSpec():
             return properties
 
         # This test needs the new connections start date to be larger than the default
+        print("======>>>>>>>>>>", self.start_date , properties["start_date"])
         assert self.start_date > properties["start_date"]
 
         properties["start_date"] = self.start_date
@@ -52,29 +56,35 @@ class TapSpec():
                 self.REPLICATION_KEYS: {"updated_at"},
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
+                self.OBEYS_START_DATE: True,
                 self.API_LIMIT: 100}
 
-        user_role = default.copy()
+        default_no_replication_key = {
+                self.PRIMARY_KEYS: {"id"},
+                self.REPLICATION_METHOD: self.FULL,
+                self.API_LIMIT: 100}
+
+        user_role = default_no_replication_key.copy()
         user_role[self.PRIMARY_KEYS] = {"role_id", "user_id"}
 
-        time_entry = default.copy()
+        time_entry = default_no_replication_key.copy()
         time_entry[self.PRIMARY_KEYS] = {"time_entry_id", "external_reference_id"}
 
-        user_project = default.copy()
+        user_project = default_no_replication_key.copy()
         user_project[self.PRIMARY_KEYS] = {"user_id", "project_task_id"}
 
         return {"projects": default,
                 "clients": default,
                 "contacts": default,
                 "estimate_item_categories": default,
-                "estimate_line_items": default,
+                "estimate_line_items": default_no_replication_key,
                 "estimate_messages": default,
                 "estimates": default,
                 "expense_categories": default,
                 "expenses": default,
-                "external_reference": default,
+                "external_reference": default_no_replication_key,
                 "invoice_item_categories": default,
-                "invoice_line_items": default,
+                "invoice_line_items": default_no_replication_key,
                 "invoice_messages": default,
                 "invoice_payments": default,
                 "invoices": default,

@@ -67,6 +67,16 @@ class BaseTapTest(TapSpec, unittest.TestCase):
                 for table, properties
                 in self.expected_metadata().items()}
 
+    def expected_automatic_keys(self):
+        """
+        Return a dictionary with the key of the table name
+        and value as a set of automatic key fields
+        """
+        return {table: self.expected_primary_keys().get(table, set()).union(
+                       self.expected_replication_keys().get(table, set())).union(
+                       self.expected_foreign_keys().get(table, set()))
+                for table in self.expected_metadata().keys()}
+
     def expected_replication_method(self):
         """return a dictionary with key of table name nd value of replication method"""
         return {table: properties.get(self.REPLICATION_METHOD, None)
@@ -151,20 +161,21 @@ class BaseTapTest(TapSpec, unittest.TestCase):
 
             upsert_messages = [m for m in batch.get('messages') if m['action'] == 'upsert']
             stream_bookmark_key = self.expected_replication_keys().get(stream, set())
-            assert len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
-            stream_bookmark_key = stream_bookmark_key.pop()
+            if stream_bookmark_key:
+                assert len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
+                stream_bookmark_key = stream_bookmark_key.pop()
 
-            bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
-            max_bookmarks[stream] = {stream_bookmark_key: None}
-            for bk_value in bk_values:
-                if bk_value is None:
-                    continue
+                bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
+                max_bookmarks[stream] = {stream_bookmark_key: None}
+                for bk_value in bk_values:
+                    if bk_value is None:
+                        continue
 
-                if max_bookmarks[stream][stream_bookmark_key] is None:
-                    max_bookmarks[stream][stream_bookmark_key] = bk_value
+                    if max_bookmarks[stream][stream_bookmark_key] is None:
+                        max_bookmarks[stream][stream_bookmark_key] = bk_value
 
-                if bk_value > max_bookmarks[stream][stream_bookmark_key]:
-                    max_bookmarks[stream][stream_bookmark_key] = bk_value
+                    if bk_value > max_bookmarks[stream][stream_bookmark_key]:
+                        max_bookmarks[stream][stream_bookmark_key] = bk_value
         return max_bookmarks
 
     def min_bookmarks_by_stream(self, sync_records):
@@ -174,20 +185,21 @@ class BaseTapTest(TapSpec, unittest.TestCase):
 
             upsert_messages = [m for m in batch.get('messages') if m['action'] == 'upsert']
             stream_bookmark_key = self.expected_replication_keys().get(stream, set())
-            assert len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
-            (stream_bookmark_key, ) = stream_bookmark_key
+            if stream_bookmark_key:
+                assert len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
+                (stream_bookmark_key, ) = stream_bookmark_key
 
-            bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
-            min_bookmarks[stream] = {stream_bookmark_key: None}
-            for bk_value in bk_values:
-                if bk_value is None:
-                    continue
+                bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
+                min_bookmarks[stream] = {stream_bookmark_key: None}
+                for bk_value in bk_values:
+                    if bk_value is None:
+                        continue
 
-                if min_bookmarks[stream][stream_bookmark_key] is None:
-                    min_bookmarks[stream][stream_bookmark_key] = bk_value
+                    if min_bookmarks[stream][stream_bookmark_key] is None:
+                        min_bookmarks[stream][stream_bookmark_key] = bk_value
 
-                if bk_value < min_bookmarks[stream][stream_bookmark_key]:
-                    min_bookmarks[stream][stream_bookmark_key] = bk_value
+                    if bk_value < min_bookmarks[stream][stream_bookmark_key]:
+                        min_bookmarks[stream][stream_bookmark_key] = bk_value
         return min_bookmarks
 
     @staticmethod

@@ -170,7 +170,7 @@ class BookmarkTest(BaseTapTest):
 
         ##########  Uncomment for PURGE MODE ###############
         # stream = ""
-        # logging.info("Comencing PURGE of stream: {}".format(stream))
+        # logging.info("Commencing PURGE of stream: {}".format(stream))
         # all_of_stream = get_all(stream)
         # while all_of_stream:
         #     for s in get_all(stream):
@@ -203,8 +203,6 @@ class BookmarkTest(BaseTapTest):
         """
         # Select all streams and no fields within streams
         found_catalogs = menagerie.get_catalogs(conn_id)
-        incremental_streams = {key for key, value in self.expected_replication_method().items()
-                               if value == self.INCREMENTAL}
 
         # IF THERE ARE STREAMS THAT SHOULD NOT BE TESTED
         # REPLACE THE EMPTY SET BELOW WITH THOSE STREAMS
@@ -219,15 +217,16 @@ class BookmarkTest(BaseTapTest):
             "user_project_tasks"}) # Limited by user_projects
         
         # If a stream does not have a replication key place it in this set
-        no_replication_key = ("estimate_line_items",
+        no_replication_key = {"estimate_line_items",
                               "external_reference",
                               "invoice_line_items",
                               "time_entry_external_reference",
-                              "user_roles")
-        
+                              "user_roles"}
+
+        streams_to_test = self.expected_streams() - untested_streams
+
         our_catalogs = [catalog for catalog in found_catalogs if
-                        catalog.get('tap_stream_id') in incremental_streams.difference(
-                            untested_streams)]
+                        catalog.get('tap_stream_id') in streams_to_test]
 
         expected = {"clients":[],
                     "contacts":[],
@@ -255,13 +254,16 @@ class BookmarkTest(BaseTapTest):
                     "user_roles":[],
                     "users":[]}
 
+        # Field selection
+        self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
+
         # Run a sync job using orchestrator
         first_sync_record_count = self.run_sync(conn_id)
 
         # verify that the sync only sent records to the target for selected streams (catalogs)
-        self.assertEqual(set(first_sync_record_count.keys()).difference(untested_streams),
-                         incremental_streams.difference(untested_streams))
+        self.assertEqual(set(first_sync_record_count.keys()).difference(untested_streams), streams_to_test)
 
+        # Get the first state of sync 1
         first_sync_state = menagerie.get_state(conn_id)
 
         # Get data about actual rows synced
@@ -534,93 +536,41 @@ class BookmarkTest(BaseTapTest):
             logging.info("Inserting time_entry_external_reference (time_entries)")
             expected['time_entry_external_reference'].append({"time_entry_id": time_entry_id,
                                                               "external_reference_id": external_reference_id})
-
-            # Run a second sync job using orchestrator
-            second_sync_record_count = self.run_sync(conn_id)
-
-            # Get data about rows synced
-            second_sync_records = runner.get_records_from_target_output()
-            second_min_bookmarks = self.min_bookmarks_by_stream(second_sync_records)
-            second_max_bookmarks = self.max_bookmarks_by_stream(second_sync_records)
-            second_sync_state = menagerie.get_state(conn_id)    
-
         finally:
             logging.info("Data Inserted, 2nd Sync Completed")
-            
+
+        # Run a second sync job using orchestrator
+        second_sync_record_count = self.run_sync(conn_id)
+
+        # Get data about rows synced
+        second_sync_records = runner.get_records_from_target_output()
+        second_min_bookmarks = self.min_bookmarks_by_stream(second_sync_records)
+        second_max_bookmarks = self.max_bookmarks_by_stream(second_sync_records)   
+        second_sync_state = menagerie.get_state(conn_id)    
+
+        # Verify the first sync sets a bookmark of the expected form
+        self.assertIsNotNone(first_sync_state)
+
+        # Verify the second sync sets a bookmark of the expected form
+        self.assertIsNotNone(second_sync_state)
+
         # THIS MAKES AN ASSUMPTION THAT CHILD STREAMS DO NOT HAVE BOOKMARKS.
         # ADJUST IF NECESSARY
-        for stream in incremental_streams.difference(untested_streams):
+        for stream in streams_to_test:
             with self.subTest(stream=stream):
                 # get bookmark values from state and target data
-                stream_bookmark_key = self.expected_replication_keys().get(stream, set())
-                assert len(
-                    stream_bookmark_key) == 1  # There shouldn't be a compound replication key
-                stream_bookmark_key = stream_bookmark_key.pop()
                 state_value = first_sync_state.get(stream)
                 final_state_value = second_sync_state.get(stream)
-                target_value = first_max_bookmarks.get(
-                    stream, {None: None}).get(stream_bookmark_key)
-                target_min_value = first_min_bookmarks.get(
-                    stream, {None: None}).get(stream_bookmark_key)
-                final_bookmark = second_max_bookmarks.get(
-                    stream, {None: None}).get(stream_bookmark_key)
-                try:
-                    # attempt to parse the bookmark as a date
-                    if state_value:
-                        if isinstance(state_value, str):
-                            state_value = self.local_to_utc(parse(state_value))
-                        if isinstance(state_value, int):
-                            state_value = self.local_to_utc(dt.utcfromtimestamp(state_value))
-
-                    if target_value:
-                        if isinstance(target_value, str):
-                            target_value = self.local_to_utc(parse(target_value))
-                        if isinstance(target_value, int):
-                            target_value = self.local_to_utc(dt.utcfromtimestamp(target_value))
-
-                    if target_min_value:
-                        if isinstance(target_min_value, str):
-                            target_min_value = self.local_to_utc(parse(target_min_value))
-                        if isinstance(target_min_value, int):
-                            target_min_value = self.local_to_utc(
-                                dt.utcfromtimestamp(target_min_value))
-
-                    if final_bookmark:
-                        if isinstance(final_bookmark, str):
-                            final_bookmark = self.local_to_utc(parse(final_bookmark))
-                        if isinstance(final_bookmark, int):
-                            final_bookmark = self.local_to_utc(
-                                dt.utcfromtimestamp(final_bookmark))
-
-                    if final_state_value:
-                        if isinstance(final_state_value, str):
-                            final_state_value = self.local_to_utc(parse(final_state_value))
-                        if isinstance(final_state_value, int):
-                            final_state_value = self.local_to_utc(
-                                dt.utcfromtimestamp(final_state_value))
-
-                except (OverflowError, ValueError, TypeError):
-                    print("bookmarks cannot be converted to dates, comparing values directly")
-
-                if stream not in no_replication_key:
-                    # verify that there is data with different bookmark values - setup necessary
-                    self.assertGreater(target_value, target_min_value,
-                                       msg="Data isn't set up to be able to test bookmarks")
-
-                    # verify state agrees with target data after 1st sync
-                    self.assertEqual(state_value, target_value,
-                                     msg="The bookmark value isn't correct based on target data")
+                first_sync_count = first_sync_record_count.get(stream, 0)
+                second_sync_count = second_sync_record_count.get(stream, 0)
 
                 # verify that you get less data the 2nd time around
-                self.assertGreater(
-                    first_sync_record_count.get(stream, 0),
-                    second_sync_record_count.get(stream, 0),
-                    msg="second syc didn't have less records, bookmark usage not verified")
+                self.assertGreater(first_sync_count, second_sync_count,
+                    msg="second sync didn't have fewer records, bookmark usage not verified")
 
-                # verify that the 2nd sync gets more than zero records
-                self.assertGreater(
-                    second_sync_record_count.get(stream, 0), 0,
-                    msg="second syc didn't have any records")
+                # Verify at least 1 record was replicated in the second sync
+                self.assertGreater(second_sync_count, 0,
+                    msg="second sync didn't have any records")
 
                 # verify the 2nd sync has specific inserted and updated records
                 actual = second_sync_records.get(stream, {'messages': []}).get('messages')
@@ -632,9 +582,67 @@ class BookmarkTest(BaseTapTest):
                         if matching:
                             break
                     self.assertTrue(matching)
-
-                # verify all data from 2nd sync >= 1st bookmark
+                
                 if stream not in no_replication_key:
+
+                    stream_bookmark_keys = self.expected_replication_keys().get(stream, set())
+                    assert len(stream_bookmark_keys) == 1  # There shouldn't be a compound replication key
+
+                    stream_bookmark_key = next(iter(stream_bookmark_keys))
+                    target_value = first_max_bookmarks.get(
+                        stream, {None: None}).get(stream_bookmark_key)
+                    target_min_value = first_min_bookmarks.get(
+                        stream, {None: None}).get(stream_bookmark_key)
+                    final_bookmark = second_max_bookmarks.get(
+                        stream, {None: None}).get(stream_bookmark_key)
+
+                    try:
+                        # attempt to parse the bookmark as a date
+                        if state_value:
+                            if isinstance(state_value, str):
+                                state_value = self.local_to_utc(parse(state_value))
+                            if isinstance(state_value, int):
+                                state_value = self.local_to_utc(dt.utcfromtimestamp(state_value))
+
+                        if target_value:
+                            if isinstance(target_value, str):
+                                target_value = self.local_to_utc(parse(target_value))
+                            if isinstance(target_value, int):
+                                target_value = self.local_to_utc(dt.utcfromtimestamp(target_value))
+
+                        if target_min_value:
+                            if isinstance(target_min_value, str):
+                                target_min_value = self.local_to_utc(parse(target_min_value))
+                            if isinstance(target_min_value, int):
+                                target_min_value = self.local_to_utc(
+                                    dt.utcfromtimestamp(target_min_value))
+
+                        if final_bookmark:
+                            if isinstance(final_bookmark, str):
+                                final_bookmark = self.local_to_utc(parse(final_bookmark))
+                            if isinstance(final_bookmark, int):
+                                final_bookmark = self.local_to_utc(
+                                    dt.utcfromtimestamp(final_bookmark))
+
+                        if final_state_value:
+                            if isinstance(final_state_value, str):
+                                final_state_value = self.local_to_utc(parse(final_state_value))
+                            if isinstance(final_state_value, int):
+                                final_state_value = self.local_to_utc(
+                                    dt.utcfromtimestamp(final_state_value))
+
+                    except (OverflowError, ValueError, TypeError):
+                        print("bookmarks cannot be converted to dates, comparing values directly")
+
+                    # verify that there is data with different bookmark values - setup necessary
+                    self.assertGreater(target_value, target_min_value,
+                                    msg="Data isn't set up to be able to test bookmarks")
+
+                    # verify state agrees with target data after 1st sync
+                    self.assertEqual(state_value, target_value,
+                                    msg="The bookmark value isn't correct based on target data")
+
+                    # verify all data from 2nd sync >= 1st bookmark
                     target_value = second_min_bookmarks.get(
                         stream, {None: None}).get(stream_bookmark_key)
                     try:
@@ -655,6 +663,6 @@ class BookmarkTest(BaseTapTest):
                     self.assertGreaterEqual(target_value, state_value)
 
                     # Make sure the final bookmark is the latest updated at
-                    # Since the api sends data in created_at desc order we made the updated_at not in order to test
+                    # Since the API sends data in created_at desc order we made the updated_at, not to test
                     # if we send the correct value even when the latest record doesn't have the latest updatye_at value
                     self.assertEqual(final_bookmark, final_state_value)

@@ -779,3 +779,127 @@ def delete_project_user(project_id, project_user_id):
     if response.status_code >= 400:
         logging.warn("delete_project_user: {} {}".format(response.status_code, response.text))
     return response.json()
+
+def set_up_class(cls):
+    logging.info("Start Setup")
+    # Track what was created to delete in teardown
+    cls._teardown_delete = {"contacts": [], "projects": [], "project_tasks": [],
+                            "tasks": [], "invoices": [], "invoice_messages": [],
+                            "invoice_item_categories": [], "invoice_payments": [],
+                            "estimates": [], "expenses": [], "expense_categories": [],
+                            "estimate_messages": [], "estimate_item_categories": [],
+                            "time_entries": [], "roles": [], "clients": [],
+                            "project_users": [], "user_roles": []}
+
+    # Protect against surviving projects from previous failures
+    project_1 = ""
+    for project in get_all('projects'):
+        delete_stream('projects', project['id'])
+
+    # Create dummy data in specifc streams prior to first sync to ensure they are captured        
+    for itter in range(2):
+        logging.info("Creating {} round(s) of data ...".format(itter + 1))
+
+        # Clients
+        client_1 = create_client()
+        cls._teardown_delete["clients"].append({"id": client_1["id"]})
+
+        # Contacts
+        contact_1 = create_contact(client_1['id'])
+        cls._teardown_delete["contacts"].append({"id": contact_1["id"]})
+
+        # Projects
+        if itter < 2: # Protect against project max (2)
+            project_1 = create_project(client_1['id'])
+            cls._teardown_delete["projects"].append({"id": project_1["id"]})
+        project_user_1 = create_project_user(project_1['id'], get_random("users"))
+        cls._teardown_delete["project_users"].append({"id": project_user_1["id"]})
+        
+        # Tasks
+        task_1 = create_task()
+        cls._teardown_delete["tasks"].append({"id": task_1["id"]})
+        project_task_1 = create_project_task(project_1['id'], task_1['id'])
+        cls._teardown_delete["project_tasks"].append({"id": project_task_1["id"]})
+
+        # Users ( This is necessary to ensure user_projects data exists)
+        user_1 = update_user(get_random('users'))
+
+        # Roles
+        role_1 = create_role()
+        cls._teardown_delete["roles"].append({"id": role_1["id"]})
+        user_role_1 = update_role(role_1['id'], [get_random("users")])
+        cls._teardown_delete["user_roles"].append({"id": user_role_1["id"]})
+        
+        # Estimates
+        estimate_1 = create_estimate(client_1['id'])
+        cls._teardown_delete["estimates"].append({"id": estimate_1['id']})
+        estimate_message_1 = create_estimate_message(estimate_1['id'])
+        cls._teardown_delete["estimate_messages"].append({"id": estimate_message_1['id']})
+        estimate_item_category_1 = create_estimate_item_category()
+        cls._teardown_delete["estimate_item_categories"].append({"id": estimate_item_category_1['id']})
+
+        # Invoices
+        invoice_1 = create_invoice(client_id=client_1['id'], project_id=project_1['id'])
+        cls._teardown_delete["invoices"].append({"id": invoice_1["id"]})
+        invoice_message_1 = create_invoice_message(invoice_1['id'])
+        cls._teardown_delete["invoice_messages"].append({"id": invoice_message_1["id"]})
+        invoice_payment_1 = create_invoice_payment(invoice_1['id'])
+        cls._teardown_delete["invoice_payments"].append({"id": invoice_payment_1["id"]})
+        invoice_item_category_1 = create_invoice_item_category()
+        cls._teardown_delete["invoice_item_categories"].append({"id": invoice_item_category_1["id"]})
+
+        # Time Entries
+        time_entry_1 = create_time_entry(project_1['id'], task_1['id'])
+        cls._teardown_delete["time_entries"].append({"id": time_entry_1["id"]})
+
+        # Expesnes
+        expense_category_1 = create_expense_category()
+        cls._teardown_delete["expense_categories"].append({"id": expense_category_1['id']})
+        expense_1 = create_expense(project_1['id'])
+        cls._teardown_delete["expenses"].append({"id": expense_1['id']})
+
+def tear_cown_class(cls):
+    # Clean up any data created in the setup
+    logging.info("Start Teardown")
+    # Projects
+    for project in cls._teardown_delete['projects']:
+        delete_stream('projects', project['id'])
+    # Estimates
+    for estimate in cls._teardown_delete['estimates']:
+        delete_stream('estimates', estimate['id'])
+    for category in cls._teardown_delete['estimate_item_categories']:
+        delete_stream('estimate_item_categories', category['id'])
+    # Time Entries TODO fix the delete methods
+    # for time_entry in cls._teardown_delete['time_entries']:
+    #     delete_stream('time_entries', time_entry['id'])
+    # Tasks
+    # for task in cls._teardown_delete['tasks']:
+    #     delete_stream('tasks', task['id'])
+    # Invoices
+    for invoice in cls._teardown_delete['invoices']:
+        delete_stream('invoices', invoice['id'])
+    for category in cls._teardown_delete['invoice_item_categories']:
+        delete_stream('invoice_item_categories', category['id'])
+    # Clients
+    for client in cls._teardown_delete['clients']:
+        delete_stream('clients', client['id'])
+    # Expenses
+    # for expense in cls._teardown_delete['expenses']:
+    #     delete_stream('expenses', expense['id'])
+    # for expense_category in cls._teardown_delete['expense_categories']:
+    #     delete_stream('expense_categories', expense_category['id'])
+    for role in cls._teardown_delete['roles']:
+        delete_stream('roles', role['id'])
+
+    ##########  Uncomment for PURGE MODE ###############
+    # stream = ""
+    # logging.info("Comencing PURGE of stream: {}".format(stream))
+    # all_of_stream = get_all(stream)
+    # while all_of_stream:
+    #     for s in get_all(stream):
+    #         try:
+    #             delete_stream(stream, s['id'])
+    #         except AssertionError:
+    #             continue
+    #     all_of_stream = get_all(stream)
+    ####################################################

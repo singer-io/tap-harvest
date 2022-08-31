@@ -3,6 +3,7 @@ Test tap pagination of streams
 """
 import logging
 import random
+from math import ceil
 
 from tap_tester import menagerie, runner
 
@@ -58,8 +59,6 @@ class PaginationTest(BaseTapTest):
             if cls._master[stream]['test'] or stream == 'projects':
                 _, record_count = get_stream_counts(stream)
                 logging.info("{} has {} records".format(stream, record_count))
-                if record_count > 100:
-                    record_count = 100
                 cls._master[stream]["delete_me"] = []
                 cls._master[stream]["expected_fields"] = set()
                 cls._master[stream]["total"] = record_count
@@ -336,24 +335,35 @@ class PaginationTest(BaseTapTest):
 
         PREREQUISITE
         For EACH stream add enough data that you surpass the limit of a single
-        fetch of data.  For instance if you have a limit of 250 records ensure
+        fetch of data.  For instance, if you have a limit of 250 records ensure
         that 251 (or more) records have been posted for that stream.
         """
 
         # Select all streams and all fields within streams
         found_catalogs = menagerie.get_catalogs(conn_id)
-        # self.select_all_streams_and_fields(conn_id, found_catalogs, select_all_fields=True)
+        self.select_all_streams_and_fields(conn_id, found_catalogs, select_all_fields=True)
 
         # Run a sync job using orchestrator
         record_count_by_stream = self.run_sync(conn_id)
 
         actual_fields_by_stream = runner.examine_target_output_for_fields()
+        synced_records = runner.get_records_from_target_output()
 
         untested_streams = [stream for stream in self._master if not self._master[stream]['test']]
-        
+
         for stream in self.expected_streams().difference(set(untested_streams)):
             with self.subTest(stream=stream):
                 logging.info("Testing " + stream)
+
+                # Expected values
+                expected_primary_keys = self.expected_primary_keys()[stream]
+
+                # Collect information for assertions from syncs 1 & 2 base on expected values
+                primary_keys_list = [tuple(message.get('data').get(expected_pk)
+                                     for expected_pk in expected_primary_keys)
+                                     for message in synced_records.get(stream).get('messages')
+                                     if message.get('action') == 'upsert']
+
                 # verify that we can paginate with all fields selected
                 self.assertGreater(
                     record_count_by_stream.get(stream, -1),
@@ -369,7 +379,7 @@ class PaginationTest(BaseTapTest):
                     set(), self._master[stream]["expected_fields"].difference(actual_fields_by_stream.get(stream, set())),
                     msg="The fields sent to the target have an extra or missing field"
                 )
-                
+
                 # verify that the automatic fields are sent to the target for non-child streams
                 if not self._master[stream]["child"]:
                     self.assertTrue(
@@ -380,3 +390,21 @@ class PaginationTest(BaseTapTest):
                         msg="The fields sent to the target don't include all automatic fields"
                     )
 
+                # Chunk the replicated records (just primary keys) into expected pages
+                pages = []
+                page_count = ceil(len(primary_keys_list) / self.API_LIMIT)
+                for page_index in range(page_count):
+                    page_start = page_index * self.API_LIMIT
+                    page_end = (page_index + 1) * self.API_LIMIT
+                    pages.append(set(primary_keys_list[page_start:page_end]))
+
+                # Verify by primary keys that data is unique for each page
+                for current_index, current_page in enumerate(pages):
+                    with self.subTest(current_page_primary_keys=current_page):
+
+                        for other_index, other_page in enumerate(pages):
+                            if current_index == other_index:
+                                continue  # don't compare the page to itself
+
+                            self.assertTrue(current_page.isdisjoint(other_page),
+                                            msg=f'other_page_primary_keys={other_page}')

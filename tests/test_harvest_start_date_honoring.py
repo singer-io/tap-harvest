@@ -1,13 +1,13 @@
 """
 Test that the start_date is respected for some streams
 """
-from tap_tester import runner
+from tap_tester import runner, menagerie
 
 from harvest_api import *
 from base import BaseTapTest
 
 class TestStartDateHonoring(BaseTapTest):
-    
+
     @classmethod
     def setUpClass(cls):
         logging.info("Start Setup")
@@ -31,7 +31,7 @@ class TestStartDateHonoring(BaseTapTest):
         project_1 = create_project(client_1['id'])
         cls._teardown_delete["projects"].append({"id": project_1["id"]})
 
-        # Create dummy data in specifc streams     
+        # Create dummy data in the specifc streams     
         for itter in range(3):
             logging.info("Creating {} round(s) of data ...".format(itter + 1))
 
@@ -72,12 +72,20 @@ class TestStartDateHonoring(BaseTapTest):
                 return data.get("data").get("id")
 
     def do_test(self, conn_id):
+
+        # table and field selection
+        expected_streams = ["invoices", "invoice_payments", "invoice_messages", "estimates", "estimate_messages"]
+        found_catalogs = menagerie.get_catalogs(conn_id)
+        test_catalogs = [catalog for catalog in found_catalogs
+                                      if catalog.get('stream_name') in expected_streams]
+        self.select_all_streams_and_fields(conn_id, test_catalogs, select_all_fields=True)
+
         sync_record_count = self.run_sync(conn_id)
 
         # Count actual rows synced
         sync_records = runner.get_records_from_target_output()
 
-        for stream in self.expected_streams():
+        for stream in expected_streams:
             if stream not in ["invoice_payments", "invoice_messages", "estimate_messages"]:
                 continue
 

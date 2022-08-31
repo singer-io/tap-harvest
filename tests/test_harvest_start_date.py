@@ -23,161 +23,41 @@ class StartDateTest(BaseTapTest):
     • verify that the minimum bookmark sent to the target for the later start_date sync
       is greater than or equal to the start date
     """
-    
+
     @classmethod
     def setUpClass(cls):
-        logging.info("Start Setup")
-        # Track what was created to delete in teardown
-        cls._teardown_delete = {"contacts": [], "projects": [], "project_tasks": [],
-                                "tasks": [], "invoices": [], "invoice_messages": [],
-                                "invoice_item_categories": [], "invoice_payments": [],
-                                "estimates": [], "expenses": [], "expense_categories": [],
-                                "estimate_messages": [], "estimate_item_categories": [],
-                                "time_entries": [], "roles": [], "clients": [],
-                                "project_users": [], "user_roles": []}
-
-        # Protect against surviving projects from previous failures
-        project_1 = ""
-        for project in get_all('projects'):
-            delete_stream('projects', project['id'])
-
-        # Create dummy data in specifc streams prior to first sync to ensure they are captured        
-        for itter in range(2):
-            logging.info("Creating {} round(s) of data ...".format(itter + 1))
-
-            # Clients
-            client_1 = create_client()
-            cls._teardown_delete["clients"].append({"id": client_1["id"]})
-
-            # Contacts
-            contact_1 = create_contact(client_1['id'])
-            cls._teardown_delete["contacts"].append({"id": contact_1["id"]})
-
-            # Projects
-            if itter < 2: # Protect against project max (2)
-                project_1 = create_project(client_1['id'])
-                cls._teardown_delete["projects"].append({"id": project_1["id"]})
-            project_user_1 = create_project_user(project_1['id'], get_random("users"))
-            cls._teardown_delete["project_users"].append({"id": project_user_1["id"]})
-            
-            # Tasks
-            task_1 = create_task()
-            cls._teardown_delete["tasks"].append({"id": task_1["id"]})
-            project_task_1 = create_project_task(project_1['id'], task_1['id'])
-            cls._teardown_delete["project_tasks"].append({"id": project_task_1["id"]})
-
-            # Users ( This is necessary to ensure user_projects data exists)
-            user_1 = update_user(get_random('users'))
-
-            # Roles
-            role_1 = create_role()
-            cls._teardown_delete["roles"].append({"id": role_1["id"]})
-            user_role_1 = update_role(role_1['id'], [get_random("users")])
-            cls._teardown_delete["user_roles"].append({"id": user_role_1["id"]})
-            
-            # Estimates
-            estimate_1 = create_estimate(client_1['id'])
-            cls._teardown_delete["estimates"].append({"id": estimate_1['id']})
-            estimate_message_1 = create_estimate_message(estimate_1['id'])
-            cls._teardown_delete["estimate_messages"].append({"id": estimate_message_1['id']})
-            estimate_item_category_1 = create_estimate_item_category()
-            cls._teardown_delete["estimate_item_categories"].append({"id": estimate_item_category_1['id']})
-
-            # Invoices
-            invoice_1 = create_invoice(client_id=client_1['id'], project_id=project_1['id'])
-            cls._teardown_delete["invoices"].append({"id": invoice_1["id"]})
-            invoice_message_1 = create_invoice_message(invoice_1['id'])
-            cls._teardown_delete["invoice_messages"].append({"id": invoice_message_1["id"]})
-            invoice_payment_1 = create_invoice_payment(invoice_1['id'])
-            cls._teardown_delete["invoice_payments"].append({"id": invoice_payment_1["id"]})
-            invoice_item_category_1 = create_invoice_item_category()
-            cls._teardown_delete["invoice_item_categories"].append({"id": invoice_item_category_1["id"]})
-
-            # Time Entries
-            time_entry_1 = create_time_entry(project_1['id'], task_1['id'])
-            cls._teardown_delete["time_entries"].append({"id": time_entry_1["id"]})
-
-            # Expesnes
-            expense_category_1 = create_expense_category()
-            cls._teardown_delete["expense_categories"].append({"id": expense_category_1['id']})
-            expense_1 = create_expense(project_1['id'])
-            cls._teardown_delete["expenses"].append({"id": expense_1['id']})
-
-
+        set_up_class(cls)
 
     @classmethod
     def tearDownClass(cls):
-        # Clean up any data created in the setup
-        logging.info("Start Teardown")
-        # Projects
-        for project in cls._teardown_delete['projects']:
-            delete_stream('projects', project['id'])
-        # Estimates
-        for estimate in cls._teardown_delete['estimates']:
-            delete_stream('estimates', estimate['id'])
-        for category in cls._teardown_delete['estimate_item_categories']:
-            delete_stream('estimate_item_categories', category['id'])
-        # Time Entries TODO fix the delete methods
-        # for time_entry in cls._teardown_delete['time_entries']:
-        #     delete_stream('time_entries', time_entry['id'])
-        # Tasks
-        # for task in cls._teardown_delete['tasks']:
-        #     delete_stream('tasks', task['id'])
-        # Invoices
-        for invoice in cls._teardown_delete['invoices']:
-            delete_stream('invoices', invoice['id'])
-        for category in cls._teardown_delete['invoice_item_categories']:
-            delete_stream('invoice_item_categories', category['id'])
-        # Clients
-        for client in cls._teardown_delete['clients']:
-            delete_stream('clients', client['id'])
-        # Expenses
-        # for expense in cls._teardown_delete['expenses']:
-        #     delete_stream('expenses', expense['id'])
-        # for expense_category in cls._teardown_delete['expense_categories']:
-        #     delete_stream('expense_categories', expense_category['id'])
-        for role in cls._teardown_delete['roles']:
-            delete_stream('roles', role['id'])
-
-        ##########  Uncomment for PURGE MODE ###############
-        # stream = ""
-        # logging.info("Comencing PURGE of stream: {}".format(stream))
-        # all_of_stream = get_all(stream)
-        # while all_of_stream:
-        #     for s in get_all(stream):
-        #         try:
-        #             delete_stream(stream, s['id'])
-        #         except AssertionError:
-        #             continue
-        #     all_of_stream = get_all(stream)
-        ####################################################
+        tear_cown_class(cls)
 
     def name(self):
         return "tap_tester_harvest_start_date"
-
 
     def do_test(self, conn_id):
         """Test we get a lot of data back based on the start date configured in base"""
 
         # Select all streams and all fields within streams
         found_catalogs = menagerie.get_catalogs(conn_id)
-        incremental_streams = {key for key, value in self.expected_replication_method().items()
-                               if value == self.INCREMENTAL}
+        streams_obeys_start_date = {key for key, value in self.expected_metadata().items()
+                               if value.get(self.OBEYS_START_DATE)}
 
         # IF THERE ARE STREAMS THAT SHOULD NOT BE TESTED
-        # REPLACE THE EMPTY SET BELOW WITH THOSE STREAM
+        # REPLACE THE EMPTY SET BELOW WITH THOSE STREAMS
         untested_streams = self.child_streams().union({
             "users",
+            "user_projects",
             "estimate_messages",
             "invoice_messages",
             "invoice_payments"
         })
 
         our_catalogs = [catalog for catalog in found_catalogs if
-                        catalog.get('tap_stream_id') in incremental_streams.difference(
+                        catalog.get('tap_stream_id') in streams_obeys_start_date.difference(
                             untested_streams)]
 
-        # self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
+        self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
         
         # Run a sync job using orchestrator
         first_sync_record_count = self.run_sync(conn_id)
@@ -186,7 +66,7 @@ class StartDateTest(BaseTapTest):
         # Count actual rows synced
         first_sync_records = runner.get_records_from_target_output()
 
-        # set the start date for a new connection based off bookmarks largest value
+        # set the start date for a new connection based on bookmarks' largest value
         first_max_bookmarks = self.max_bookmarks_by_stream(first_sync_records)
         bookmark_list = [list(book.values())[0] for stream, book in first_max_bookmarks.items()]
         bookmark_dates = []
@@ -245,14 +125,23 @@ class StartDateTest(BaseTapTest):
 
         logging.info("   Time Entries")
         updated_time_entry = update_time_entry(self._teardown_delete['time_entries'][0]['id'])
-        
+
         # get state
         state = menagerie.get_state(conn_id)
-        # set state for next sync
-        menagerie.set_state(conn_id, state)
+
+        # create a new connection with the new start_date
+        self.start_date = datetime.datetime.strftime(largest_bookmark, self.START_DATE_FORMAT)
+        conn_id_2 = self.create_connection(original_properties=False)
+
+        # Select all streams and all fields within streams
+        found_catalogs = menagerie.get_catalogs(conn_id_2)
+        our_catalogs = [catalog for catalog in found_catalogs if
+                        catalog.get('tap_stream_id') in streams_obeys_start_date.difference(
+                            untested_streams)]
+        self.select_all_streams_and_fields(conn_id_2, our_catalogs, select_all_fields=True)
 
         # Run a sync job using orchestrator
-        second_sync_record_count = self.run_sync(conn_id)
+        second_sync_record_count = self.run_sync(conn_id_2)
         second_total_records = reduce(lambda a, b: a + b, second_sync_record_count.values(), 0)
         second_sync_records = runner.get_records_from_target_output()
         second_min_bookmarks = self.min_bookmarks_by_stream(second_sync_records)
@@ -261,12 +150,29 @@ class StartDateTest(BaseTapTest):
         self.assertGreater(second_total_records, 0)
         self.assertLess(second_total_records, first_total_records)
 
-        for stream in incremental_streams.difference(untested_streams):
+        for stream in streams_obeys_start_date.difference(untested_streams):
             with self.subTest(stream=stream):
+
+                # expected values
+                expected_primary_keys = self.expected_primary_keys()[stream]
+
+                # collect information for assertions from syncs 1 & 2 base on expected values
+                primary_keys_sync_1 = set([tuple(message.get('data', {}).get(expected_pk) for expected_pk in expected_primary_keys)
+                                           for message in first_sync_records.get(stream, {'messages': []}).get('messages')
+                                           if message.get('action') == 'upsert'])
+                primary_keys_sync_2 = set([tuple(message.get('data', {}).get(expected_pk) for expected_pk in expected_primary_keys)
+                                           for message in second_sync_records.get(stream, {'messages': []}).get('messages')
+                                           if message.get('action') == 'upsert'])
+
+                # verify that sync 2 has at least one record synced
+                self.assertGreater(second_sync_record_count.get(stream, 0), 0)
+
+                # Verify by primary key values, that all records in the 1st sync are included in the 2nd sync.
+                self.assertTrue(primary_keys_sync_2.issubset(primary_keys_sync_1))
 
                 # verify that each stream has less records than the first connection sync
                 self.assertGreaterEqual(
-                    first_sync_record_count.get(stream, 0),
+                    first_sync_record_count.get(stream, -1),
                     second_sync_record_count.get(stream, 0),
                     msg="second had more records, start_date usage not verified")
 
@@ -288,4 +194,3 @@ class StartDateTest(BaseTapTest):
                     except (OverflowError, ValueError, TypeError):
                         print("bookmarks cannot be converted to dates, "
                               "can't test start_date for {}".format(stream))
-

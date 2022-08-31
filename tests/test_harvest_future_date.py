@@ -14,10 +14,14 @@ class TestFutureDate(BaseTapTest):
 
     def do_test(self, conn_id):
         state = {}
-        # add next day as state for all streams
+        # add next day as the state for all streams
         state_streams = self.expected_streams() - {"estimate_line_items", "external_reference", "invoice_line_items", "time_entry_external_reference", "user_project_tasks", "user_roles"}
         for state_stream in state_streams:
             state[state_stream] = datetime.datetime.strftime(datetime.datetime.today() + datetime.timedelta(days=1), "%Y-%m-%dT00:00:00Z")
+
+        # Select all streams and all fields within streams
+        found_catalogs = menagerie.get_catalogs(conn_id)
+        self.select_all_streams_and_fields(conn_id, found_catalogs, select_all_fields=True)
 
         # set state for running sync mode
         menagerie.set_state(conn_id, state)
@@ -28,6 +32,6 @@ class TestFutureDate(BaseTapTest):
         # get the state after running sync mode
         latest_state = menagerie.get_state(conn_id)
 
-        # verify the child streams have the state in latest state
+        # verify the child streams have the state in the latest state
         for stream in ["invoice_payments", "invoice_messages", "user_projects", "estimate_messages"]:
             self.assertIsNotNone(latest_state.get(stream))
