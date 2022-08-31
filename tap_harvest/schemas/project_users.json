@@ -4,6 +4,9 @@
     "id": {
       "type": ["null", "integer"]
     },
+    "use_default_rates": {
+      "type": ["null", "boolean"]
+    },
     "project_id": {
       "type": ["null", "integer"]
     },

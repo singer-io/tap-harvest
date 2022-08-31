@@ -1,13 +1,13 @@
 """Test that all fields are received when all the fields are selected."""
-import re
-from tap_tester import menagerie, connections, runner
+from tap_tester import menagerie, runner
 from base import BaseTapTest
 from harvest_api import set_up_class, tear_cown_class
 
 KNOWN_MISSING_FIELDS = {
     "external_reference": {
-        "task_id",
+        "task_id",  # Field not available in docs and response
     },
+    # Given fields are available in response but not written by tap
     "invoice_messages": {
         "send_reminder_on",
     },
@@ -27,6 +27,9 @@ KNOWN_MISSING_FIELDS = {
     },
     "projects": {
         "over_budget_notification_date",
+    },
+    "user_projects": {
+        "task_assignments_id"   # NOTE: Remove from map after dict-base implementatation
     },
 }
 

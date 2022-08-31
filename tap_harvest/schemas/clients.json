@@ -13,6 +13,9 @@
     "address": {
       "type": ["null", "string"]
     },
+    "statement_key": {
+      "type": ["null", "string"]
+    },
     "currency": {
       "type": ["null", "string"]
     },
