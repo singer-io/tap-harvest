@@ -1,22 +1,20 @@
 """
 Test tap pagination of streams
 """
-import logging
-import random
 from math import ceil
-
-from tap_tester import menagerie, runner
-
+from tap_tester import menagerie, runner, LOGGER
 from harvest_api import *
 from base import BaseTapTest
 
 
 class PaginationTest(BaseTapTest):
-    """ Test the tap pagination to get multiple pages of data """
+    """
+    Test the tap pagination to get multiple pages of data.
+    """
 
     @classmethod
     def setUpClass(cls):
-        logging.info("Start Setup")
+        LOGGER.info("Start Setup")
         
         # ###  BREAKDOWN for cls._master  #############################################################################
         # Each stream has an information map which dictates how we create data and how we test the stream
@@ -58,7 +56,7 @@ class PaginationTest(BaseTapTest):
         for stream in cls._master:
             if cls._master[stream]['test'] or stream == 'projects':
                 _, record_count = get_stream_counts(stream)
-                logging.info("{} has {} records".format(stream, record_count))
+                LOGGER.info("{} has {} records".format(stream, record_count))
                 cls._master[stream]["delete_me"] = []
                 cls._master[stream]["expected_fields"] = set()
                 cls._master[stream]["total"] = record_count
@@ -72,11 +70,11 @@ class PaginationTest(BaseTapTest):
 
         # Create dummy data in specifc streams prior to first sync to ensure they are captured        
         for itter in range(101):
-            logging.info("Creating {} round(s) of data ...".format(itter + 1))
+            LOGGER.info("Creating {} round(s) of data ...".format(itter + 1))
 
             # Clients            
             if cls._master["clients"]["total"] < 101:
-                logging.info("  Creating Client")
+                LOGGER.info("  Creating Client")
                 client = create_client()
                 cls._master["clients"]["total"] += 1
                 # BUG (https://github.com/singer-io/tap-harvest/issues/37)
@@ -87,7 +85,7 @@ class PaginationTest(BaseTapTest):
 
             # Contacts
             if cls._master["contacts"]["total"] < 101:
-                logging.info("  Creating Contact")
+                LOGGER.info("  Creating Contact")
                 contact = create_contact(get_random('clients'))
                 cls._master["contacts"]["total"] += 1
                 remove_expected = {'client'} # this is a correct expectation
@@ -97,7 +95,7 @@ class PaginationTest(BaseTapTest):
 
             # Roles
             if cls._master["roles"]["total"] < 101:
-                logging.info("  Creating Role")
+                LOGGER.info("  Creating Role")
                 role = create_role()
                 cls._master["roles"]["total"] += 1
                 # BUG (see clients bug above)
@@ -108,7 +106,7 @@ class PaginationTest(BaseTapTest):
 
             # Projects
             if cls._master["projects"]["total"] < 1:
-                logging.info("  Creating Project")
+                LOGGER.info("  Creating Project")
                 project = create_project(get_random('clients')) # master_client)
                 cls._master["projects"]["total"] += 1
                 cls._master["projects"]["expected_fields"].update(project.keys())
@@ -117,7 +115,7 @@ class PaginationTest(BaseTapTest):
             # Tasks
             if cls._master["tasks"]["total"] < 101 or cls._master["project_tasks"]["total"] < 101 or \
                cls._master["time_entries"]["total"] < 101 or cls._master["external_reference"]["total"] < 101:
-                logging.info("  Creating Task")
+                LOGGER.info("  Creating Task")
                 task = create_task()
                 cls._master["tasks"]["total"] += 1
                 cls._master["tasks"]["expected_fields"].update(get_fields(task))
@@ -126,14 +124,14 @@ class PaginationTest(BaseTapTest):
                 task_id = task['id']
 
                 # Project_Tasks
-                logging.info("  Creating Project_Task")
+                LOGGER.info("  Creating Project_Task")
                 project_task = create_project_task(project_id, task_id)
                 cls._master["project_tasks"]["total"] += 1
                 cls._master["project_tasks"]["expected_fields"].update(get_fields(project_task))
                 cls._master["project_tasks"]["delete_me"].append({"id": project_task['id']})
 
                 # Time Entries;
-                logging.info("  Creating Time Entry")
+                LOGGER.info("  Creating Time Entry")
                 time_entry = create_time_entry(project_id, task_id)
                 cls._master["time_entries"]["total"] += 1
                 # NOTE: time_entries has fields which are set to null in a create and so do not get picked up
@@ -159,7 +157,7 @@ class PaginationTest(BaseTapTest):
             # Invoices
             if cls._master["invoices"]["total"] < 101 or cls._master["invoice_line_items"]["total"] < 101:
                 # or cls._master["invoice_messages"]["total"] < 101 or cls._master["invoice_payments"]["total"] < 101:
-                logging.info("  Creating Invoice")
+                LOGGER.info("  Creating Invoice")
                 invoice = create_invoice(client_id=get_all('projects')[0]['client']['id'],
                                          project_id=get_all('projects')[0]['id'])
                 cls._master["invoices"]["total"] += 1
@@ -171,7 +169,7 @@ class PaginationTest(BaseTapTest):
                 cls._master["invoices"]["delete_me"].append({"id": invoice['id']})
 
                 # Invoice Messages (BUG See cls._master)
-                # logging.info("  Creating Invoice Messages")
+                # LOGGER.info("  Creating Invoice Messages")
                 # invoice_message = create_invoice_message(invoice['id'])
                 # cls._master["invoice_messages"]["total"] += 1
                 # cls._master["invoice_messages"]["expected_fields"].update(invoice_message.keys())
@@ -183,7 +181,7 @@ class PaginationTest(BaseTapTest):
                 cls._master["invoice_line_items"]["expected_fields"].update({'invoice_id'})
 
                 # Invoice Payments (BUG See cls._master)
-                # logging.info("  Creating Invoice Payments")
+                # LOGGER.info("  Creating Invoice Payments")
                 # invoice_payment = create_invoice_payment(invoice['id'])
                 # cls._master["invoice_payments"]["total"] += 1
                 # cls._master["invoice_payments"]["expected_fields"].update(invoice_payment.keys())
@@ -191,7 +189,7 @@ class PaginationTest(BaseTapTest):
 
             # Expenses
             if cls._master["expenses"]["total"] < 101:
-                logging.info("  Creating Expense")
+                LOGGER.info("  Creating Expense")
                 expense = create_expense(get_all('projects')[0]['id'])
                 cls._master["expenses"]["total"] += 1
                 # NOTE: Expesnes has fields which cannot be generated by api call, so we will set
@@ -205,7 +203,7 @@ class PaginationTest(BaseTapTest):
 
             # Invoice Item Categories
             if cls._master["invoice_item_categories"]["total"] < 101:
-                logging.info("  Creating Invoice Item Category")
+                LOGGER.info("  Creating Invoice Item Category")
                 invoice_category = create_invoice_item_category()
                 cls._master["invoice_item_categories"]["total"] += 1
                 cls._master["invoice_item_categories"]["expected_fields"].update(invoice_category.keys())
@@ -213,7 +211,7 @@ class PaginationTest(BaseTapTest):
 
             # Expense Categories
             if cls._master["expense_categories"]["total"] < 101:
-                logging.info("  Creating Expense Category")
+                LOGGER.info("  Creating Expense Category")
                 category = create_expense_category()
                 cls._master["expense_categories"]["total"] += 1
                 cls._master["expense_categories"]["expected_fields"].update(category.keys())
@@ -222,7 +220,7 @@ class PaginationTest(BaseTapTest):
 
             # Estimates
             if cls._master["estimates"]["total"] < 101: # or cls._master["estimate_messages"]["total"] < 101:
-                logging.info("  Creating Estimate")
+                LOGGER.info("  Creating Estimate")
                 estimate = create_estimate(get_random("clients"))
                 cls._master["estimates"]["total"] += 1
                 # BUG (see clients bug above)
@@ -237,7 +235,7 @@ class PaginationTest(BaseTapTest):
                 cls._master["estimate_line_items"]["total"] += 1
 
                 # Estimate Messages (BUG See cls._master)
-                # logging.info("  Creating Estimate_Message")
+                # LOGGER.info("  Creating Estimate_Message")
                 # estimate_message = create_estimate_message(estimate['id'])
                 # cls._master["estimate_messages"]["total"] += 1
                 # cls._master["estimate_messages"]["expected_fields"].update(estimate_message.keys())
@@ -245,7 +243,7 @@ class PaginationTest(BaseTapTest):
 
             # Estimate Item Categories
             if cls._master["estimate_item_categories"]["total"] < 101:
-                logging.info("  Creating Estimate Item Category")
+                LOGGER.info("  Creating Estimate Item Category")
                 category = create_estimate_item_category()
                 cls._master["estimate_item_categories"]["total"] += 1
                 cls._master["estimate_item_categories"]["expected_fields"].update(category.keys())
@@ -254,16 +252,16 @@ class PaginationTest(BaseTapTest):
 
     @classmethod
     def tearDownClass(cls):
-        logging.info("Start Teardown")
+        LOGGER.info("Start Teardown")
 
         # TODO figure out how to delete a task with tracked time, and an expense
 
         ##########  Uncomment for CLEAN UP MODE #########################
         # for stream in cls._master:
         #     if stream in cls._is_special:  
-        #         logging.info("Leaving special stream ({}) untouched".format(stream))
+        #         LOGGER.info("Leaving special stream ({}) untouched".format(stream))
         #         continue
-        #     logging.info("Cleaning up stream: {}".format(stream))
+        #     LOGGER.info("Cleaning up stream: {}".format(stream))
         #     all_of_stream = get_all(stream)
         #     while all_of_stream:
         #         for st in cls._master[stream]['delete_me']: 
@@ -276,19 +274,19 @@ class PaginationTest(BaseTapTest):
         
         ##########  Uncomment for PURGE MODE ###########################
         # stream = "time_entries"
-        # logging.info("Comencing PURGE of stream: {}".format(stream))
+        # LOGGER.info("Comencing PURGE of stream: {}".format(stream))
         # deletions = 0
         # delete_failed = 0
         # all_records = get_all(stream)
         # pages, records = get_stream_counts(stream)
-        # logging.info("Stream has {} pages and {} records".format(pages, records))
+        # LOGGER.info("Stream has {} pages and {} records".format(pages, records))
         # while pages:
         #     for record in all_records:
         #         try:
         #             delete_stream(stream, record['id'])
         #             deletions += 1
         #             if not (deletions % 10):
-        #                 logging.info("{} instances of stream ({}) were deleted.".format(str(deletions), stream))
+        #                 LOGGER.info("{} instances of stream ({}) were deleted.".format(str(deletions), stream))
         #         except AssertionError:
         #             delete_failed += 1
         #     pages -= 1
@@ -296,16 +294,16 @@ class PaginationTest(BaseTapTest):
         #         break
         #     all_records = get_all(stream)
         #     pages, records = get_stream_counts(stream)
-        #     logging.info("Stream has {} pages and {} records".format(pages, records)) 
+        #     LOGGER.info("Stream has {} pages and {} records".format(pages, records)) 
         ################################################################
 
         ##########  Uncomment for PURGE ALL MODE ########################
-        # logging.info("Comencing PURGE of ALL streams...this may take some time.")
+        # LOGGER.info("Comencing PURGE of ALL streams...this may take some time.")
         # for stream in cls._master:
         #     deletions = 0
         #     delete_failed = 0
         #     pages, records = get_stream_counts(stream)
-        #     logging.info("Stream ({}) has {} pages and {} records".format(stream, pages, records))
+        #     LOGGER.info("Stream ({}) has {} pages and {} records".format(stream, pages, records))
         #     all_records = get_all(stream)
         #     while pages:
         #         for record in all_records:
@@ -313,7 +311,7 @@ class PaginationTest(BaseTapTest):
         #                 delete_stream(stream, record['id'])
         #                 deletions += 1
         #                 if not (deletions % 20):
-        #                     logging.info("{} instances of stream ({}) were deleted.".format(str(deletions), stream))
+        #                     LOGGER.info("{} instances of stream ({}) were deleted.".format(str(deletions), stream))
         #             except AssertionError:
         #                 delete_failed += 1
         #                 continue
@@ -322,7 +320,7 @@ class PaginationTest(BaseTapTest):
         #             break
         #         all_records = get_all(stream)
         #         pages, records = get_stream_counts(stream)
-        #         logging.info("Stream has {} pages and {} records".format(pages, records))
+        #         LOGGER.info("Stream has {} pages and {} records".format(pages, records))
         ################################################################
         
     def name(self):
@@ -353,7 +351,7 @@ class PaginationTest(BaseTapTest):
 
         for stream in self.expected_streams().difference(set(untested_streams)):
             with self.subTest(stream=stream):
-                logging.info("Testing " + stream)
+                LOGGER.info("Testing " + stream)
 
                 # Expected values
                 expected_primary_keys = self.expected_primary_keys()[stream]
@@ -364,7 +362,7 @@ class PaginationTest(BaseTapTest):
                                      for message in synced_records.get(stream).get('messages')
                                      if message.get('action') == 'upsert']
 
-                # verify that we can paginate with all fields selected
+                # Verify that we can paginate with all fields selected
                 self.assertGreater(
                     record_count_by_stream.get(stream, -1),
                     self.expected_metadata().get(stream, {}).get(self.API_LIMIT, 0),
@@ -380,7 +378,7 @@ class PaginationTest(BaseTapTest):
                     msg="The fields sent to the target have an extra or missing field"
                 )
 
-                # verify that the automatic fields are sent to the target for non-child streams
+                # Verify that the automatic fields are sent to the target for non-child streams
                 if not self._master[stream]["child"]:
                     self.assertTrue(
                         actual_fields_by_stream.get(stream, set()).issuperset(
@@ -404,7 +402,7 @@ class PaginationTest(BaseTapTest):
 
                         for other_index, other_page in enumerate(pages):
                             if current_index == other_index:
-                                continue  # don't compare the page to itself
+                                continue  # Don't compare the page to itself
 
                             self.assertTrue(current_page.isdisjoint(other_page),
-                                            msg=f'other_page_primary_keys={other_page}')
+                                            msg=f'Other_page_primary_keys={other_page}')

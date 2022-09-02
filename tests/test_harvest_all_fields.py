@@ -1,6 +1,4 @@
-"""Test that all fields are received when all the fields are selected."""
-import re
-from tap_tester import menagerie, connections, runner
+from tap_tester import menagerie, runner
 from base import BaseTapTest
 from harvest_api import set_up_class, tear_cown_class
 
@@ -31,7 +29,10 @@ KNOWN_MISSING_FIELDS = {
 }
 
 
-class HarvestAutomaticFields(BaseTapTest):
+class TestAllFields(BaseTapTest):
+    """
+    Test that all fields are received when all the fields are selected.
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -42,7 +43,7 @@ class HarvestAutomaticFields(BaseTapTest):
         tear_cown_class(cls)
 
     def name(self):
-        return "tap_tester_harvest_automatic_fields"
+        return "tap_tester_harvest_all_fields"
 
     def do_test(self, conn_id):
         """

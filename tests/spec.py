@@ -37,7 +37,6 @@ class TapSpec():
             return properties
 
         # This test needs the new connections start date to be larger than the default
-        print("======>>>>>>>>>>", self.start_date , properties["start_date"])
         assert self.start_date > properties["start_date"]
 
         properties["start_date"] = self.start_date
