@@ -1,10 +1,11 @@
-"""Test that automatic fields are received for selected streams."""
-import re
-from tap_tester import menagerie, connections, runner
+from tap_tester import menagerie, runner
 from base import BaseTapTest
 from harvest_api import set_up_class, tear_cown_class
 
-class HarvestAutomaticFields(BaseTapTest):
+class TestAutomaticFields(BaseTapTest):
+    """
+    Test that automatic fields are received for selected streams.
+    """
 
     @classmethod
     def setUpClass(cls):

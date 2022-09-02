@@ -1,27 +1,20 @@
-"""
-Test tap sets a bookmark and respects it for the next sync of a stream
-"""
-import logging
-
 from time import sleep
 from datetime import datetime as dt
-
 from dateutil.parser import parse
-import random
-
-from tap_tester import menagerie, runner
-
+from tap_tester import menagerie, runner, LOGGER
 from harvest_api import *
 from base import BaseTapTest
 
 
 class BookmarkTest(BaseTapTest):
-    """Test tap sets a bookmark and respects it for the next sync of a stream"""
+    """
+    Test tap sets a bookmark and respects it for the next sync of a stream.
+    """
 
     @classmethod
     def setUpClass(cls):
-        logging.info("Start Setup")
-        logging.info("Creating Data..")
+        LOGGER.info("Start Setup")
+        LOGGER.info("Creating Data..")
         client_1 = create_client()
         try:
             project_1 = create_project(client_1['id'])
@@ -142,7 +135,7 @@ class BookmarkTest(BaseTapTest):
 
     @classmethod
     def tearDownClass(cls):
-        logging.info("Start Teardown")
+        LOGGER.info("Start Teardown")
         for invoice in cls._teardown_delete['invoices']:
             delete_stream('invoices', invoice['id'])
         for expense in cls._teardown_delete['expenses']:
@@ -170,7 +163,7 @@ class BookmarkTest(BaseTapTest):
 
         ##########  Uncomment for PURGE MODE ###############
         # stream = ""
-        # logging.info("Commencing PURGE of stream: {}".format(stream))
+        # LOGGER.info("Commencing PURGE of stream: {}".format(stream))
         # all_of_stream = get_all(stream)
         # while all_of_stream:
         #     for s in get_all(stream):
@@ -186,19 +179,19 @@ class BookmarkTest(BaseTapTest):
 
     def do_test(self, conn_id):
         """
-        Verify that for each stream you can do a sync which records bookmarks.
+        Verify that for each stream you can do a sync that records bookmarks.
         That the bookmark is the maximum value sent to the target for the replication key.
         That a second sync respects the bookmark
             All data of the second sync is >= the bookmark from the first sync
-            The number of records in the 2nd sync is less then the first (This assumes that
+            The number of records in the 2nd sync is less than the first (This assumes that
                 new data added to the stream is done at a rate slow enough that you haven't
                 doubled the amount of data from the start date to the first sync between
                 the first sync and second sync run in this test)
 
-        Verify that only data for incremental streams is sent to the target
+        Verify that only data for incremental streams are sent to the target
 
         PREREQUISITE
-        For EACH stream that is incrementally replicated there are multiple rows of data with
+        For EACH stream that is incrementally replicated, there are multiple rows of data with
             different values for the replication key
         """
         # Select all streams and no fields within streams
@@ -260,7 +253,7 @@ class BookmarkTest(BaseTapTest):
         # Run a sync job using orchestrator
         first_sync_record_count = self.run_sync(conn_id)
 
-        # verify that the sync only sent records to the target for selected streams (catalogs)
+        # Verify that the sync only sent records to the target for selected streams (catalogs)
         self.assertEqual(set(first_sync_record_count.keys()).difference(untested_streams), streams_to_test)
 
         # Get the first state of sync 1
@@ -272,151 +265,151 @@ class BookmarkTest(BaseTapTest):
         first_min_bookmarks = self.min_bookmarks_by_stream(first_sync_records)
 
         # Insert Data prior to the 2nd sync
-        logging.info("Updating clients")
+        LOGGER.info("Updating clients")
         client_id = self._teardown_delete['clients'][0]['id']
         updated_client = update_client(client_id)
         expected['clients'].append({"id": client_id})
 
-        logging.info(updated_client['updated_at'])
+        LOGGER.info(updated_client['updated_at'])
         
-        logging.info("Updating contacts")
+        LOGGER.info("Updating contacts")
         contact_id = self._teardown_delete['contacts'][0]['id']
         updated_contact = update_contact(contact_id)
         expected['contacts'].append({"id": contact_id})
 
-        logging.info(updated_contact['updated_at'])
+        LOGGER.info(updated_contact['updated_at'])
         
-        logging.info("Updating estimates")
+        LOGGER.info("Updating estimates")
         estimate_id = self._teardown_delete['estimates'][0]['id']
         updated_estimate = update_estimate(estimate_id)
         expected['estimates'].append({"id": estimate_id})
 
-        logging.info(updated_estimate['updated_at'])
+        LOGGER.info(updated_estimate['updated_at'])
         
-        logging.info("'Updating' estimate_messages")
+        LOGGER.info("'Updating' estimate_messages")
         updated_estimate_message = update_estimate_message(estimate_id)
         expected['estimate_messages'].append({"id": updated_estimate_message['id']})
 
-        logging.info(updated_estimate_message['updated_at'])
+        LOGGER.info(updated_estimate_message['updated_at'])
         
-        logging.info("Updating estimate_line_items")
+        LOGGER.info("Updating estimate_line_items")
         expected['estimate_line_items'].append({"id": updated_estimate['line_items'][0]['id']})
 
-        logging.info("Updating estimate_item_categories")
+        LOGGER.info("Updating estimate_item_categories")
         category_id = self._teardown_delete['estimate_item_categories'][0]['id']        
         updated_category = update_estimate_item_category(category_id)
         expected['estimate_item_categories'].append({"id": category_id})
 
-        logging.info(updated_category['updated_at'])
+        LOGGER.info(updated_category['updated_at'])
         
-        logging.info("Updating invoices")
+        LOGGER.info("Updating invoices")
         invoice_id = self._teardown_delete['invoices'][0]['id']
         updated_invoice = update_invoice(invoice_id)
         expected['invoices'].append({"id": invoice_id})
 
-        logging.info(updated_invoice['updated_at'])
+        LOGGER.info(updated_invoice['updated_at'])
         
-        logging.info("Updating invoice_payments")
+        LOGGER.info("Updating invoice_payments")
         updated_payment = update_invoice_payment(invoice_id)
         expected['invoice_payments'].append({"id": updated_payment['id']})
         
-        logging.info(updated_payment['updated_at'])
+        LOGGER.info(updated_payment['updated_at'])
 
-        logging.info("Updating invoice_messages")
+        LOGGER.info("Updating invoice_messages")
         updated_message = update_invoice_message(invoice_id)
         expected['invoice_messages'].append({"id": updated_message['id']})
 
-        logging.info("Updating invoice_line_items")
+        LOGGER.info("Updating invoice_line_items")
         expected['invoice_line_items'].append({"id": updated_invoice['line_items'][0]['id']})
 
-        logging.info(updated_message['updated_at'])
+        LOGGER.info(updated_message['updated_at'])
         
-        logging.info("Updating invoice_item_categories")
+        LOGGER.info("Updating invoice_item_categories")
         category_id = self._teardown_delete['invoice_item_categories'][0]['id']        
         updated_category = update_invoice_item_category(category_id)
         expected['invoice_item_categories'].append({"id": category_id})
 
-        logging.info(updated_category['updated_at'])
+        LOGGER.info(updated_category['updated_at'])
         
-        logging.info("Updating roles")
+        LOGGER.info("Updating roles")
         role_id = self._teardown_delete['roles'][0]['id']
         updated_role = update_role(role_id)
         expected['roles'].append({"id": role_id})
 
-        logging.info(updated_role['updated_at'])
+        LOGGER.info(updated_role['updated_at'])
 
-        logging.info("Updating user_roles")
+        LOGGER.info("Updating user_roles")
         user_id = get_random('users')
         update_user_role = update_role(role_id, [])
         updated_user_role = update_role(role_id, [user_id])
         expected['user_roles'].append({"user_id": user_id, "role_id": role_id})
 
-        logging.info(updated_user_role['updated_at'])
+        LOGGER.info(updated_user_role['updated_at'])
         
         # TODO - Why is this the same as user_roles update ^
-        # logging.info("Updating user_project_tasks")
+        # LOGGER.info("Updating user_project_tasks")
         # user_id = get_random('users')
         # update_user_role = update_role(role_id, [])
         # updated_user_role = update_role(role_id, [user_id])
         # expected['user_roles'].append({"roles": user_id, "role_id": role_id})
 
-        # logging.info(updated_user_role['updated_at'])
+        # LOGGER.info(updated_user_role['updated_at'])
         
-        logging.info("Updating expenses")
+        LOGGER.info("Updating expenses")
         expense_id = self._teardown_delete['expenses'][0]['id']
         updated_expense = update_expense(expense_id)
         expected['expenses'].append({"id": expense_id})
 
-        logging.info(updated_category['updated_at'])
+        LOGGER.info(updated_category['updated_at'])
         
-        logging.info("Updating expense_categories")
+        LOGGER.info("Updating expense_categories")
         category_id = self._teardown_delete['expense_categories'][0]['id']
         updated_category = update_expense_category(category_id)
         expected['expense_categories'].append({"id": category_id})
 
-        logging.info(updated_category['updated_at'])
+        LOGGER.info(updated_category['updated_at'])
 
-        logging.info("Updating tasks")
+        LOGGER.info("Updating tasks")
         task_id = self._teardown_delete['tasks'][0]['id']
         updated_task = update_task(task_id)
         expected['tasks'].append({"id": task_id})
 
-        logging.info(updated_category['updated_at'])
+        LOGGER.info(updated_category['updated_at'])
                 
         # This is commented because we are not testing this stream and it affects time_entries and it's child streams
-        # logging.info("Updating project_users")
+        # LOGGER.info("Updating project_users")
         # project_id = self._teardown_delete["projects"][0]['id']
         # project_user_id = self._teardown_delete["project_users"][0]['id']
         # updated_project_user = update_project_user(project_id, project_user_id)
         # expected['project_users'].append({'id': updated_project_user['id']})
         
-        # logging.info(updated_project_user['updated_at'])
+        # LOGGER.info(updated_project_user['updated_at'])
         
-        logging.info("Updating project_tasks (task_assignments)")
+        LOGGER.info("Updating project_tasks (task_assignments)")
         project_id = self._teardown_delete["projects"][0]['id']
         project_task_id = self._teardown_delete["project_tasks"][0]['id']
         updated_project_task = update_project_task(project_id, project_task_id)
         expected['project_tasks'].append({"id": updated_project_task['id']})
         expected['user_project_tasks'].append({"project_task_id": updated_project_task['id'], "user_id": get_random("users")})
 
-        logging.info(updated_project_task['updated_at'])
+        LOGGER.info(updated_project_task['updated_at'])
 
-        logging.info("Updating time_entries")
+        LOGGER.info("Updating time_entries")
         time_entry_id = self._teardown_delete['time_entries'][0]['id']
         updated_time_entry = update_time_entry(time_entry_id)
         expected['time_entries'].append({"id": time_entry_id})
 
-        logging.info(updated_category['updated_at'])
+        LOGGER.info(updated_category['updated_at'])
         
-        logging.info("Updating external_reference (time_entries)")
+        LOGGER.info("Updating external_reference (time_entries)")
         external_reference_id = updated_time_entry['external_reference']['id']
         expected['external_reference'].append({"id": external_reference_id})
 
-        logging.info("Updating time_entry_external_reference (time_entries)")
+        LOGGER.info("Updating time_entry_external_reference (time_entries)")
         expected['time_entry_external_reference'].append({"time_entry_id": time_entry_id,
                                                           "external_reference_id": external_reference_id})
 
-        logging.info("Updated Expectations : \n{}".format(expected))
+        LOGGER.info("Updated Expectations : \n{}".format(expected))
 
         # Ensure different updated_at times for updates and inserts
         sleep(2)
@@ -432,112 +425,112 @@ class BookmarkTest(BaseTapTest):
 
         for stream, expect in self._teardown_delete.items():
             if expect:
-                logging.info("last synced {}: {}".format(stream, expect[-1]))
+                LOGGER.info("last synced {}: {}".format(stream, expect[-1]))
 
         try:
-            logging.info("Inserting roles")
+            LOGGER.info("Inserting roles")
             inserted_role = create_role()
             expected['roles'].append({"id": inserted_role['id']})
             self._teardown_delete['roles'].append({"id":inserted_role['id']})
 
-            logging.info("'Inserting' (update_role) user_roles")
+            LOGGER.info("'Inserting' (update_role) user_roles")
             user_id = get_random('users')
             inserted_user_role = update_role(inserted_role['id'], [user_id])
             expected['user_roles'].append({"user_id": user_id, "role_id": inserted_role['id']})
             
-            logging.info("Inserting clients")
+            LOGGER.info("Inserting clients")
             inserted_client = create_client()
             expected['clients'].append({"id": inserted_client['id']})
             self._teardown_delete['clients'].append({"id":inserted_client['id']})
 
-            logging.info("Inserting contacts")
+            LOGGER.info("Inserting contacts")
             inserted_contact = create_contact(inserted_client['id'])
             expected['contacts'].append({"id": inserted_contact['id']})
             self._teardown_delete['contacts'].append({"id":inserted_contact['id']})
             
-            logging.info("Inserting estimates")
+            LOGGER.info("Inserting estimates")
             inserted_estimate = create_estimate(inserted_client['id'])
             expected['estimates'].append({"id": inserted_estimate['id']})
             self._teardown_delete['estimates'].append({"id": inserted_estimate['id']})
 
-            logging.info("Inserting estimate_item_categories")
+            LOGGER.info("Inserting estimate_item_categories")
             inserted_category = create_estimate_item_category()
             expected['estimate_item_categories'].append({"id": inserted_category['id']})
             self._teardown_delete['estimate_item_categories'].append({"id": inserted_category['id']})
             
-            logging.info("Inserting estimate_line_items")
+            LOGGER.info("Inserting estimate_line_items")
             updated_estimate_line_item = inserted_estimate['line_items'][0]
             expected['estimate_line_items'].append({"id": updated_estimate_line_item['id']})
 
-            logging.info("Inserting estimate_messages")
+            LOGGER.info("Inserting estimate_messages")
             inserted_estimate_message = create_estimate_message(inserted_estimate['id'])
             expected['estimate_messages'].append({"id": inserted_estimate_message['id']})
 
-            logging.info("Inserting invoices")
+            LOGGER.info("Inserting invoices")
             client_id = self._teardown_delete['clients'][0]['id']
             inserted_invoice = create_invoice(client_id=client_id,estimate_id=inserted_estimate['id'])
             expected['invoices'].append({"id": inserted_invoice['id']})
             self._teardown_delete['invoices'].append({"id":inserted_invoice['id']})
 
-            logging.info("Inserting invoice_payments")
+            LOGGER.info("Inserting invoice_payments")
             inserted_payment = create_invoice_payment(inserted_invoice['id'])
             expected['invoice_payments'].append({"id": inserted_payment['id']})
 
-            logging.info("Inserting invoice_line_items")
+            LOGGER.info("Inserting invoice_line_items")
             updated_invoice_line_item = inserted_invoice['line_items'][0]
             expected['invoice_line_items'].append({"id": updated_invoice_line_item['id']})
 
-            logging.info("Inserting invoice_messages")
+            LOGGER.info("Inserting invoice_messages")
             inserted_message = create_invoice_message(inserted_invoice['id'])
             expected['invoice_messages'].append({"id": inserted_message['id']})
             self._teardown_delete['invoice_messages'].append({"id":inserted_message['id']})
             
-            logging.info("Inserting invoice_item_categories")
+            LOGGER.info("Inserting invoice_item_categories")
             inserted_category = create_invoice_item_category()
             expected['invoice_item_categories'].append({"id": inserted_category['id']})
             self._teardown_delete['invoice_item_categories'].append({"id":inserted_category['id']})
 
-            logging.info("Inserting expenses")
+            LOGGER.info("Inserting expenses")
             project_id = self._teardown_delete['projects'][0]['id']
             inserted_expense = create_expense(project_id)
             expected['expenses'].append({"id": inserted_expense['id']})
             self._teardown_delete['expenses'].append({"id": inserted_expense['id']})
 
-            logging.info("Inserting expense_categories")
+            LOGGER.info("Inserting expense_categories")
             inserted_category = create_expense_category()
             expected['expense_categories'].append({"id": inserted_category['id']})
             self._teardown_delete['expense_categories'].append({"id": inserted_category['id']})
 
-            logging.info("Inserting tasks")
+            LOGGER.info("Inserting tasks")
             inserted_task = create_task()
             expected['tasks'].append({"id": inserted_task['id']})
             self._teardown_delete['tasks'].append({"id": inserted_task['id']})
 
-            logging.info("Inserting project_users)")
+            LOGGER.info("Inserting project_users)")
             project_id = self._teardown_delete['projects'][1]['id']
             inserted_project_user = create_project_user(project_id, get_random('users'))
             expected['project_users'].append({"id":inserted_project_user["id"]})
 
-            logging.info("Inserting project_tasks (task_assingments)")
+            LOGGER.info("Inserting project_tasks (task_assingments)")
             inserted_project_task = create_project_task(project_id, inserted_task['id'])
             expected['project_tasks'].append({"id":inserted_project_task["id"]})
             expected['user_project_tasks'].append({"project_task_id": inserted_project_task['id'], "user_id": get_random("users")})
 
-            logging.info("Inserting time_entries")
+            LOGGER.info("Inserting time_entries")
             task_id = inserted_task['id']
             inserted_time_entry = create_time_entry(project_id, task_id)
             expected['time_entries'].append({"id": inserted_time_entry['id']})
             self._teardown_delete['time_entries'].append({"id": inserted_time_entry['id']})
             
-            logging.info("Inserting external_reference (time_entries)")
+            LOGGER.info("Inserting external_reference (time_entries)")
             inserted_external_reference = inserted_time_entry['external_reference']
             expected['external_reference'].append({"id": inserted_external_reference['id']})
 
-            logging.info("Inserting time_entry_external_reference (time_entries)")
+            LOGGER.info("Inserting time_entry_external_reference (time_entries)")
             expected['time_entry_external_reference'].append({"time_entry_id": time_entry_id,
                                                               "external_reference_id": external_reference_id})
         finally:
-            logging.info("Data Inserted, 2nd Sync Completed")
+            LOGGER.info("Data Inserted, 2nd Sync Completed")
 
         # Run a second sync job using orchestrator
         second_sync_record_count = self.run_sync(conn_id)
@@ -558,13 +551,13 @@ class BookmarkTest(BaseTapTest):
         # ADJUST IF NECESSARY
         for stream in streams_to_test:
             with self.subTest(stream=stream):
-                # get bookmark values from state and target data
+                # Get bookmark values from state and target data
                 state_value = first_sync_state.get(stream)
                 final_state_value = second_sync_state.get(stream)
                 first_sync_count = first_sync_record_count.get(stream, 0)
                 second_sync_count = second_sync_record_count.get(stream, 0)
 
-                # verify that you get less data the 2nd time around
+                # Verify that you get less data the 2nd time around
                 self.assertGreater(first_sync_count, second_sync_count,
                     msg="second sync didn't have fewer records, bookmark usage not verified")
 
@@ -572,7 +565,7 @@ class BookmarkTest(BaseTapTest):
                 self.assertGreater(second_sync_count, 0,
                     msg="second sync didn't have any records")
 
-                # verify the 2nd sync has specific inserted and updated records
+                # Verify the 2nd sync has specific inserted and updated records
                 actual = second_sync_records.get(stream, {'messages': []}).get('messages')
                 actual = [item["data"] for item in actual]
                 for expected_key_values in expected[stream]:
@@ -597,7 +590,7 @@ class BookmarkTest(BaseTapTest):
                         stream, {None: None}).get(stream_bookmark_key)
 
                     try:
-                        # attempt to parse the bookmark as a date
+                        # Attempt to parse the bookmark as a date
                         if state_value:
                             if isinstance(state_value, str):
                                 state_value = self.local_to_utc(parse(state_value))
@@ -632,17 +625,17 @@ class BookmarkTest(BaseTapTest):
                                     dt.utcfromtimestamp(final_state_value))
 
                     except (OverflowError, ValueError, TypeError):
-                        print("bookmarks cannot be converted to dates, comparing values directly")
+                        print("Bookmarks cannot be converted to dates, comparing values directly")
 
-                    # verify that there is data with different bookmark values - setup necessary
+                    # Verify that there is data with different bookmark values - setup necessary
                     self.assertGreater(target_value, target_min_value,
                                     msg="Data isn't set up to be able to test bookmarks")
 
-                    # verify state agrees with target data after 1st sync
+                    # Verify state agrees with target data after 1st sync
                     self.assertEqual(state_value, target_value,
                                     msg="The bookmark value isn't correct based on target data")
 
-                    # verify all data from 2nd sync >= 1st bookmark
+                    # Verify all data from 2nd sync >= 1st bookmark
                     target_value = second_min_bookmarks.get(
                         stream, {None: None}).get(stream_bookmark_key)
                     try:
@@ -653,9 +646,9 @@ class BookmarkTest(BaseTapTest):
                                 target_value = self.local_to_utc(dt.utcfromtimestamp(target_value))
 
                     except (OverflowError, ValueError, TypeError):
-                        print("bookmarks cannot be converted to dates, comparing values directly")
+                        print("Bookmarks cannot be converted to dates, comparing values directly")
 
-                    # verify that the minimum bookmark sent to the target for the second sync
+                    # Verify that the minimum bookmark sent to the target for the second sync
                     # is greater than or equal to the bookmark from the first sync
                     # TODO - BUG this will fail if no streams are updated/created
 

@@ -1,16 +1,15 @@
-"""
-Test that the start_date is respected for some streams
-"""
-from tap_tester import runner, menagerie
-
+from tap_tester import runner, menagerie, LOGGER
 from harvest_api import *
 from base import BaseTapTest
 
 class TestStartDateHonoring(BaseTapTest):
+    """
+    Test that the start_date is respected for some streams
+    """
 
     @classmethod
     def setUpClass(cls):
-        logging.info("Start Setup")
+        LOGGER.info("Start Setup")
         # Track what was created to delete in teardown
         cls._teardown_delete = {"contacts": [], "projects": [], "project_tasks": [],
                                 "tasks": [], "invoices": [], "invoice_messages": [],
@@ -33,7 +32,7 @@ class TestStartDateHonoring(BaseTapTest):
 
         # Create dummy data in the specifc streams     
         for itter in range(3):
-            logging.info("Creating {} round(s) of data ...".format(itter + 1))
+            LOGGER.info("Creating {} round(s) of data ...".format(itter + 1))
 
             estimate_1 = create_estimate(client_1['id'])
             estimate_message_1 = create_estimate_message(estimate_1['id'])
@@ -51,7 +50,7 @@ class TestStartDateHonoring(BaseTapTest):
     @classmethod
     def tearDownClass(cls):
         # Clean up the data created in the setup
-        logging.info("Starting Teardown")
+        LOGGER.info("Starting Teardown")
         for project in cls._teardown_delete['projects']:
             delete_stream('projects', project['id'])
         for invoice in cls._teardown_delete['invoices']:
@@ -65,7 +64,7 @@ class TestStartDateHonoring(BaseTapTest):
         return "tap_tester_harvest_start_date_honoring"
 
     def get_second_updated_parent_id(self, records, stream):
-        # get the invoice id or estimate id that is perviously updated than 1st id
+        """Get the invoice id or estimate id that is previously updated than 1st id."""
         highest_updated_at = records.get(stream).get("messages")[0].get("data").get("updated_at")
         for data in records.get(stream).get("messages"):
             if data.get("data").get("updated_at") < highest_updated_at:
