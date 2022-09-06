@@ -31,7 +31,7 @@ def main():
     
     with HarvestClient(config) as client:
 
-            state = {}
+            state = {'bookmarks': {}}
             if parsed_args.state:
                 state = parsed_args.state
             if parsed_args.discover:
