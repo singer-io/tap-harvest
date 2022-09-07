@@ -1,7 +1,5 @@
 from datetime import datetime
-
 import singer
-import pendulum
 from singer import Transformer, utils, metadata
 
 LOGGER = singer.get_logger()
@@ -20,7 +18,7 @@ def remove_empty_date_times(item, schema):
     for key in schema['properties']:
         subschema = schema['properties'][key]
 
-        # Append key with datatpye date-time into the `fields` list 
+        # Append key with datatpye date-time into the `fields` list
         if subschema.get('format') == 'date-time':
             fields.append(key)
 
@@ -49,18 +47,15 @@ def get_bookmark(stream_name, state, default):
     """
     Return bookmark value if available in the state otherwise return start date
     """
-    if (state is None):
+    if state is None:
         return default
-    return (
-        state
-        .get(stream_name, default)
-    )
+    return state.get(stream_name, default)
 
 class Stream:
     tap_stream_id = None
-    replication_method="FULL_TABLE"
-    replication_keys=[]
-    key_properties=["id"]
+    replication_method = "FULL_TABLE"
+    replication_keys = []
+    key_properties = ["id"]
     object_to_id = None
     parent = None
     parent_id = None
@@ -70,7 +65,7 @@ class Stream:
     path = None
     date_fields = None
 
-    def add_field_at_1st_level(self, row=None, parent_row=None):
+    def add_field_at_1st_level(self, row=None):
         return row
 
     def write_schema(self, catalog):
@@ -94,13 +89,17 @@ class Stream:
         min_bookmark = bookmark
         if stream in selected_streams:
             # Get minimum of stream's bookmark(start date in case of no bookmark) and min_bookmark
-            stream_name_in_state = f'{stream}_parent' if stream_obj.parent else stream
+            if stream_obj.parent:
+                stream_name_in_state = stream+'_parent'
+            else:
+                stream_name_in_state = stream
             min_bookmark = min(min_bookmark, get_bookmark(stream_name_in_state, state, start_date))
             LOGGER.debug("New minimum bookmark is %s", min_bookmark)
 
         for child in stream_obj.children:
             # Iterate through all children and return minimum bookmark among all.
-            min_bookmark = min(min_bookmark, self.get_min_bookmark(child, selected_streams, min_bookmark, start_date, state))
+            min_bookmark = min(min_bookmark,
+                              self.get_min_bookmark(child, selected_streams, min_bookmark, start_date, state))
 
         return min_bookmark
 
@@ -114,7 +113,14 @@ class Stream:
 
         return schema, stream_metadata
 
-    def sync_endpoint(self, client, catalog, config, state, tap_state, selected_streams, parent_row={}):
+    def sync_endpoint(self,
+                      client,
+                      catalog,
+                      config,
+                      state,
+                      tap_state,
+                      selected_streams,
+                      parent_row={}):
         """
         A common function sync incremental streams.
         """
@@ -125,7 +131,11 @@ class Stream:
         children = self.children
 
         current_time = datetime.now().strftime(DATE_FORMAT)
-        min_bookmark_among_parent_child = self.get_min_bookmark(self.tap_stream_id, selected_streams, current_time, config['start_date'], state)
+        min_bookmark_among_parent_child = self.get_min_bookmark(self.tap_stream_id,
+                                        selected_streams,
+                                        current_time,
+                                        config['start_date'],
+                                        state)
 
         # Get the latest bookmark for the stream and set the last_datetime
         last_datetime = get_bookmark(self.tap_stream_id, state, config['start_date'])
@@ -133,11 +143,15 @@ class Stream:
         with Transformer() as transformer:
             page = 1
             # Loop until the last page.
-            while page is not None:
+            while page:
 
                 # Add parent_id in the url ito get records of child stream.
-                url = get_url(self.endpoint or self.tap_stream_id).format(parent_row.get(self.parent_id))
-                params = {"updated_since": min_bookmark_among_parent_child} if self.with_updated_since else {}
+                url = get_url(self.endpoint or self.tap_stream_id).format(
+                    parent_row.get(self.parent_id))
+
+                params = {}
+                if self.with_updated_since:
+                    params = {"updated_since": min_bookmark_among_parent_child}
                 params['page'] =  page
 
                 # Call API to fetch the records
@@ -147,17 +161,19 @@ class Stream:
                 time_extracted = utils.now()
                 for row in data:
                     if self.parent_id:
-                        # Remove last character `s` from parent stream name and join it with `_id` to save parent id in the child record.
-                        # For example ifparent is invoices, then save parent id in invoice_id key to the child.
+                        # Remove the last character `s` from the parent stream name and
+                        # join it with `_id` to save the parent id in the child record.
+                        # For example if a parent is `invoices`, then save parent id in
+                        # invoice_id key to the child.
                         row[self.parent[:-1]+'_id'] = parent_row.get(self.parent_id)
- 
+
                     # Add fields at 1st level explisitly
-                    row = self.add_field_at_1st_level(row=row, parent_row=parent_row)
+                    row = self.add_field_at_1st_level(row=row)
 
                     if self.object_to_id is not None:
                         for key in self.object_to_id:
                             key_object = row.get(key)
-                            if key_object: 
+                            if key_object:
                                 row[key + '_id'] = key_object.get('id')
                             else:
                                 row[key + '_id'] = None
@@ -170,21 +186,25 @@ class Stream:
                     append_times_to_dates(transformed_record, self.date_fields)
 
                     if self.tap_stream_id in selected_streams:
-                        # Write the record of parent if it is selected.
-                        singer.write_record(self.tap_stream_id, transformed_record, time_extracted=time_extracted)
+                        # Write the record of a parent if it is selected.
+                        singer.write_record(self.tap_stream_id,
+                                        transformed_record,
+                                        time_extracted=time_extracted)
 
-                    # Loop thru parent batch records for each children objects
+                    # Loop thru parent batch records for each child's objects
                     for child_stream_name in children:
                         if child_stream_name in selected_streams:
                             # Sync child stream if it is selected.
                             child_obj = STREAMS[child_stream_name]()
-                            child_obj.sync_endpoint(client, catalog, config, state, tap_state, selected_streams, row)
+                            child_obj.sync_endpoint(client, catalog, config, state,
+                                                    tap_state, selected_streams, row)
 
                     if bookmark_field:
-                        # Get replication key value from record for the incremental stream
+                        # Get replication key value from the record for the incremental stream
                         bookmark_dttm = transformed_record[bookmark_field]
                         if bookmark_dttm > last_datetime:
-                            # Update last_datetime if it is less than current replication key value
+                            # Update last_datetime if it is less than the current
+                            # replication key value
                             last_datetime = bookmark_dttm
 
                         if self.tap_stream_id in selected_streams:
@@ -192,16 +212,19 @@ class Stream:
                             utils.update_state(tap_state, self.tap_stream_id, bookmark_dttm)
 
                 page = response['next_page']
-        
+
         # Loop through all children
         for child_stream_name in children:
             # Write bookmark if child stream is selected and incremental
             if child_stream_name in selected_streams and bookmark_field:
-                # update bookmark of parent into the following name pattern `{child_stream_name}_parent``
-                # For example, update bookmark for invoice_meesages to the `invoice_messages_parent` key. 
-                utils.update_state(tap_state, f'{child_stream_name}_parent', last_datetime)
+                # Update bookmark of the parent into the following name pattern:
+                # `{child_stream_name}_parent`
+                # For example, update bookmark for invoice_meesages
+                # to the `invoice_messages_parent` key.
+                utils.update_state(tap_state, child_stream_name+'_parent', last_datetime)
                 if child_stream_name in tap_state and tap_state[child_stream_name] > current_time:
-                    # Reset child stream's bookmark to current_time if max_bookmark is greater than current_time.
+                    # Reset child stream's bookmark to current_time
+                    # if max_bookmark is greater than current_time.
                     tap_state[child_stream_name] = current_time
 
         singer.write_state(tap_state)
@@ -231,15 +254,16 @@ class UserRoles(Stream):
     key_properties = ["user_id", "role_id"]
     parent="roles"
 
-    def sync_endpoint(self, client, catalog, config, state, tap_state, selected_streams, parent_row={}):
+    def sync_endpoint(self, client, catalog, config, state,
+                        tap_state, selected_streams, parent_row={}):
         """
-        Prepare record of user_roles stream using parent record's fields.
+        Prepare a record of user_roles stream using parent record's fields.
         """
         # Retrieve schema and metadata of stream from the catalog
         schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
         with Transformer() as transformer:
-            # Loop through all records of parent
+            # Loop through all records of the parent
             for user_id in parent_row['user_ids']:
                 time_extracted = utils.now()
 
@@ -305,15 +329,16 @@ class UserProjectTasks(Stream):
     parent="users"
     parent_id = 'id'
 
-    def sync_endpoint(self, client, catalog, config, state, tap_state, selected_streams, parent_row={}):
+    def sync_endpoint(self, client, catalog, config, state,
+                        tap_state, selected_streams, parent_row={}):
         """
-        Prepare record of user_project_tasks stream using parent record's fields.
+        Prepare a record of the `user_project_tasks` stream using the parent record's fields.
         """
         # Retrieve schema and metadata of stream from the catalog
         schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
         with Transformer() as transformer:
-            # Loop through all records of parent
+            # Loop through all records of the parent
             for project_task in parent_row['task_assignments']:
 
                 time_extracted = utils.now()
@@ -323,7 +348,8 @@ class UserProjectTasks(Stream):
                 }
 
                 transformed_record = transformer.transform(pivot_row, schema, stream_metadata)
-                singer.write_record(self.tap_stream_id, transformed_record, time_extracted=time_extracted)
+                singer.write_record(self.tap_stream_id, transformed_record,
+                                    time_extracted=time_extracted)
 
 class UserProjects(Stream):
     """
@@ -365,6 +391,22 @@ class Expenses(Stream):
     replication_keys=["updated_at"]
     object_to_id =['client', 'project', 'expense_category', 'user', 'user_assignment', 'invoice']
 
+    def add_field_at_1st_level(self, row=None):
+        """
+        Add fields at 1st level explicitly
+        """
+        if row['receipt'] is None:
+            row['receipt_url'] = None
+            row['receipt_file_name'] = None
+            row['receipt_file_size'] = None
+            row['receipt_content_type'] = None
+        else:
+            row['receipt_url'] = row['receipt']['url']
+            row['receipt_file_name'] = row['receipt']['file_name']
+            row['receipt_file_size'] = row['receipt']['file_size']
+            row['receipt_content_type'] = row['receipt']['content_type']
+        return row
+
 class InvoiceItemCategories(Stream):
     """
     https://help.getharvest.com/api-v1/invoices-api/invoices/invoice-messages-payments/#show-all-categories
@@ -396,9 +438,9 @@ class InvoicePayments(Stream):
     parent_id = "id"
     date_fields = ["send_reminder_on"]
 
-    def add_field_at_1st_level(self, row=None, parent_row=None):
+    def add_field_at_1st_level(self, row=None):
         """
-        Add fields at 1st level explisitly
+        Add fields at 1st level explicitly
         """
         row['payment_gateway_id'] = row['payment_gateway']['id']
         row['payment_gateway_name'] = row['payment_gateway']['name']
@@ -412,14 +454,15 @@ class InvoiceLineItems(Stream):
     parent = "invoices"
     parent_id = "id"
 
-    def sync_endpoint(self, client, catalog, config, state, tap_state, selected_streams, parent_row={}):
+    def sync_endpoint(self, client, catalog, config, state,
+                        tap_state, selected_streams, parent_row={}):
         """
-        Prepare record of invoice_line_items stream using parent record's fields
+        Prepare a record of the `invoice_line_items` stream using the parent record's fields
         """
         schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
         with Transformer() as transformer:
-            # Loop through all records of parent
+            # Loop through all records of the parent
             for line_item in parent_row['line_items']:
                 time_extracted = utils.now()
 
@@ -472,14 +515,15 @@ class EstimateLineItems(Stream):
     parent = "estimates"
     parent_id = "id"
 
-    def sync_endpoint(self, client, catalog, config, state, tap_state, selected_streams, parent_row={}):
+    def sync_endpoint(self, client, catalog, config, state,
+                        tap_state, selected_streams, parent_row={}):
         """
-        Prepare record of estimate_line_items stream using parent record's fields.
+        Prepare a record of the `estimate_line_items` stream using the parent record's fields.
         """
         schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
         with Transformer() as transformer:
-            # Loop through all records of parent
+            # Loop through all records of the parent
             for line_item in parent_row['line_items']:
                 time_extracted = utils.now()
 
@@ -504,9 +548,10 @@ class ExternalReferences(Stream):
     parent = "time_entries"
     parent_id = "id"
 
-    def sync_endpoint(self, client, catalog, config, state, tap_state, selected_streams, parent_row={}):
+    def sync_endpoint(self, client, catalog, config, state,
+                        tap_state, selected_streams, parent_row={}):
         """
-        Prepare record of external_reference stream using parent record's fields.
+        Prepare a record of the `external_reference` stream using the parent record's fields.
         """
         schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
@@ -526,21 +571,24 @@ class TimeEntryExternalReferences(Stream):
     parent = "time_entries"
     parent_id = "id"
 
-    def sync_endpoint(self, client, catalog, config, state, tap_state, selected_streams, parent_row={}):
+    def sync_endpoint(self, client, catalog, config, state,
+                        tap_state, selected_streams, parent_row={}):
         """
-        Prepare record of time_entry_external_reference stream using parent record's fields.
+        Prepare a record of the `time_entry_external_reference` stream using
+        the parent record's fields.
         """
         if parent_row['external_reference']:
             external_reference = parent_row['external_reference']
             time_extracted = utils.now()
 
-            # Create record for time_entry
+            # Create a record for time_entry
             pivot_row = {
                 'time_entry_id': parent_row['id'],
                 'external_reference_id': external_reference['id']
             }
 
-            singer.write_record("time_entry_external_reference", pivot_row, time_extracted=time_extracted)
+            singer.write_record("time_entry_external_reference", pivot_row,
+                                time_extracted=time_extracted)
 
 class TimeEntries(Stream):
     """

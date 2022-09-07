@@ -42,7 +42,7 @@ def sync(client, config, catalog, state):
     """
     sync selected streams.
     """
-    
+
     # Get ALL selected streams from catalog
     selected_streams = []
     for stream in catalog.get_selected_streams(state):
