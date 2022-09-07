@@ -145,7 +145,6 @@ class Stream:
                 path = self.path or self.tap_stream_id
                 data = response[path]
                 time_extracted = utils.now()
-
                 for row in data:
                     if self.parent_id:
                         # Remove last character `s` from parent stream name and join it with `_id` to save parent id in the child record.
@@ -157,8 +156,9 @@ class Stream:
 
                     if self.object_to_id is not None:
                         for key in self.object_to_id:
-                            if row[key] is not None:
-                                row[key + '_id'] = row[key]['id']
+                            key_object = row.get(key)
+                            if key_object: 
+                                row[key + '_id'] = key_object.get('id')
                             else:
                                 row[key + '_id'] = None
 
@@ -528,7 +528,7 @@ class TimeEntryExternalReferences(Stream):
 
     def sync_endpoint(self, client, catalog, config, state, tap_state, selected_streams, parent_row={}):
         """
-        Prepare a record of time_entry_external_reference stream using parent record's fields.
+        Prepare record of time_entry_external_reference stream using parent record's fields.
         """
         if parent_row['external_reference']:
             external_reference = parent_row['external_reference']
