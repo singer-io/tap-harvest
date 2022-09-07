@@ -52,6 +52,10 @@ def sync(client, config, catalog, state):
     if not selected_streams:
         return
 
+    # last_stream = Previous currently synced stream, if the load was interrupted
+    last_stream = singer.get_currently_syncing(state)
+    LOGGER.info('last/currently syncing stream: %s', last_stream)
+
     # state will preserve state passed in sync mode and
     # tap_state will be updated and written to output based on current sync
     tap_state = state.copy()
@@ -61,7 +65,17 @@ def sync(client, config, catalog, state):
     stream_to_sync = get_streams_to_sync(selected_streams)
 
     for stream_name in stream_to_sync:
-        write_schemas_recursive(stream_name, catalog, selected_streams)
-        stream_obj = STREAMS[stream_name]()
 
+        LOGGER.info('START Syncing: %s', stream_name)
+        # Set currently syncing stream
+        state = singer.set_currently_syncing(state, stream_name)
+        write_schemas_recursive(stream_name, catalog, selected_streams)
+
+        stream_obj = STREAMS[stream_name]()
         stream_obj.sync_endpoint(client, catalog, config, state, tap_state, selected_streams)
+    
+        LOGGER.info('FINISHED Syncing: %s', stream_name)
+
+    # remove currently_syncing at the end of the sync
+    state = singer.set_currently_syncing(state, None)
+    
