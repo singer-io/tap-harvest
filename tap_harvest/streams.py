@@ -1,5 +1,6 @@
 from datetime import datetime
 import singer
+import copy
 from singer import Transformer, utils, metadata
 
 LOGGER = singer.get_logger()
@@ -180,6 +181,8 @@ class Stream:
 
                     # Remove empty date-time fields from the record.
                     remove_empty_date_times(row, schema)
+                    
+                    parent_row = copy.deepcopy(row)
                     transformed_record = transformer.transform(row, schema, stream_metadata)
 
                     # Convert date field into the standard format
@@ -197,7 +200,7 @@ class Stream:
                             # Sync child stream if it is selected.
                             child_obj = STREAMS[child_stream_name]()
                             child_obj.sync_endpoint(client, catalog, config, state,
-                                                    tap_state, selected_streams, row)
+                                                    tap_state, selected_streams, parent_row)
 
                     if bookmark_field:
                         # Get replication key value from the record for the incremental stream
@@ -338,12 +341,13 @@ class UserProjectTasks(Stream):
         schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
         with Transformer() as transformer:
+            user_id = parent_row['user_id']
             # Loop through all records of the parent
             for project_task in parent_row['task_assignments']:
 
                 time_extracted = utils.now()
                 pivot_row = {
-                    'user_id': project_task['user_id'],
+                    'user_id': user_id,
                     'project_task_id': project_task['id']
                 }
 
@@ -363,6 +367,7 @@ class UserProjects(Stream):
     parent="users"
     parent_id = 'id'
     object_to_id = ['project', 'client', 'user']
+    children = ['user_project_tasks']
 
 
 class Users(Stream):
