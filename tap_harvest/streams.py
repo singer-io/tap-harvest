@@ -57,8 +57,8 @@ class Stream:
     replication_method = "FULL_TABLE"
     replication_keys = []
     key_properties = ["id"]
-    object_to_id = None
-    parent = None
+    object_to_id = []
+    parent = ""
     parent_id = None
     with_updated_since = True
     children = []
@@ -181,7 +181,7 @@ class Stream:
 
                     # Remove empty date-time fields from the record.
                     remove_empty_date_times(row, schema)
-                    
+
                     parent_row = copy.deepcopy(row)
                     transformed_record = transformer.transform(row, schema, stream_metadata)
 
@@ -465,7 +465,7 @@ class InvoiceLineItems(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row):
+                        tap_state, selected_streams, parent_row=):
         """
         Prepare a record of the `invoice_line_items` stream using the parent record's fields
         """
@@ -527,7 +527,7 @@ class EstimateLineItems(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row):
+                        tap_state, selected_streams, parent_row=):
         """
         Prepare a record of the `estimate_line_items` stream using the parent record's fields.
         """
@@ -561,7 +561,7 @@ class ExternalReferences(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row):
+                        tap_state, selected_streams, parent_row=):
         """
         Prepare a record of the `external_reference` stream using the parent record's fields.
         """
@@ -585,7 +585,7 @@ class TimeEntryExternalReferences(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row):
+                        tap_state, selected_streams, parent_row=):
         """
         Prepare a record of the `time_entry_external_reference` stream using
         the parent record's fields.
