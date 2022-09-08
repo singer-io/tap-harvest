@@ -77,5 +77,5 @@ def sync(client, config, catalog, state):
         LOGGER.info('FINISHED Syncing: %s', stream_name)
 
     # remove currently_syncing at the end of the sync
-    state = singer.set_currently_syncing(state, None)
-    
+    state = singer.set_currently_syncing(tap_state, None)
+    singer.write_state(tap_state)

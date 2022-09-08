@@ -29,7 +29,7 @@ class TestSyncMode(unittest.TestCase):
     Test the main function for sync mode.
     """
 
-    mock_catalog = {"streams": [{"stream": "teams", "schema": {}, "metadata": {}}]}
+    mock_catalog = {"streams": [{"stream": "invoices", "schema": {}, "metadata": {}}]}
 
     @mock.patch("tap_harvest._discover")
     def test_sync_with_catalog(self, mock_discover, mock_sync, mock_args, mock_check_access_token):

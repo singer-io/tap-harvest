@@ -37,29 +37,30 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
 
     def get_request_timeout(self):
         """
-        Get timeout value from config, if the value is passed.
+        Get timeout value from config, if the value is passed. 
         Else return the default value.
         """
         # Get `request_timeout` value from config.
         config_request_timeout = self.config.get('request_timeout')
 
-        # if config request_timeout is other than 0,"0" or "" then use request_timeout
-        if (((type(config_request_timeout) in [int, float]) or
-                (type(config_request_timeout)==str
-                and config_request_timeout.replace('.', '', 1).isdigit()))
-                and float(config_request_timeout)):
+        # If timeout is not passed in the config then set it to the default(300 seconds)
+        if config_request_timeout is None:
+            return REQUEST_TIMEOUT
+
+        # If config request_timeout is other than 0,"0" or invalid string then use request_timeout
+        if ((type(config_request_timeout) in [int, float]) or 
+                (type(config_request_timeout)==str and config_request_timeout.replace('.', '', 1).isdigit())) and float(config_request_timeout):
             return float(config_request_timeout)
-        # If the value is 0, "0", "" or not passed then it set the default to 300 seconds.
-        return REQUEST_TIMEOUT
+        else:
+            raise Exception("The entered timeout is invalid, it should be a valid none-zero integer.")
 
 
-    # Backoff for Timeout error is already included in "requests.exceptions.RequestException"
-    # as it is a parent class of the "Timeout" error
+    # backoff for Timeout error is already included in "requests.exceptions.RequestException"
+    # as it is a parent class of "Timeout" error
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
                           max_tries=5,
-                          giveup=(lambda e: e.response is not None
-                            and 400 <= e.response.status_code < 500),
+                          giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
                           factor=2)
     def _refresh_access_token(self):
         """
@@ -93,7 +94,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         """
         Return access token if available or generate one.
         """
-        if self._access_token and self._expires_at > pendulum.now():
+        if self._access_token is not None and self._expires_at > pendulum.now():
             return self._access_token
 
         self._refresh_access_token()

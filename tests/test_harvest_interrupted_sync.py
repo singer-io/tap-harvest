@@ -74,7 +74,7 @@ class HarvestParentInterruptedSyncTest(BaseTapTest):
             # Verify final_state is equal to uninterrupted sync's state
             # (This is what the value would have been without an interruption and proves resuming succeeds)
             self.assertDictEqual(final_state, full_sync_state)
-            
+
         for stream in streams_to_test:
             with self.subTest(stream=stream):
                 # set expectations
@@ -118,6 +118,7 @@ class HarvestParentInterruptedSyncTest(BaseTapTest):
                     
                     else:
                         for record in interrupted_records:
+                            rec_time = record[expected_replication_key]
                             self.assertGreaterEqual(rec_time, self.DEFAULT_START_DATE)
 
                         # Verify resuming sync replicates all records that were found in the full sync (uninterrupted)
