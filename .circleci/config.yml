@@ -12,11 +12,11 @@ jobs:
             source ~/.virtualenvs/tap-harvest/bin/activate
             pip install .
             pip install pylint
-      # - run:
-      #     name: 'Pylint'
-      #     command: |
-      #       source ~/.virtualenvs/tap-harvest/bin/activate
-      #       pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals,consider-using-f-string
+      - run:
+          name: 'Pylint'
+          command: |
+            source ~/.virtualenvs/tap-harvest/bin/activate
+            pylint tap_harvest --disable 'missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals,consider-using-f-string,line-too-long'
       - run:
           name: 'Unit Tests'
           command: |

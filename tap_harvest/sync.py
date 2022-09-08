@@ -73,7 +73,7 @@ def sync(client, config, catalog, state):
 
         stream_obj = STREAMS[stream_name]()
         stream_obj.sync_endpoint(client, catalog, config, state, tap_state, selected_streams)
-    
+
         LOGGER.info('FINISHED Syncing: %s', stream_name)
 
     # remove currently_syncing at the end of the sync

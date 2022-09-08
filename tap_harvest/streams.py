@@ -254,11 +254,12 @@ class UserRoles(Stream):
     https://help.getharvest.com/api-v2/users-api/users/users/
     """
     tap_stream_id = 'user_roles'
+    replication_method="INCREMENTAL"
     key_properties = ["user_id", "role_id"]
     parent="roles"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row={}):
+                        tap_state, selected_streams, parent_row):
         """
         Prepare a record of user_roles stream using parent record's fields.
         """
@@ -329,11 +330,12 @@ class ProjectUsers(Stream):
 class UserProjectTasks(Stream):
     tap_stream_id = 'user_project_tasks'
     key_properties = ["user_id", "project_task_id"]
+    replication_method="INCREMENTAL"
     parent="users"
     parent_id = 'id'
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row={}):
+                        tap_state, selected_streams, parent_row):
         """
         Prepare a record of the `user_project_tasks` stream using the parent record's fields.
         """
@@ -438,6 +440,8 @@ class InvoicePayments(Stream):
     """
     tap_stream_id = 'invoice_payments'
     path = 'invoice_payments'
+    replication_method="INCREMENTAL"
+    replication_keys=["updated_at"]
     endpoint="invoices/{}/payments"
     parent = "invoices"
     parent_id = "id"
@@ -456,11 +460,12 @@ class InvoiceLineItems(Stream):
     https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/#the-invoice-line-item-object
     """
     tap_stream_id = 'invoice_line_items'
+    replication_method="INCREMENTAL"
     parent = "invoices"
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row={}):
+                        tap_state, selected_streams, parent_row):
         """
         Prepare a record of the `invoice_line_items` stream using the parent record's fields
         """
@@ -517,11 +522,12 @@ class EstimateLineItems(Stream):
     https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/#the-estimate-line-item-object
     """
     tap_stream_id = 'estimate_line_items'
+    replication_method="INCREMENTAL"
     parent = "estimates"
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row={}):
+                        tap_state, selected_streams, parent_row):
         """
         Prepare a record of the `estimate_line_items` stream using the parent record's fields.
         """
@@ -550,11 +556,12 @@ class Estimates(Stream):
 
 class ExternalReferences(Stream):
     tap_stream_id = 'external_reference'
+    replication_method="INCREMENTAL"
     parent = "time_entries"
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row={}):
+                        tap_state, selected_streams, parent_row):
         """
         Prepare a record of the `external_reference` stream using the parent record's fields.
         """
@@ -573,11 +580,12 @@ class ExternalReferences(Stream):
 class TimeEntryExternalReferences(Stream):
     tap_stream_id = 'time_entry_external_reference'
     key_properties = ["time_entry_id", "external_reference_id"]
+    replication_method="INCREMENTAL"
     parent = "time_entries"
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row={}):
+                        tap_state, selected_streams, parent_row):
         """
         Prepare a record of the `time_entry_external_reference` stream using
         the parent record's fields.
