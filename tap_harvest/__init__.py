@@ -19,6 +19,9 @@ REQUIRED_CONFIG_KEYS = [
 ]
 
 def do_discover():
+    """
+    Call the discovery function.
+    """
     LOGGER.info('Starting discover')
     catalog = _discover()
     json.dump(catalog.to_dict(), sys.stdout, indent=2)
@@ -26,21 +29,24 @@ def do_discover():
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
+    """
+    Run discover mode or sync mode.
+    """
     parsed_args = singer.utils.parse_args(REQUIRED_CONFIG_KEYS)
     config = parsed_args.config
-    
+
     with HarvestClient(config) as client:
 
-            state = {}
-            if parsed_args.state:
-                state = parsed_args.state
-            if parsed_args.discover:
-                do_discover()
-            elif parsed_args.catalog:
-                _sync(client=client,
-                        config=config,
-                        catalog=parsed_args.catalog,
-                        state=state)
+        state = {}
+        if parsed_args.state:
+            state = parsed_args.state
+        if parsed_args.discover:
+            do_discover()
+        elif parsed_args.catalog:
+            _sync(client=client,
+                  config=config,
+                  catalog=parsed_args.catalog,
+                  state=state)
 
 if __name__ == '__main__':
     main()

@@ -112,6 +112,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         self._account_id = None
         self.session = requests.Session()
         self._access_token = None
+        self._expires_at = None
         self.request_timeout = self.get_request_timeout()
     
     def __enter__(self):
@@ -122,7 +123,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
 
     def get_request_timeout(self):
         """
-        Get timeout value from config, if the value is passed. 
+        Get timeout value from config, if the value is passed.
         Else return the default value.
         """
         # Get `request_timeout` value from config.
@@ -133,11 +134,10 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
             return REQUEST_TIMEOUT
 
         # If config request_timeout is other than 0,"0" or invalid string then use request_timeout
-        if ((type(config_request_timeout) in [int, float]) or 
-                (type(config_request_timeout)==str and config_request_timeout.replace('.', '', 1).isdigit())) and float(config_request_timeout):
+        if ((type(config_request_timeout) in [int, float]) or
+                (isinstance(config_request_timeout,str) and config_request_timeout.replace('.', '', 1).isdigit())) and float(config_request_timeout):
             return float(config_request_timeout)
-        else:
-            raise Exception("The entered timeout is invalid, it should be a valid none-zero integer.")
+        raise Exception("The entered timeout is invalid, it should be a valid none-zero integer.")
 
     @backoff.on_exception(backoff.expo,
                           (HarvestRateLimitExceeededError, Server5xxError,
@@ -225,10 +225,11 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
                           max_tries=5,
                           factor=2)
     @utils.ratelimit(100, 15)
-    def request(self, url, params={}):
+    def request(self, url, params=None):
         """
         Call rest API and return the response in case of status code 200.
         """
+        params = params or {}
         access_token = self.get_access_token()
         headers = {"Accept": "application/json",
                    "Harvest-Account-Id": self.get_account_id(),
