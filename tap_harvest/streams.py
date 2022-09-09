@@ -121,12 +121,13 @@ class Stream:
                       state,
                       tap_state,
                       selected_streams,
-                      parent_row={}):
+                      parent_row=None):
         """
         A common function sync incremental streams.
         """
         # Retrieve schema and metadata of stream from the catalog
         schema, stream_metadata = self.get_schema_and_metadata(catalog)
+        parent_row = parent_row or {}
 
         bookmark_field = next(iter(self.replication_keys)) if self.replication_keys else None
         children = self.children
@@ -259,7 +260,7 @@ class UserRoles(Stream):
     parent="roles"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row):
+                        tap_state, selected_streams, parent_row=None):
         """
         Prepare a record of user_roles stream using parent record's fields.
         """
@@ -335,7 +336,7 @@ class UserProjectTasks(Stream):
     parent_id = 'id'
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row):
+                        tap_state, selected_streams, parent_row=None):
         """
         Prepare a record of the `user_project_tasks` stream using the parent record's fields.
         """
@@ -465,7 +466,7 @@ class InvoiceLineItems(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row=):
+                        tap_state, selected_streams, parent_row=None):
         """
         Prepare a record of the `invoice_line_items` stream using the parent record's fields
         """
@@ -527,7 +528,7 @@ class EstimateLineItems(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row=):
+                        tap_state, selected_streams, parent_row=None):
         """
         Prepare a record of the `estimate_line_items` stream using the parent record's fields.
         """
@@ -561,7 +562,7 @@ class ExternalReferences(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row=):
+                        tap_state, selected_streams, parent_row=None):
         """
         Prepare a record of the `external_reference` stream using the parent record's fields.
         """
@@ -585,7 +586,7 @@ class TimeEntryExternalReferences(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                        tap_state, selected_streams, parent_row=):
+                        tap_state, selected_streams, parent_row=None):
         """
         Prepare a record of the `time_entry_external_reference` stream using
         the parent record's fields.

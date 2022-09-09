@@ -145,9 +145,9 @@ class TestStream(unittest.TestCase):
         ['test_only_multiple_child_selected_with_no_bookmark', ['invoice_messages', 'invoice_payments'],
          [{'invoices': [{'id': 1, 'updated_at': '2022-08-00T10:08:18Z', 'client': ID_OBJECT, 'estimate': ID_OBJECT, 'retainer': None, 'creator': ID_OBJECT}], 'next_page': None}, 
           {'invoice_messages': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z'}], 'next_page': None},
-          {'invoice_payments': [{'id': 1, 'updated_at': '2022-09-30T10:08:18Z', 'payment_gateway': {'id': 1, 'name': 'abc'}}], 'next_page': None}], 
+          {'invoice_payments': [{'id': 1, 'updated_at': '2022-07-30T10:08:18Z', 'payment_gateway': {'id': 1, 'name': 'abc'}}], 'next_page': None}], 
          {'invoice_messages': '2022-08-30T10:08:18Z', 'invoice_messages_parent': '2022-08-00T10:08:18Z',
-          'invoice_payments_parent': '2022-08-00T10:08:18Z'}, {}, {}, 3, 2],
+          'invoice_payments_parent': '2022-08-00T10:08:18Z', 'invoice_payments': '2022-07-30T10:08:18Z'}, {}, {}, 3, 2],
         
         ['test_both_parent_child_selected_with_no_bookmark', ['invoice_messages', 'invoices'],
          [{'invoices': [{'id': 1, 'updated_at': '2022-08-00T10:08:18Z', 'client': ID_OBJECT, 'estimate': ID_OBJECT, 'retainer': None, 'creator': ID_OBJECT}], 'next_page': None}, 
