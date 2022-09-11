@@ -5,8 +5,169 @@ from parameterized import parameterized
 import unittest
 from singer.schema import Schema
 from singer.catalog import Catalog, CatalogEntry
-from tap_harvest.streams import remove_empty_date_times, append_times_to_dates, get_bookmark, Invoices
+from tap_harvest.streams import remove_empty_date_times, append_times_to_dates, get_bookmark, Invoices, TimeEntries, Roles, Users, Expenses, Estimates
 from tap_harvest.client import HarvestClient
+
+CATALOG = Catalog(streams=[
+    CatalogEntry(
+        stream='invoices',
+        tap_stream_id='invoices',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),
+                'name': Schema(type='string')}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','updated_at']},
+            {'metadata': {'inclusion': 'available','selected': True},'breadcrumb': ['properties','name']}
+    ]),
+    CatalogEntry(
+        stream='invoice_messages',
+        tap_stream_id='invoice_messages',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),
+                'name': Schema(type='string')}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','updated_at']},
+            {'metadata': {'inclusion': 'available','selected': True},'breadcrumb': ['properties','invoice_id']}
+    ]),
+    CatalogEntry(
+        stream='invoice_payments',
+        tap_stream_id='invoice_payments',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),
+                'name': Schema(type='string')}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','updated_at']},
+            {'metadata': {'inclusion': 'available'},'breadcrumb': ['properties','invoice_id']}
+    ]),
+    CatalogEntry(
+        stream='invoice_line_items',
+        tap_stream_id='invoice_line_items',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
+            {'metadata': {'inclusion': 'available'},'breadcrumb': ['properties','invoice_id']},
+            {'metadata': {'inclusion': 'available'},'breadcrumb': ['properties','project_id']}
+    ]),
+    CatalogEntry(
+        stream='user_roles',
+        tap_stream_id='user_roles',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),
+                'name': Schema(type='string')}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','user_id']},
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','role_id']}
+    ]),
+    CatalogEntry(
+        stream='roles',
+        tap_stream_id='roles',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
+    ]),
+    CatalogEntry(
+        stream='users',
+        tap_stream_id='users',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
+    ]),
+    CatalogEntry(
+        stream='user_projects',
+        tap_stream_id='user_projects',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
+    ]),
+    CatalogEntry(
+        stream='user_project_tasks',
+        tap_stream_id='user_project_tasks',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','user_id']},
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','project_task_id']}
+    ]),
+    CatalogEntry(
+        stream='expenses',
+        tap_stream_id='expenses',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']}
+    ]),
+    CatalogEntry(
+        stream='estimates',
+        tap_stream_id='estimates',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']}
+    ]),
+    CatalogEntry(
+        stream='estimate_messages',
+        tap_stream_id='estimate_messages',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
+    ]),
+    CatalogEntry(
+        stream='estimate_line_items',
+        tap_stream_id='estimate_line_items',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
+            {'metadata': {'inclusion': 'available'},'breadcrumb': ['properties','estimate_id']},
+    ]),
+    CatalogEntry(
+        stream='external_reference',
+        tap_stream_id='external_reference',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
+    ]),
+    CatalogEntry(
+        stream='time_entry_external_reference',
+        tap_stream_id='time_entry_external_reference',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'available'},'breadcrumb': ['properties','external_reference']},
+    ]),
+    CatalogEntry(
+        stream='time_entries',
+        tap_stream_id='time_entries',
+        schema=Schema(
+            properties={
+                'id': Schema(type='integer'),}),
+        metadata=[
+            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
+    ])])
 
 class TestStreamsUtils(unittest.TestCase):
     """
@@ -68,44 +229,6 @@ CONFIG = {'start_date': START_DATE,
           'user_agent': 'user_agent'}
 ID_OBJECT = {'id': 1}
 
-CATALOG = Catalog(streams=[
-    CatalogEntry(
-        stream='invoices',
-        tap_stream_id='invoices',
-        schema=Schema(
-            properties={
-                'id': Schema(type='integer'),
-                'name': Schema(type='string')}),
-        metadata=[
-            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
-            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','updated_at']},
-            {'metadata': {'inclusion': 'available','selected': True},'breadcrumb': ['properties','name']}
-    ]),
-    CatalogEntry(
-        stream='invoice_messages',
-        tap_stream_id='invoice_messages',
-        schema=Schema(
-            properties={
-                'id': Schema(type='integer'),
-                'name': Schema(type='string')}),
-        metadata=[
-            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
-            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','updated_at']},
-            {'metadata': {'inclusion': 'available','selected': True},'breadcrumb': ['properties','invoice_id']}
-    ]),
-    CatalogEntry(
-        stream='invoice_payments',
-        tap_stream_id='invoice_payments',
-        schema=Schema(
-            properties={
-                'id': Schema(type='integer'),
-                'name': Schema(type='string')}),
-        metadata=[
-            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','id']},
-            {'metadata': {'inclusion': 'automatic'},'breadcrumb': ['properties','updated_at']},
-            {'metadata': {'inclusion': 'available','selected': True},'breadcrumb': ['properties','invoice_id']}
-    ])])
-
 class TestStream(unittest.TestCase):
 
     @parameterized.expand([
@@ -129,18 +252,28 @@ class TestStream(unittest.TestCase):
         
         self.assertEqual(actual_bookmark, expected_bookmark)
 
+@mock.patch('singer.write_record')
+@mock.patch('tap_harvest.client.HarvestClient.request')
+@mock.patch('singer.write_state')
+class TestSyncEndpoint(unittest.TestCase):
+    """
+    """
+
     @parameterized.expand([
         ['test_only_parent_selected_with_1_record', ['invoices'], 
-         [{'invoices': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z', 'client': ID_OBJECT, 'estimate': ID_OBJECT, 'retainer': None, 'creator': ID_OBJECT}], 'next_page': None}], 
-         {'invoices': '2022-08-30T10:08:18Z'}, {}, {}, 1, 1],
+         [{'invoices': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z', 'client': ID_OBJECT, 'estimate': ID_OBJECT, 'retainer': None, 'creator': ID_OBJECT}], 'next_page': None},
+          {'invoice_messages': [], 'next_page': None},
+          {'invoice_payments': [], 'next_page': None}], 
+         {'invoices': '2022-08-30T10:08:18Z'}, {}, {}, 3, 1],
         
         ['test_only_parent_selected_with_0_record', ['invoices'], 
          [{'invoices': [], 'next_page': None}], {}, {}, {}, 1, 0],
         
         ['test_only_single_child_selected_with_no_bookmark', ['invoice_messages'],
          [{'invoices': [{'id': 1, 'updated_at': '2022-08-00T10:08:18Z', 'client': ID_OBJECT, 'estimate': ID_OBJECT, 'retainer': None, 'creator': ID_OBJECT}], 'next_page': None}, 
-          {'invoice_messages': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z'}], 'next_page': None}], 
-         {'invoice_messages': '2022-08-30T10:08:18Z', 'invoice_messages_parent': '2022-08-00T10:08:18Z'}, {}, {}, 2, 1],
+          {'invoice_messages': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z'}], 'next_page': None},
+          {'invoice_payments': [], 'next_page': None}], 
+         {'invoice_messages': '2022-08-30T10:08:18Z', 'invoice_messages_parent': '2022-08-00T10:08:18Z'}, {}, {}, 3, 1],
         
         ['test_only_multiple_child_selected_with_no_bookmark', ['invoice_messages', 'invoice_payments'],
          [{'invoices': [{'id': 1, 'updated_at': '2022-08-00T10:08:18Z', 'client': ID_OBJECT, 'estimate': ID_OBJECT, 'retainer': None, 'creator': ID_OBJECT}], 'next_page': None}, 
@@ -151,15 +284,14 @@ class TestStream(unittest.TestCase):
         
         ['test_both_parent_child_selected_with_no_bookmark', ['invoice_messages', 'invoices'],
          [{'invoices': [{'id': 1, 'updated_at': '2022-08-00T10:08:18Z', 'client': ID_OBJECT, 'estimate': ID_OBJECT, 'retainer': None, 'creator': ID_OBJECT}], 'next_page': None}, 
-          {'invoice_messages': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z'}], 'next_page': None}], 
+          {'invoice_messages': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z'}], 'next_page': None},
+          {'invoice_payments': [], 'next_page': None}], 
          {'invoice_messages': '2022-08-30T10:08:18Z', 'invoice_messages_parent': '2022-08-00T10:08:18Z', 
-          'invoices': '2022-08-00T10:08:18Z'}, {}, {}, 2, 2],
+          'invoices': '2022-08-00T10:08:18Z'}, {}, {}, 3, 2]
     ])
-    @mock.patch('singer.write_record')
-    @mock.patch('tap_harvest.client.HarvestClient.request')
-    @mock.patch('singer.write_state')
-    def test_sync_endpoint(self, name, selected_streams, response, expected_bookmark, state, tap_state, write_state_call_count, 
-                           write_record_call_count, mock_singer, mock_request, mock_write_record):
+    def test_sync_endpoint_for_parent_child_streams(self, mock_singer, mock_request, mock_write_record, name, selected_streams, 
+                                                    response, expected_bookmark, state, tap_state, write_state_call_count, 
+                                                    write_record_call_count):
         client = HarvestClient(CONFIG)
         obj = Invoices()
 
@@ -169,3 +301,101 @@ class TestStream(unittest.TestCase):
         mock_singer.assert_called_with(expected_bookmark)
         self.assertEqual(mock_request.call_count, write_state_call_count)
         self.assertEqual(mock_write_record.call_count, write_record_call_count)
+
+
+    def test_sync_endpoint_for_user_roles_stream(self, mock_singer, mock_request, mock_write_record):
+        
+        client = HarvestClient(CONFIG)
+        obj = Roles()
+        expected_record = {'role_id': 1, 'user_id': '2'}
+        mock_request.side_effect = [{'roles': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z', 'user_ids': ['1', '2']}], 'next_page': None}]
+        
+        obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['user_roles'])
+        args, kwargs = mock_write_record.call_args
+        self.assertEqual(expected_record, args[1])
+
+    def test_sync_endpoint_for_user_project_tasks_stream(self, mock_singer, mock_request, mock_write_record):
+        
+        client = HarvestClient(CONFIG)
+        obj = Users()
+        expected_record = {'project_task_id': 1, 'user_id': 2}
+        mock_request.side_effect = [{'users': [{'id': 2, 'updated_at': '2022-08-30T10:08:18Z'}], 'next_page': None},
+                                    {'project_assignments': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z', 'task_assignments': [ID_OBJECT]}], 'next_page': None}]
+        
+        x = obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['user_project_tasks'])
+        args, kwargs = mock_write_record.call_args
+        self.assertEqual(args[1], expected_record)
+
+    @parameterized.expand([
+        ['test_none_receipt_value', [{'expenses': [{'id':1, 'updated_at': '2022-08-30T10:08:18Z', 'receipt': None}], 'next_page': None}],
+         {'id':1, 'updated_at': '2022-08-30T10:08:18Z', 'receipt_url': None, 'receipt_file_name': None, 'receipt_file_size': None, 'receipt_content_type': None,
+          'receipt': None, 'client_id': None, 'project_id': None, 'expense_category_id': None, 'user_id': None, 'user_assignment_id': None, 'invoice_id': None}],
+        ['test_not_none_receipt_value', [{'expenses': [{'id':1, 'updated_at': '2022-08-30T10:08:18Z', 
+            'receipt': {'url': 'URL', 'file_name': 'abc.txt', 'file_size': '10mb', 'content_type': 'text'}}], 'next_page': None}],
+        {'id':1, 'updated_at': '2022-08-30T10:08:18Z', 'receipt_url': 'URL', 'receipt_file_name': 'abc.txt', 'receipt_file_size': '10mb', 'receipt_content_type': 'text',
+          'receipt': {'url': 'URL', 'file_name': 'abc.txt', 'file_size': '10mb', 'content_type': 'text'}, 
+          'client_id': None, 'project_id': None, 'expense_category_id': None, 'user_id': None, 'user_assignment_id': None, 'invoice_id': None}],
+    ])
+    def test_sync_endpoint_for_expense_stream(self, mock_singer, mock_request, mock_write_record, name, response, expected_record):
+        
+        client = HarvestClient(CONFIG)
+        obj = Expenses()
+        mock_request.side_effect = response
+        
+        obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['expenses'])
+        args, kwargs = mock_write_record.call_args
+        self.assertEqual(expected_record, args[1])
+
+    @parameterized.expand([
+        ['test_none_project_value', [{'invoices': [{'id':2, 'updated_at': '2022-08-30T10:08:18Z', 'line_items': [{'id': 1, 'project': None}]}], 'next_page': None},
+        {'invoice_messages': [{'id':2, 'updated_at': '2022-08-30T10:08:18Z'}], 'next_page': None}, 
+        {'invoice_payments': [{'id':2, 'updated_at': '2022-08-30T10:08:18Z', 'payment_gateway': {}}], 'next_page': None}],
+         {'id': 1, 'invoice_id': 2, 'project_id': None, 'project': None}],
+        ['test_not_none_project_value', [{'invoices': [{'id':2, 'updated_at': '2022-08-30T10:08:18Z', 'line_items': [{'id': 1, 'project': ID_OBJECT}]}], 'next_page': None},
+        {'invoice_messages': [{'id':2, 'updated_at': '2022-08-30T10:08:18Z'}], 'next_page': None}, 
+        {'invoice_payments': [{'id':2, 'updated_at': '2022-08-30T10:08:18Z', 'payment_gateway': {}}], 'next_page': None}],
+         {'id': 1, 'invoice_id': 2, 'project_id': 1, 'project': ID_OBJECT}],
+    ])
+    def test_sync_endpoint_for_invoice_line_iteams_stream(self, mock_singer, mock_request, mock_write_record, name, response, expected_record):
+        
+        client = HarvestClient(CONFIG)
+        obj = Invoices()
+        mock_request.side_effect = response
+        
+        obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['invoice_line_items'])
+        args, kwargs = mock_write_record.call_args
+        self.assertEqual(expected_record, args[1])
+
+    def test_sync_endpoint_for_estimate_line_items_stream(self, mock_singer, mock_request, mock_write_record):
+        
+        client = HarvestClient(CONFIG)
+        obj = Estimates()
+        expected_record = {'id': 1, 'estimate_id': 2}
+        mock_request.side_effect = [{'estimates': [{'id': 2, 'updated_at': '2022-08-30T10:08:18Z', 'line_items': [{'id': 1}]}], 'next_page': None},
+                                    {'estimate_messages': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z', }], 'next_page': None}]
+        
+        obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['estimate_line_items'])
+        args, kwargs = mock_write_record.call_args
+        self.assertEqual(expected_record, args[1])
+
+    def test_sync_endpoint_for_external_reference_stream(self, mock_singer, mock_request, mock_write_record):
+        
+        client = HarvestClient(CONFIG)
+        obj = TimeEntries()
+        expected_record = {'id': 1}
+        mock_request.side_effect = [{'time_entries': [{'id': 2, 'updated_at': '2022-08-30T10:08:18Z', 'external_reference': {'id': 1}}], 'next_page': None}]
+        
+        obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['external_reference'])
+        args, kwargs = mock_write_record.call_args
+        self.assertEqual(expected_record, args[1])
+
+    def test_sync_endpoint_for_time_entry_external_reference_stream(self, mock_singer, mock_request, mock_write_record):
+        
+        client = HarvestClient(CONFIG)
+        obj = TimeEntries()
+        expected_record = {'external_reference_id': 1, 'time_entry_id': 2}
+        mock_request.side_effect = [{'time_entries': [{'id': 2, 'updated_at': '2022-08-30T10:08:18Z', 'external_reference': {'id': 1}}], 'next_page': None}]
+        
+        obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['time_entry_external_reference'])
+        args, kwargs = mock_write_record.call_args
+        self.assertEqual(expected_record, args[1])
