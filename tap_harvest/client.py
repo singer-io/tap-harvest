@@ -80,7 +80,7 @@ def raise_for_error(response):
 
     try:
         response.raise_for_status()
-    except requests.HTTPError:
+    except (requests.HTTPError) as error:
         error_code = response.status_code
         try:
             response_json = response.json()
@@ -114,11 +114,11 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         self._access_token = None
         self._expires_at = None
         self.request_timeout = self.get_request_timeout()
-
+    
     def __enter__(self):
         self._refresh_access_token()
 
-    def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(self):
         self.session.close()
 
     def get_request_timeout(self):
