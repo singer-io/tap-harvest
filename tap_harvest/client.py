@@ -5,7 +5,6 @@ import pendulum
 from singer import utils
 import singer
 import time
-from requests import Timeout, ConnectionError
 
 LOGGER = singer.get_logger()
 
@@ -78,25 +77,22 @@ def raise_for_error(response):
     Forming a custom response message for raising an exception.
     """
 
+    error_code = response.status_code
     try:
-        response.raise_for_status()
-    except (requests.HTTPError) as error:
-        error_code = response.status_code
-        try:
-            response_json = response.json()
-        except Exception:
-            response_json = {}
+        response_json = response.json()
+    except Exception:
+        response_json = {}
 
-        if error_code not in ERROR_CODE_EXCEPTION_MAPPING and error_code > 500:
-            # Raise `Server5xxError` for all 5xx unknown error
-            exc = Server5xxError
-        else:
-            exc = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", HarvestError)
-        error_message = response_json.get("error_description", ERROR_CODE_EXCEPTION_MAPPING.get(
-                error_code, {}).get("message", "An Unknown Error occurred."))
-        message = "HTTP-error-code: {}, Error: {}".format(error_code, error_message)
+    if error_code not in ERROR_CODE_EXCEPTION_MAPPING and error_code > 500:
+        # Raise `Server5xxError` for all 5xx unknown error
+        exc = Server5xxError
+    else:
+        exc = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", HarvestError)
+    error_message = response_json.get("error_description", ERROR_CODE_EXCEPTION_MAPPING.get(
+            error_code, {}).get("message", "An Unknown Error occurred."))
+    message = "HTTP-error-code: {}, Error: {}".format(error_code, error_message)
 
-        raise exc(message) from None
+    raise exc(message) from None
 
 class HarvestClient: #pylint: disable=too-many-instance-attributes
     """
@@ -114,11 +110,11 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         self._access_token = None
         self._expires_at = None
         self.request_timeout = self.get_request_timeout()
-    
+
     def __enter__(self):
         self._refresh_access_token()
 
-    def __exit__(self):
+    def __exit__(self, exception_type, exception_value, traceback):
         self.session.close()
 
     def get_request_timeout(self):
@@ -141,7 +137,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
 
     @backoff.on_exception(backoff.expo,
                           (HarvestRateLimitExceeededError, Server5xxError,
-                           Timeout, ConnectionError),
+                           requests.Timeout, requests.ConnectionError),
                           max_tries=5,
                           factor=2)
     def _refresh_access_token(self):
@@ -186,7 +182,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
 
     @backoff.on_exception(backoff.expo,
                           (HarvestRateLimitExceeededError, Server5xxError,
-                           Timeout, ConnectionError),
+                           requests.Timeout, requests.ConnectionError),
                           max_tries=5,
                           factor=2)
     def get_account_id(self):
@@ -221,7 +217,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
 
     @backoff.on_exception(backoff.expo,
                           (HarvestRateLimitExceeededError, Server5xxError,
-                           Timeout, ConnectionError),
+                           requests.Timeout, requests.ConnectionError),
                           max_tries=5,
                           factor=2)
     @utils.ratelimit(100, 15)
