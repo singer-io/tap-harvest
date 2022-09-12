@@ -162,16 +162,8 @@ class Stream:
                 data = response[path]
                 time_extracted = utils.now()
                 for row in data:
-                    if self.parent_id:
-                        # Remove the last character `s` from the parent stream name and
-                        # join it with `_id` to save the parent id in the child record.
-                        # For example if a parent is `invoices`, then save parent id in
-                        # invoice_id key to the child.
-                        row[self.parent[:-1]+'_id'] = parent_row.get(self.parent_id)
-
                     # Add fields at 1st level explisitly
                     row = self.add_field_at_1st_level(row=row)
-
                     if self.object_to_id is not None:
                         for key in self.object_to_id:
                             key_object = row.get(key)
@@ -179,6 +171,13 @@ class Stream:
                                 row[key + '_id'] = key_object.get('id')
                             else:
                                 row[key + '_id'] = None
+
+                    if self.parent_id:
+                        # Remove the last character `s` from the parent stream name and
+                        # join it with `_id` to save the parent id in the child record.
+                        # For example if a parent is `invoices`, then save parent id in
+                        # invoice_id key to the child.
+                        row[self.parent[:-1]+'_id'] = parent_row.get(self.parent_id)
 
                     # Remove empty date-time fields from the record.
                     remove_empty_date_times(row, schema)
@@ -197,11 +196,10 @@ class Stream:
 
                     # Loop thru parent batch records for each child's objects
                     for child_stream_name in children:
-                        if child_stream_name in selected_streams:
-                            # Sync child stream if it is selected.
-                            child_obj = STREAMS[child_stream_name]()
-                            child_obj.sync_endpoint(client, catalog, config, state,
-                                                    tap_state, selected_streams, parent_row)
+                        # Sync child stream if it is selected.
+                        child_obj = STREAMS[child_stream_name]()
+                        child_obj.sync_endpoint(client, catalog, config, state,
+                                                tap_state, selected_streams, parent_row)
 
                     if bookmark_field:
                         # Get replication key value from the record for the incremental stream
@@ -264,20 +262,21 @@ class UserRoles(Stream):
         """
         Prepare a record of user_roles stream using parent record's fields.
         """
-        # Retrieve schema and metadata of stream from the catalog
-        schema, stream_metadata = self.get_schema_and_metadata(catalog)
+        if self.tap_stream_id in selected_streams:
+            # Retrieve schema and metadata of stream from the catalog
+            schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
-        with Transformer() as transformer:
-            # Loop through all records of the parent
-            for user_id in parent_row['user_ids']:
-                time_extracted = utils.now()
+            with Transformer() as transformer:
+                # Loop through all records of the parent
+                for user_id in parent_row['user_ids']:
+                    time_extracted = utils.now()
 
-                pivot_row = {
-                    'role_id': parent_row['id'],
-                    'user_id': user_id
-                }
-                transformed_record = transformer.transform(pivot_row, schema, stream_metadata)
-                singer.write_record("user_roles", transformed_record, time_extracted=time_extracted)
+                    pivot_row = {
+                        'role_id': parent_row['id'],
+                        'user_id': user_id
+                    }
+                    transformed_record = transformer.transform(pivot_row, schema, stream_metadata)
+                    singer.write_record("user_roles", transformed_record, time_extracted=time_extracted)
 
 class Roles(Stream):
     """
@@ -340,23 +339,23 @@ class UserProjectTasks(Stream):
         """
         Prepare a record of the `user_project_tasks` stream using the parent record's fields.
         """
-        # Retrieve schema and metadata of stream from the catalog
-        schema, stream_metadata = self.get_schema_and_metadata(catalog)
+        if self.tap_stream_id in selected_streams:
+            # Retrieve schema and metadata of stream from the catalog
+            schema, stream_metadata = self.get_schema_and_metadata(catalog)
+            with Transformer() as transformer:
+                user_id = parent_row['user_id']
+                # Loop through all records of the parent
+                for project_task in parent_row['task_assignments']:
 
-        with Transformer() as transformer:
-            user_id = parent_row['user_id']
-            # Loop through all records of the parent
-            for project_task in parent_row['task_assignments']:
+                    time_extracted = utils.now()
+                    pivot_row = {
+                        'user_id': user_id,
+                        'project_task_id': project_task['id']
+                    }
 
-                time_extracted = utils.now()
-                pivot_row = {
-                    'user_id': user_id,
-                    'project_task_id': project_task['id']
-                }
-
-                transformed_record = transformer.transform(pivot_row, schema, stream_metadata)
-                singer.write_record(self.tap_stream_id, transformed_record,
-                                    time_extracted=time_extracted)
+                    transformed_record = transformer.transform(pivot_row, schema, stream_metadata)
+                    singer.write_record(self.tap_stream_id, transformed_record,
+                                        time_extracted=time_extracted)
 
 class UserProjects(Stream):
     """
@@ -452,8 +451,8 @@ class InvoicePayments(Stream):
         """
         Add fields at 1st level explicitly
         """
-        row['payment_gateway_id'] = row['payment_gateway']['id']
-        row['payment_gateway_name'] = row['payment_gateway']['name']
+        row['payment_gateway_id'] = row['payment_gateway'].get('id')
+        row['payment_gateway_name'] = row['payment_gateway'].get('name')
         return row
 
 class InvoiceLineItems(Stream):
@@ -470,21 +469,22 @@ class InvoiceLineItems(Stream):
         """
         Prepare a record of the `invoice_line_items` stream using the parent record's fields
         """
-        schema, stream_metadata = self.get_schema_and_metadata(catalog)
+        if self.tap_stream_id in selected_streams:
+            schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
-        with Transformer() as transformer:
-            # Loop through all records of the parent
-            for line_item in parent_row['line_items']:
-                time_extracted = utils.now()
+            with Transformer() as transformer:
+                # Loop through all records of the parent
+                for line_item in parent_row['line_items']:
+                    time_extracted = utils.now()
 
-                line_item['invoice_id'] = parent_row['id']
-                if line_item['project'] is not None:
-                    line_item['project_id'] = line_item['project']['id']
-                else:
-                    line_item['project_id'] = None
-                line_item = transformer.transform(line_item, schema, stream_metadata)
+                    line_item['invoice_id'] = parent_row['id']
+                    if line_item['project'] is not None:
+                        line_item['project_id'] = line_item['project']['id']
+                    else:
+                        line_item['project_id'] = None
+                    line_item = transformer.transform(line_item, schema, stream_metadata)
 
-                singer.write_record("invoice_line_items", line_item, time_extracted=time_extracted)
+                    singer.write_record("invoice_line_items", line_item, time_extracted=time_extracted)
 
 
 class Invoices(Stream):
@@ -532,17 +532,18 @@ class EstimateLineItems(Stream):
         """
         Prepare a record of the `estimate_line_items` stream using the parent record's fields.
         """
-        schema, stream_metadata = self.get_schema_and_metadata(catalog)
+        if self.tap_stream_id in selected_streams:
+            schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
-        with Transformer() as transformer:
-            # Loop through all records of the parent
-            for line_item in parent_row['line_items']:
-                time_extracted = utils.now()
+            with Transformer() as transformer:
+                # Loop through all records of the parent
+                for line_item in parent_row['line_items']:
+                    time_extracted = utils.now()
 
-                line_item['estimate_id'] = parent_row['id']
-                line_item = transformer.transform(line_item, schema, stream_metadata)
+                    line_item['estimate_id'] = parent_row['id']
+                    line_item = transformer.transform(line_item, schema, stream_metadata)
 
-                singer.write_record(self.tap_stream_id, line_item, time_extracted=time_extracted)
+                    singer.write_record(self.tap_stream_id, line_item, time_extracted=time_extracted)
 
 class Estimates(Stream):
     """
@@ -568,15 +569,15 @@ class ExternalReferences(Stream):
         """
         schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
-        if parent_row['external_reference']:
+        if self.tap_stream_id in selected_streams and parent_row['external_reference']:
             with Transformer() as transformer:
                 time_extracted = utils.now()
 
                 # Create record for external_reference
                 external_reference = parent_row['external_reference']
-                line_item = transformer.transform(external_reference, schema, stream_metadata)
+                transformed_external_reference = transformer.transform(external_reference, schema, stream_metadata)
 
-                singer.write_record(self.tap_stream_id, line_item, time_extracted=time_extracted)
+                singer.write_record(self.tap_stream_id, transformed_external_reference, time_extracted=time_extracted)
 
 class TimeEntryExternalReferences(Stream):
     tap_stream_id = 'time_entry_external_reference'
@@ -591,7 +592,7 @@ class TimeEntryExternalReferences(Stream):
         Prepare a record of the `time_entry_external_reference` stream using
         the parent record's fields.
         """
-        if parent_row['external_reference']:
+        if self.tap_stream_id in selected_streams and parent_row['external_reference']:
             external_reference = parent_row['external_reference']
             time_extracted = utils.now()
 
