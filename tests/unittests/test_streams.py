@@ -245,11 +245,13 @@ class TestStream(unittest.TestCase):
     ])
     def test_get_min_bookmark(self, name, selected_streams, state, expected_bookmark):
         """
+        Test that the `get_min_bookmark` function returns the minimum bookmark from the parent and its corresponding child bookmarks.
         """
         invoice_obj = Invoices()
         
         actual_bookmark = invoice_obj.get_min_bookmark('invoices', selected_streams, '2022-11-30T00:00:00.000000Z', START_DATE, state)
         
+        # Verify expected bookmark value
         self.assertEqual(actual_bookmark, expected_bookmark)
 
 @mock.patch('singer.write_record')
@@ -257,6 +259,7 @@ class TestStream(unittest.TestCase):
 @mock.patch('singer.write_state')
 class TestSyncEndpoint(unittest.TestCase):
     """
+    Test sync endpoint method of different streams.
     """
 
     @parameterized.expand([
@@ -292,19 +295,27 @@ class TestSyncEndpoint(unittest.TestCase):
     def test_sync_endpoint_for_parent_child_streams(self, mock_singer, mock_request, mock_write_record, name, selected_streams, 
                                                     response, expected_bookmark, state, tap_state, write_state_call_count, 
                                                     write_record_call_count):
+        """
+        Test sync_endpoint function for parent and child streams.
+        """
         client = HarvestClient(CONFIG)
         obj = Invoices()
 
         mock_request.side_effect = response
         obj.sync_endpoint(client, CATALOG, CONFIG, state, tap_state, selected_streams)
         
+        # Verify that tap writes the expected bookmark for each stream.
         mock_singer.assert_called_with(expected_bookmark)
+        # Verify request method is called for the expected no of time.
         self.assertEqual(mock_request.call_count, write_state_call_count)
+        # Verify that write_record is called for the expected no of time.
         self.assertEqual(mock_write_record.call_count, write_record_call_count)
 
 
     def test_sync_endpoint_for_user_roles_stream(self, mock_singer, mock_request, mock_write_record):
-        
+        """
+        Test sync_endpoint function for `roles` stream
+        """
         client = HarvestClient(CONFIG)
         obj = Roles()
         expected_record = {'role_id': 1, 'user_id': '2'}
@@ -312,10 +323,13 @@ class TestSyncEndpoint(unittest.TestCase):
         
         obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['user_roles'])
         args, kwargs = mock_write_record.call_args
+        # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])
 
     def test_sync_endpoint_for_user_project_tasks_stream(self, mock_singer, mock_request, mock_write_record):
-        
+        """
+        Test sync_endpoint function for `project_tasks` stream
+        """
         client = HarvestClient(CONFIG)
         obj = Users()
         expected_record = {'project_task_id': 1, 'user_id': 2}
@@ -324,6 +338,7 @@ class TestSyncEndpoint(unittest.TestCase):
         
         x = obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['user_project_tasks'])
         args, kwargs = mock_write_record.call_args
+        # Verify that tap writes the expected record.
         self.assertEqual(args[1], expected_record)
 
     @parameterized.expand([
@@ -337,13 +352,16 @@ class TestSyncEndpoint(unittest.TestCase):
           'client_id': None, 'project_id': None, 'expense_category_id': None, 'user_id': None, 'user_assignment_id': None, 'invoice_id': None}],
     ])
     def test_sync_endpoint_for_expense_stream(self, mock_singer, mock_request, mock_write_record, name, response, expected_record):
-        
+        """
+        Test sync_endpoint function for `expense` stream
+        """
         client = HarvestClient(CONFIG)
         obj = Expenses()
         mock_request.side_effect = response
         
         obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['expenses'])
         args, kwargs = mock_write_record.call_args
+        # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])
 
     @parameterized.expand([
@@ -357,17 +375,22 @@ class TestSyncEndpoint(unittest.TestCase):
          {'id': 1, 'invoice_id': 2, 'project_id': 1, 'project': ID_OBJECT}],
     ])
     def test_sync_endpoint_for_invoice_line_iteams_stream(self, mock_singer, mock_request, mock_write_record, name, response, expected_record):
-        
+        """
+        Test sync_endpoint function for `invoice_line_iteams` stream
+        """
         client = HarvestClient(CONFIG)
         obj = Invoices()
         mock_request.side_effect = response
         
         obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['invoice_line_items'])
         args, kwargs = mock_write_record.call_args
+        # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])
 
     def test_sync_endpoint_for_estimate_line_items_stream(self, mock_singer, mock_request, mock_write_record):
-        
+        """
+        Test sync_endpoint function for `estimate_line_items` stream
+        """
         client = HarvestClient(CONFIG)
         obj = Estimates()
         expected_record = {'id': 1, 'estimate_id': 2}
@@ -376,10 +399,13 @@ class TestSyncEndpoint(unittest.TestCase):
         
         obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['estimate_line_items'])
         args, kwargs = mock_write_record.call_args
+        # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])
 
     def test_sync_endpoint_for_external_reference_stream(self, mock_singer, mock_request, mock_write_record):
-        
+        """
+        Test sync_endpoint function for `external_reference` stream
+        """
         client = HarvestClient(CONFIG)
         obj = TimeEntries()
         expected_record = {'id': 1}
@@ -387,10 +413,13 @@ class TestSyncEndpoint(unittest.TestCase):
         
         obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['external_reference'])
         args, kwargs = mock_write_record.call_args
+        # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])
 
     def test_sync_endpoint_for_time_entry_external_reference_stream(self, mock_singer, mock_request, mock_write_record):
-        
+        """
+        Test sync_endpoint function for `time_entry_external_reference` stream
+        """
         client = HarvestClient(CONFIG)
         obj = TimeEntries()
         expected_record = {'external_reference_id': 1, 'time_entry_id': 2}
@@ -398,4 +427,5 @@ class TestSyncEndpoint(unittest.TestCase):
         
         obj.sync_endpoint(client, CATALOG, CONFIG, {}, {}, ['time_entry_external_reference'])
         args, kwargs = mock_write_record.call_args
+        # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])

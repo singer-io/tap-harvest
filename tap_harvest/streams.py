@@ -15,28 +15,28 @@ def remove_empty_date_times(item, schema):
     """
     fields = []
 
-    # Loop through all keys of schema
+    # Loop through all keys of the schema
     for key in schema['properties']:
         subschema = schema['properties'][key]
 
-        # Append key with datatpye date-time into the `fields` list
+        # Append key with datatype date-time into the `fields` list
         if subschema.get('format') == 'date-time':
             fields.append(key)
 
     for field in fields:
-        # Remove field with datatype date-time from record if value is None
+        # Remove field with datatype date-time from the record if the value is None
         if item.get(field) is None:
             del item[field]
 
 def get_url(endpoint):
     """
-    Return URL which contain BASE_API_URL and endpoint path itself.
+    Return URL which contains BASE_API_URL and endpoint path itself.
     """
     return BASE_API_URL + endpoint
 
 def append_times_to_dates(item, date_fields):
     """
-    Convert date field into the standard format
+    Convert the date field into the standard format
     For example: 2021-02-02 to 2021-02-02T00:00:00Z
     """
     if date_fields:
@@ -53,6 +53,9 @@ def get_bookmark(stream_name, state, default):
     return state.get(stream_name, default)
 
 class Stream:
+    """
+    A base class representing tap-harvest streams
+    """
     tap_stream_id = None
     replication_method = "FULL_TABLE"
     replication_keys = []
@@ -114,6 +117,22 @@ class Stream:
 
         return schema, stream_metadata
 
+    def convert_object_to_id(self, row):
+        """
+        Take the id of the nested object and store it into a separate field ended with _id
+        For example, row = {'client': {'id': 1, 'name': 'client_1'}}
+        This function updates the row as below,
+        row = {'client': {'id': 1, 'name': 'client_1'}, 'client_id': 1}
+        """
+        if self.object_to_id is not None:
+            # Loop through each key of the object_to_id list.
+            for key in self.object_to_id:
+                key_object = row.get(key)
+                if key_object:
+                    row[key + '_id'] = key_object.get('id')
+                else:
+                    row[key + '_id'] = None
+
     def sync_endpoint(self,
                       client,
                       catalog,
@@ -123,7 +142,7 @@ class Stream:
                       selected_streams,
                       parent_row=None):
         """
-        A common function sync incremental streams.
+        A common function to sync incremental streams.
         """
         # Retrieve schema and metadata of stream from the catalog
         schema, stream_metadata = self.get_schema_and_metadata(catalog)
@@ -147,7 +166,7 @@ class Stream:
             # Loop until the last page.
             while page:
 
-                # Add parent_id in the url ito get records of child stream.
+                # Add parent_id in the URL to get records of child stream.
                 url = get_url(self.endpoint or self.tap_stream_id).format(
                     parent_row.get(self.parent_id))
 
@@ -162,15 +181,9 @@ class Stream:
                 data = response[path]
                 time_extracted = utils.now()
                 for row in data:
-                    # Add fields at 1st level explisitly
+                    # Add fields at 1st level explicitly
                     row = self.add_field_at_1st_level(row=row)
-                    if self.object_to_id is not None:
-                        for key in self.object_to_id:
-                            key_object = row.get(key)
-                            if key_object:
-                                row[key + '_id'] = key_object.get('id')
-                            else:
-                                row[key + '_id'] = None
+                    self.convert_object_to_id(row)
 
                     if self.parent_id:
                         # Remove the last character `s` from the parent stream name and
@@ -205,8 +218,7 @@ class Stream:
                         # Get replication key value from the record for the incremental stream
                         bookmark_dttm = transformed_record[bookmark_field]
                         if bookmark_dttm > last_datetime:
-                            # Update last_datetime if it is less than the current
-                            # replication key value
+                            # Update last_datetime if it is less than the current replication key value
                             last_datetime = bookmark_dttm
 
                         if self.tap_stream_id in selected_streams:
@@ -219,14 +231,11 @@ class Stream:
         for child_stream_name in children:
             # Write bookmark if child stream is selected and incremental
             if child_stream_name in selected_streams and bookmark_field:
-                # Update bookmark of the parent into the following name pattern:
-                # `{child_stream_name}_parent`
-                # For example, update bookmark for invoice_meesages
-                # to the `invoice_messages_parent` key.
+                # Update the bookmark of the parent into the following name pattern: `{child_stream_name}_parent`
+                # For example, update the bookmark for invoice_meesages to the `invoice_messages_parent` key.
                 utils.update_state(tap_state, child_stream_name+'_parent', last_datetime)
                 if child_stream_name in tap_state and tap_state[child_stream_name] > current_time:
-                    # Reset child stream's bookmark to current_time
-                    # if max_bookmark is greater than current_time.
+                    # Reset the child stream's bookmark to current_time if max_bookmark is greater than current_time.
                     tap_state[child_stream_name] = current_time
 
         singer.write_state(tap_state)
@@ -260,7 +269,7 @@ class UserRoles(Stream):
     def sync_endpoint(self, client, catalog, config, state,
                         tap_state, selected_streams, parent_row=None):
         """
-        Prepare a record of user_roles stream using parent record's fields.
+        Prepare a record of the user_roles stream using the parent record's fields.
         """
         if self.tap_stream_id in selected_streams:
             # Retrieve schema and metadata of stream from the catalog

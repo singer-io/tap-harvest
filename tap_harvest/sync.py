@@ -28,7 +28,7 @@ def get_streams_to_sync(selected_streams):
 
 def write_schemas_recursive(stream_id, catalog, selected_streams):
     """
-    Write the schemas for each stream.
+    Write the schemas for the selected parent and it's all child.
     """
     stream_obj = STREAMS[stream_id]()
 
@@ -64,6 +64,7 @@ def sync(client, config, catalog, state):
     # sync method needs to be called
     stream_to_sync = get_streams_to_sync(selected_streams)
 
+    # Loop through all `stream_to_sync` streams
     for stream_name in stream_to_sync:
 
         LOGGER.info('START Syncing: %s', stream_name)
