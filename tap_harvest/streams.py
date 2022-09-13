@@ -91,7 +91,7 @@ class Stream:
 
         stream_obj = STREAMS[stream]()
         min_bookmark = bookmark
-        if stream in selected_streams:
+        if stream in selected_streams and stream_obj.replication_keys:
             # Get minimum of stream's bookmark(start date in case of no bookmark) and min_bookmark
             if stream_obj.parent:
                 stream_name_in_state = stream+'_parent'
@@ -229,8 +229,10 @@ class Stream:
 
         # Loop through all children
         for child_stream_name in children:
+            # Sync child stream if it is selected.
+            child_obj = STREAMS[child_stream_name]()
             # Write bookmark if child stream is selected and incremental
-            if child_stream_name in selected_streams and bookmark_field:
+            if child_stream_name in selected_streams and child_obj.replication_keys:
                 # Update the bookmark of the parent into the following name pattern: `{child_stream_name}_parent`
                 # For example, update the bookmark for invoice_meesages to the `invoice_messages_parent` key.
                 utils.update_state(tap_state, child_stream_name+'_parent', last_datetime)

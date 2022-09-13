@@ -69,7 +69,9 @@ def sync(client, config, catalog, state):
 
         LOGGER.info('START Syncing: %s', stream_name)
         # Set currently syncing stream
-        state = singer.set_currently_syncing(state, stream_name)
+        tap_state = singer.set_currently_syncing(tap_state, stream_name)
+        singer.write_state(tap_state)
+
         write_schemas_recursive(stream_name, catalog, selected_streams)
 
         stream_obj = STREAMS[stream_name]()
@@ -77,6 +79,6 @@ def sync(client, config, catalog, state):
 
         LOGGER.info('FINISHED Syncing: %s', stream_name)
 
-    # remove currently_syncing at the end of the sync
-    state = singer.set_currently_syncing(tap_state, None)
-    singer.write_state(tap_state)
+        # remove currently_syncing at the end of the sync
+        tap_state = singer.set_currently_syncing(tap_state, None)
+        singer.write_state(tap_state)
