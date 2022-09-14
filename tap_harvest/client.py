@@ -105,7 +105,6 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         self._client_secret = config['client_secret']
         self._refresh_token = config['refresh_token']
         self._user_agent = config['user_agent']
-        self._account_id = None
         self.session = requests.Session()
         self._access_token = None
         self._expires_at = None
@@ -113,6 +112,8 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
 
     def __enter__(self):
         self._refresh_access_token()
+        self._account_id = self.get_account_id()
+        return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         self.session.close()
@@ -190,8 +191,6 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         Get the account Id of the Active Harvest account.
         It will throw an exception if no active harvest account is found.
         """
-        if self._account_id is not None:
-            return self._account_id
 
         response = self.session.request('GET',
                                         url=BASE_ID_URL + 'accounts',
@@ -228,7 +227,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         params = params or {}
         access_token = self.get_access_token()
         headers = {"Accept": "application/json",
-                   "Harvest-Account-Id": self.get_account_id(),
+                   "Harvest-Account-Id": self._account_id,
                    "Authorization": "Bearer " + access_token,
                    "User-Agent": self._user_agent}
         req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
