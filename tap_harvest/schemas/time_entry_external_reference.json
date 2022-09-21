@@ -6,6 +6,10 @@
     },
     "external_reference_id": {
       "type": ["null", "string"]
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
     }
   }
 }

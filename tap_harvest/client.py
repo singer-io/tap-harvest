@@ -1,4 +1,3 @@
-
 import backoff
 import requests
 import pendulum
@@ -9,10 +8,11 @@ LOGGER = singer.get_logger()
 
 BASE_ID_URL = "https://id.getharvest.com/api/v2/"
 BASE_API_URL = "https://api.harvestapp.com/v2/"
-# timeout request after 300 seconds
+# Timeout request after 300 seconds
 REQUEST_TIMEOUT = 300
 
-class HarvestClient: #pylint: disable=too-many-instance-attributes
+
+class HarvestClient:  # pylint: disable=too-many-instance-attributes
     """
     The client class is used for making REST calls to the Harvest API.
     """
@@ -50,10 +50,11 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
 
         # If config request_timeout is other than 0,"0" or invalid string then use request_timeout
         if ((type(config_request_timeout) in [int, float]) or
-                (isinstance(config_request_timeout,str) and config_request_timeout.replace('.', '', 1).isdigit())) and float(config_request_timeout):
+                (isinstance(config_request_timeout, str) and
+                 config_request_timeout.replace('.', '', 1).isdigit())) and float(config_request_timeout):
             return float(config_request_timeout)
-        raise Exception("The entered timeout is invalid, it should be a valid none-zero integer.")
-
+        raise Exception(
+            "The entered timeout is invalid, it should be a valid none-zero integer.")
 
     # backoff for Timeout error is already included in "requests.exceptions.RequestException"
     # as it is a parent class of "Timeout" error
@@ -137,7 +138,8 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
                    "Harvest-Account-Id": self.get_account_id(),
                    "Authorization": "Bearer " + access_token,
                    "User-Agent": self._user_agent}
-        req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
+        req = requests.Request(
+            "GET", url=url, params=params, headers=headers).prepare()
         LOGGER.info("GET %s", req.url)
         resp = self.session.send(req, timeout=self.request_timeout)
         resp.raise_for_status()

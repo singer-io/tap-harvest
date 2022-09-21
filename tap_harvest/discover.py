@@ -5,6 +5,7 @@ from tap_harvest.streams import STREAMS
 
 LOGGER = singer.get_logger()
 
+
 def discover():
     """
     Run the discovery mode, prepare the catalog file and return the catalog.

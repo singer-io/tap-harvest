@@ -3,6 +3,7 @@ from tap_harvest.streams import STREAMS
 
 LOGGER = singer.get_logger()
 
+
 def get_streams_to_sync(selected_streams):
     """
     Get lists of streams to call the sync method.
@@ -26,6 +27,7 @@ def get_streams_to_sync(selected_streams):
 
     return streams_to_sync
 
+
 def write_schemas_recursive(stream_id, catalog, selected_streams):
     """
     Write the schemas for the selected parent and it's all child.
@@ -37,6 +39,7 @@ def write_schemas_recursive(stream_id, catalog, selected_streams):
 
     for child in stream_obj.children:
         write_schemas_recursive(child, catalog, selected_streams)
+
 
 def sync(client, config, catalog, state):
     """

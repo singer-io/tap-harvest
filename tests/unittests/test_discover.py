@@ -12,14 +12,16 @@ TEST_CONFIG = {
     "user_agent": "USER_AGENT"
 }
 
+
 class MockArgs:
     """Mock args object class"""
-    
-    def __init__(self, config = None, catalog = None, state = {}, discover = False) -> None:
-        self.config = config 
+
+    def __init__(self, config=None, catalog=None, state={}, discover=False) -> None:
+        self.config = config
         self.catalog = catalog
         self.state = state
         self.discover = discover
+
 
 @mock.patch("tap_harvest.HarvestClient._refresh_access_token")
 @mock.patch("singer.utils.parse_args")
@@ -32,14 +34,14 @@ class TestDiscoverMode(unittest.TestCase):
     def test_discover_with_config(self, mock_discover, mock_args, mock_verify_access):
         """Test `_discover` function is called for discover mode"""
         mock_discover.return_value = Catalog([])
-        mock_args.return_value = MockArgs(discover = True, config = TEST_CONFIG)
+        mock_args.return_value = MockArgs(discover=True, config=TEST_CONFIG)
         main()
 
         # Verify that `discover` was called
         self.assertTrue(mock_discover.called)
 
 
-@mock.patch("tap_harvest.client.pendulum.now", return_value = pendulum.datetime(2022,2,5))
+@mock.patch("tap_harvest.client.pendulum.now", return_value=pendulum.datetime(2022, 2, 5))
 @mock.patch("tap_harvest.client.HarvestClient._refresh_access_token")
 class TestGetAccessToken(unittest.TestCase):
     """
@@ -52,7 +54,7 @@ class TestGetAccessToken(unittest.TestCase):
         """
         Test if the client token is not expired, then the token will not be refreshed.
         """
-        self._client._expires_at = pendulum.datetime(2022,2,10)
+        self._client._expires_at = pendulum.datetime(2022, 2, 10)
         self._client.get_access_token()
 
         # Verify that `_refresh_access_token` is not called.
@@ -62,7 +64,7 @@ class TestGetAccessToken(unittest.TestCase):
         """
         Test if the client token is expired, then the token will be refreshed.
         """
-        self._client._expires_at = pendulum.datetime(2022,2,1)
+        self._client._expires_at = pendulum.datetime(2022, 2, 1)
         self._client.get_access_token()
 
         # Verify that `_refresh_access_token` is called.
