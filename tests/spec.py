@@ -8,7 +8,7 @@ class TapSpec():
     PRIMARY_KEYS = "table-key-properties"
     FOREIGN_KEYS = "table-foreign-key-properties"
     REPLICATION_METHOD = "forced-replication-method"
-    API_LIMIT = 100
+    API_LIMIT = "max-row-limit"
     INCREMENTAL = "INCREMENTAL"
     FULL = "FULL_TABLE"
     START_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -60,7 +60,7 @@ class TapSpec():
 
         default_no_replication_key = {
                 self.PRIMARY_KEYS: {"id"},
-                self.REPLICATION_METHOD: self.FULL,
+                self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.API_LIMIT: 100}
 
         user_role = default_no_replication_key.copy()

@@ -16,12 +16,12 @@ jobs:
           name: 'Pylint'
           command: |
             source ~/.virtualenvs/tap-harvest/bin/activate
-            pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals,consider-using-f-string
+            pylint tap_harvest --disable 'missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals,consider-using-f-string,line-too-long,too-many-arguments'
       - run:
           name: 'Unit Tests'
           command: |
             source ~/.virtualenvs/tap-harvest/bin/activate
-            pip install nose coverage
+            pip install nose coverage parameterized
             nosetests --with-coverage --cover-erase --cover-package=tap_harvest --cover-html-dir=htmlcov tests/unittests
             coverage html
       - store_test_results:

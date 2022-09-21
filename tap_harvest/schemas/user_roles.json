@@ -6,6 +6,10 @@
     },
     "role_id": {
       "type": ["null", "integer"]
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
     }
   }
 }
