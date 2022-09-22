@@ -3,13 +3,12 @@ Setup expectations for test sub classes
 Run discovery for as a prerequisite for most tests
 """
 import unittest
-import os
 from datetime import datetime as dt
 from datetime import timezone as tz
 
-from tap_tester import connections, menagerie, runner
-
+from dateutil.parser import parse
 from spec import TapSpec
+from tap_tester import connections, menagerie, runner
 
 
 class BaseTapTest(TapSpec, unittest.TestCase):
@@ -25,69 +24,84 @@ class BaseTapTest(TapSpec, unittest.TestCase):
 
     def environment_variables(self):
         return {}
-        #({p for p in self.CONFIGURATION_ENVIRONMENT['properties'].values()})# |
-        # {c for c in self.CONFIGURATION_ENVIRONMENT['credentials'].values()})
 
     def expected_streams(self):
-        """A set of expected stream names"""
+        """A set of expected stream names."""
         return set(self.expected_metadata().keys())
 
     def child_streams(self):
         """
         Return a set of streams that are child streams
-        based on having foreign key metadata
+        based on having foreign key metadata.
         """
-        return {stream for stream, metadata in self.expected_metadata().items()
-                if metadata.get(self.FOREIGN_KEYS)}
+        return {
+            stream
+            for stream, metadata in self.expected_metadata().items()
+            if metadata.get(self.FOREIGN_KEYS)
+        }
 
     def expected_primary_keys(self):
         """
-        return a dictionary with key of table name
-        and value as a set of primary key fields
+        Return a dictionary with the key of the table name and value as a
+        set of primary key fields.
         """
-        return {table: properties.get(self.PRIMARY_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.PRIMARY_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_replication_keys(self):
         """
-        return a dictionary with key of table name
-        and value as a set of replication key fields
+        Return a dictionary with the key of the table name and value as a
+        set of replication key fields.
         """
-        return {table: properties.get(self.REPLICATION_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.REPLICATION_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_foreign_keys(self):
         """
-        return a dictionary with key of table name
-        and value as a set of foreign key fields
+        Return a dictionary with the key of the table name and value as a
+        set of foreign key fields.
         """
-        return {table: properties.get(self.FOREIGN_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.FOREIGN_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_automatic_keys(self):
         """
         Return a dictionary with the key of the table name
-        and value as a set of automatic key fields
+        and value as a set of automatic key fields.
         """
-        return {table: self.expected_primary_keys().get(table, set()).union(
-                       self.expected_replication_keys().get(table, set())).union(
-                       self.expected_foreign_keys().get(table, set()))
-                for table in self.expected_metadata().keys()}
+        return {
+            table: self.expected_primary_keys()
+            .get(table, set())
+            .union(self.expected_replication_keys().get(table, set()))
+            .union(self.expected_foreign_keys().get(table, set()))
+            for table in self.expected_metadata().keys()
+        }
 
     def expected_replication_method(self):
-        """return a dictionary with key of table name nd value of replication method"""
-        return {table: properties.get(self.REPLICATION_METHOD, None)
-                for table, properties
-                in self.expected_metadata().items()}
+        """
+        Return a dictionary with the key of table name and
+        value of replication method.
+        """
+        return {
+            table: properties.get(self.REPLICATION_METHOD, None)
+            for table, properties in self.expected_metadata().items()
+        }
 
     def setUp(self):
-        """Verify that you have set the prerequisites to run the tap (creds, etc.)"""
+        """
+        Verify that you have set the prerequisites to run the tap (creds,etc.)
+        """
         missing_envs = [x for x in self.environment_variables() if os.getenv(x) is None]
         if missing_envs:
-            raise Exception("Missing test-required environment variables: {}".format(missing_envs))
+            raise Exception(
+                f"Missing test-required environment variables: {missing_envs}"
+            )
 
     def test_run(self):
         """
@@ -99,14 +113,14 @@ class BaseTapTest(TapSpec, unittest.TestCase):
         self.do_test(self.create_connection())
 
     def do_test(self, conn_id):
-        """A placeholder test to override in sub-class tests"""
+        """A placeholder test to override in sub-class tests."""
 
     #########################
     #   Helper Methods      #
     #########################
 
     def create_connection(self, original_properties: bool = True):
-        """Create a new connection with the test name"""
+        """Create a new connection with the test name."""
         # Create the connection
         conn_id = connections.ensure_connection(self, original_properties)
 
@@ -134,14 +148,23 @@ class BaseTapTest(TapSpec, unittest.TestCase):
 
         # Verify actual rows were synced
         sync_record_count = runner.examine_target_output_file(
-            self, conn_id, self.expected_streams(), self.expected_primary_keys())
+            self, conn_id, self.expected_streams(), self.expected_primary_keys()
+        )
         return sync_record_count
 
     @staticmethod
     def local_to_utc(date: dt):
-        """Convert a datetime with timezone information to utc"""
-        utc = dt(date.year, date.month, date.day, date.hour, date.minute,
-                 date.second, date.microsecond, tz.utc)
+        """Convert a DateTime with timezone information to utc."""
+        utc = dt(
+            date.year,
+            date.month,
+            date.day,
+            date.hour,
+            date.minute,
+            date.second,
+            date.microsecond,
+            tz.utc,
+        )
 
         if date.tzinfo and hasattr(date.tzinfo, "_offset"):
             utc += date.tzinfo._offset
@@ -151,21 +174,27 @@ class BaseTapTest(TapSpec, unittest.TestCase):
     def max_bookmarks_by_stream(self, sync_records):
         """
         Return the maximum value for the replication key for each stream
-        which is the bookmark expected value.
+        which is the bookmark's expected value.
 
-        Comparisons are based on the class of the bookmark value. Dates will be
-        string compared which works for ISO date-time strings
+        Comparisons are based on the class of the bookmark value. Dates
+        will be string compared which works for ISO date-time strings
         """
         max_bookmarks = {}
         for stream, batch in sync_records.items():
 
-            upsert_messages = [m for m in batch.get('messages') if m['action'] == 'upsert']
+            upsert_messages = [
+                m for m in batch.get("messages") if m["action"] == "upsert"
+            ]
             stream_bookmark_key = self.expected_replication_keys().get(stream, set())
             if stream_bookmark_key:
-                assert len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
+                # There shouldn't be a compound replication key
+                assert len(stream_bookmark_key) == 1
                 stream_bookmark_key = stream_bookmark_key.pop()
 
-                bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
+                bk_values = [
+                    message["data"].get(stream_bookmark_key)
+                    for message in upsert_messages
+                ]
                 max_bookmarks[stream] = {stream_bookmark_key: None}
                 for bk_value in bk_values:
                     if bk_value is None:
@@ -179,17 +208,23 @@ class BaseTapTest(TapSpec, unittest.TestCase):
         return max_bookmarks
 
     def min_bookmarks_by_stream(self, sync_records):
-        """Return the minimum value for the replication key for each stream"""
+        """Return the minimum value for the replication key for each stream."""
         min_bookmarks = {}
         for stream, batch in sync_records.items():
 
-            upsert_messages = [m for m in batch.get('messages') if m['action'] == 'upsert']
+            upsert_messages = [
+                m for m in batch.get("messages") if m["action"] == "upsert"
+            ]
             stream_bookmark_key = self.expected_replication_keys().get(stream, set())
             if stream_bookmark_key:
-                assert len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
-                (stream_bookmark_key, ) = stream_bookmark_key
+                # There shouldn't be a compound replication key
+                assert len(stream_bookmark_key) == 1
+                (stream_bookmark_key,) = stream_bookmark_key
 
-                bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
+                bk_values = [
+                    message["data"].get(stream_bookmark_key)
+                    for message in upsert_messages
+                ]
                 min_bookmarks[stream] = {stream_bookmark_key: None}
                 for bk_value in bk_values:
                     if bk_value is None:
@@ -203,20 +238,32 @@ class BaseTapTest(TapSpec, unittest.TestCase):
         return min_bookmarks
 
     @staticmethod
-    def select_all_streams_and_fields(conn_id, catalogs, select_all_fields: bool = True):
-        """Select all streams and all fields within streams"""
+    def select_all_streams_and_fields(
+        conn_id, catalogs, select_all_fields: bool = True
+    ):
+        """Select all streams and all fields within streams."""
         for catalog in catalogs:
-            schema = menagerie.get_annotated_schema(conn_id, catalog['stream_id'])
+            schema = menagerie.get_annotated_schema(conn_id, catalog["stream_id"])
 
             non_selected_properties = []
             if not select_all_fields:
                 # get a list of all properties so that none are selected
-                non_selected_properties = schema.get('annotated-schema', {}).get(
-                    'properties', {}).keys()
+                non_selected_properties = (
+                    schema.get("annotated-schema", {}).get("properties", {}).keys()
+                )
 
             connections.select_catalog_and_fields_via_metadata(
-                conn_id, catalog, schema, [], non_selected_properties)
+                conn_id, catalog, schema, [], non_selected_properties
+            )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.start_date = self.get_properties().get("start_date")
+
+    def parse_bookmark_to_date(self, bookmark_value):
+        if bookmark_value:
+            if isinstance(bookmark_value, str):
+                bookmark_value = self.local_to_utc(parse(bookmark_value))
+            if isinstance(bookmark_value, int):
+                bookmark_value = self.local_to_utc(dt.utcfromtimestamp(bookmark_value))
+        return bookmark_value
