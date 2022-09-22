@@ -48,6 +48,7 @@ class TapSpec:
         return properties
 
     def get_credentials(self):
+        """Configure cerdentials required for the tap."""
         return_val = {
             "client_id": os.environ["TAP_HARVEST_CLIENT_ID"],
             "client_secret": os.environ["TAP_HARVEST_CLIENT_SECRET"],

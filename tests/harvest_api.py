@@ -243,15 +243,8 @@ def create_expense(project_id):
         "spent_date": str(spent_date),
         "total_cost": random.randint(1, 10000000),
     }
-    receipt_file = None
     response = None
-    # NOTE we cannot attach files on the free Harvest plan
-    # with open(os.getcwd() +'/harvest_test_receipt.gif') as receipt:
-    #     receipt_file = {"harvest_test_receipt.gif": receipt}
-    #     response = requests.post(url="https://api.harvestapp.com/v2/expenses", headers=HEADERS, json=data, files=receipt_file)
-    #     if response.status_code >= 400:
-    #         LOGGER.warning("create_expense: {} {}".format(response.status_code, response.text))
-    #         assert None
+
     response = requests.post(
         url="https://api.harvestapp.com/v2/expenses", headers=HEADERS, json=data
     )
@@ -734,10 +727,7 @@ def update_project(project_id):
 
 
 def update_project_task(project_id, task_assignment_id):
-    """a.k.a.
-
-    task_assignment
-    """
+    """a.k.a. task_assignment"""
     data = {"budget": random.randint(1000, 1000000000)}
     response = requests.patch(
         url="https://api.harvestapp.com/v2/projects/{}/task_assignments/{}".format(
@@ -1178,7 +1168,14 @@ def delete_project_user(project_id, project_user_id):
     return response.json()
 
 
-def set_up(cls, rec_count=2, create_master=True):
+def set_up(cls, rec_count=2):
+    """
+    Function to create records for all the streams before starting test.
+
+    Args:
+        rec_count (int, optional): Number of records to generate. Defaults to 2.
+    """
+
     LOGGER.info("Start Setup")
 
     # ###  BREAKDOWN for cls._master  #############################################################################
@@ -1190,61 +1187,60 @@ def set_up(cls, rec_count=2, create_master=True):
     #                            "total": 0}}               | total record count for the stream
     ##############################################################################################################
 
-    if create_master:
-        cls._master = {
-            "clients": {"test": True, "child": False},
-            "contacts": {"test": True, "child": False},
-            "estimate_item_categories": {"test": True, "child": False},
-            "estimate_line_items": {
-                "test": True,
-                "child": True,
-            },
-            "estimate_messages": {
-                "test": False,
-                "child": False,
-            },  # BUG see (https://github.com/singer-io/tap-harvest/issues/35)
-            "estimates": {"test": True, "child": False},
-            "expense_categories": {"test": True, "child": False},
-            "expenses": {"test": True, "child": False},
-            "external_reference": {
-                "test": True,
-                "child": True,
-            },
-            "invoice_item_categories": {"test": True, "child": False},
-            "invoice_line_items": {
-                "test": True,
-                "child": True,
-            },
-            "invoice_messages": {
-                "test": False,
-                "child": False,
-            },  # BUG (see issue/35 ^ )
-            "invoice_payments": {
-                "test": False,
-                "child": False,
-            },  # BUG (see issue/35 ^ )
-            "invoices": {"test": True, "child": False},
-            "project_tasks": {"test": True, "child": False},
-            "project_users": {
-                "test": False,
-                "child": False,
-            },  # Unable to test - limited by projects
-            "projects": {"test": False, "child": False},  # Unable to test - limit 2
-            "roles": {"test": True, "child": False},
-            "tasks": {"test": True, "child": False},
-            "time_entries": {"test": True, "child": False},
-            "time_entry_external_reference": {"test": True, "child": True},
-            "user_project_tasks": {
-                "test": False,
-                "child": False,
-            },  # Unable to test - limited by users
-            "user_projects": {
-                "test": False,
-                "child": False,
-            },  # Unable to test - limited by projects
-            "user_roles": {"test": False, "child": False},  # TODO TEST THIS STREAM
-            "users": {"test": False, "child": False},  # Unable to test - limit 1
-        }
+    cls._master = {
+        "clients": {"test": True, "child": False},
+        "contacts": {"test": True, "child": False},
+        "estimate_item_categories": {"test": True, "child": False},
+        "estimate_line_items": {
+            "test": True,
+            "child": True,
+        },
+        "estimate_messages": {
+            "test": False,
+            "child": False,
+        },  # BUG see (https://github.com/singer-io/tap-harvest/issues/35)
+        "estimates": {"test": True, "child": False},
+        "expense_categories": {"test": True, "child": False},
+        "expenses": {"test": True, "child": False},
+        "external_reference": {
+            "test": True,
+            "child": True,
+        },
+        "invoice_item_categories": {"test": True, "child": False},
+        "invoice_line_items": {
+            "test": True,
+            "child": True,
+        },
+        "invoice_messages": {
+            "test": False,
+            "child": False,
+        },  # BUG (see issue/35 ^ )
+        "invoice_payments": {
+            "test": False,
+            "child": False,
+        },  # BUG (see issue/35 ^ )
+        "invoices": {"test": True, "child": False},
+        "project_tasks": {"test": True, "child": False},
+        "project_users": {
+            "test": False,
+            "child": False,
+        },  # Unable to test - limited by projects
+        "projects": {"test": False, "child": False},  # Unable to test - limit 2
+        "roles": {"test": True, "child": False},
+        "tasks": {"test": True, "child": False},
+        "time_entries": {"test": True, "child": False},
+        "time_entry_external_reference": {"test": True, "child": True},
+        "user_project_tasks": {
+            "test": False,
+            "child": False,
+        },  # Unable to test - limited by users
+        "user_projects": {
+            "test": False,
+            "child": False,
+        },  # Unable to test - limited by projects
+        "user_roles": {"test": False, "child": False},  # TODO TEST THIS STREAM
+        "users": {"test": False, "child": False},  # Unable to test - limit 1
+    }
 
     # Assign attributes to each stream that is under test
     for stream in cls._master:
@@ -1521,6 +1517,10 @@ def set_up(cls, rec_count=2, create_master=True):
 
 
 def tear_down(cls):
+    """
+    Delete all the streams records.
+    (Except tasks and time_entries as they can not be deleted.)
+    """
     LOGGER.info("Start Teardown")
 
     # Estimates
@@ -1555,6 +1555,14 @@ def tear_down(cls):
 
 
 def update_streams(cls, expected=None):
+    """A common function to update streams records.
+
+    Args:
+        expected (dict, optional): Dictionary containaing streams name with list to append updated records. Defaults to None.
+
+    Returns:
+        dict: Returns 'expected' dictionary.
+    """
     if not expected:
         expected = {stream: [] for stream in cls.expected_streams()}
 
@@ -1704,6 +1712,7 @@ def update_streams(cls, expected=None):
 
 def insert_one_record(cls, expected):
     """Function to insert one record to all streams."""
+
     LOGGER.info("Inserting roles")
     inserted_role = create_role()
     expected["roles"].append({"id": inserted_role["id"]})

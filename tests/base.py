@@ -3,6 +3,7 @@ Setup expectations for test sub classes
 Run discovery for as a prerequisite for most tests
 """
 import unittest
+import os
 from datetime import datetime as dt
 from datetime import timezone as tz
 
@@ -23,6 +24,7 @@ class BaseTapTest(TapSpec, unittest.TestCase):
         return "tap_tester_{}".format(TapSpec.tap_name())
 
     def environment_variables(self):
+        """Returns set of environment variable."""
         return {}
 
     def expected_streams(self):
@@ -261,6 +263,9 @@ class BaseTapTest(TapSpec, unittest.TestCase):
         self.start_date = self.get_properties().get("start_date")
 
     def parse_bookmark_to_date(self, bookmark_value):
+        """
+        Function to parse bookmark value to UTC format
+        """
         if bookmark_value:
             if isinstance(bookmark_value, str):
                 bookmark_value = self.local_to_utc(parse(bookmark_value))
