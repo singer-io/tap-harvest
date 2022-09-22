@@ -4,6 +4,7 @@ import requests
 import json
 from tap_harvest.client import HarvestClient
 
+
 def get_mock_http_response(status_code, content={}):
     """
     Returns mock response.
@@ -15,6 +16,7 @@ def get_mock_http_response(status_code, content={}):
     response._content = contents.encode()
     return response
 
+
 TEST_CONFIG = {
     "client_id": "CLIENT_ID",
     "client_secret": "CLIENT_SECRET",
@@ -22,13 +24,14 @@ TEST_CONFIG = {
     "user_agent": "USER_AGENT"
 }
 
+
 class TestAccountAvailability(unittest.TestCase):
     """
     Test `get_account_id` method of the client.
     """
 
     @mock.patch("tap_harvest.client.HarvestClient._refresh_access_token")
-    @mock.patch('requests.Session.request')
+    @mock.patch('requests.Session.request', return_value=get_mock_http_response(200, {"accounts": []}))
     def test_get_account_id(self, mock_request, mock_refresh_access_token):
         """
         Test if no account is available in the success response,
@@ -37,8 +40,7 @@ class TestAccountAvailability(unittest.TestCase):
 
         auth = HarvestClient(TEST_CONFIG)
         auth._access_token = "test"
-        mock_request.return_value=get_mock_http_response(200,{"accounts":[]})
-        with self.assertRaises(Exception) as e: 
+        with self.assertRaises(Exception) as e:
             auth.get_account_id()
         expected_message = "No Active Harvest Account found"
 
@@ -46,7 +48,7 @@ class TestAccountAvailability(unittest.TestCase):
         self.assertEqual(str(e.exception), str(expected_message))
 
     @mock.patch("tap_harvest.client.HarvestClient._refresh_access_token")
-    @mock.patch('requests.Session.request')
+    @mock.patch('requests.Session.request', return_value=get_mock_http_response(200, {"accounts": [{"id": 12345}]}))
     def test_success_get_account_id(self, mock_request, mock_refresh_access_token):
         """
         Test if an account is present in the response,
@@ -54,7 +56,6 @@ class TestAccountAvailability(unittest.TestCase):
         """
         auth = HarvestClient(TEST_CONFIG)
         auth._access_token = "test"
-        mock_request.return_value=get_mock_http_response(200,{"accounts":[{"id": 12345}]})
         auth.get_account_id()
 
         # Verify that the client account id is updated

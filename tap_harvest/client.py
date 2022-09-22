@@ -12,32 +12,42 @@ BASE_API_URL = "https://api.harvestapp.com/v2/"
 # Timeout request after 300 seconds
 REQUEST_TIMEOUT = 300
 
-class HarvestError(Exception):
-    pass
 
-class Server5xxError(Exception):
-    pass
+class HarvestError(Exception):
+    """Custom error class for all the Harvest errors."""
+
+
+class Server5xxError(HarvestError):
+    """Custom error class for all the 5xx error."""
+
 
 class HarvestBadRequestError(HarvestError):
-    pass
+    """Custom error class for bad request."""
+
 
 class HarvestUnauthorizedError(HarvestError):
-    pass
+    """Custom error class for unauthorization."""
+
 
 class HarvestNotFoundError(HarvestError):
-    pass
+    """Custom error class for not found error."""
+
 
 class HarvestForbiddenError(HarvestError):
-    pass
+    """Custom error class for forbidden error."""
+
 
 class HarvestUnprocessableEntityError(HarvestError):
-    pass
+    """Custom error class for unprocessable entity."""
 
-class HarvestRateLimitExceeededError(HarvestError):
-    pass
 
-class HarvestInternalServiceError(Server5xxError):
-    pass
+class HarvestRateLimitExceededError(HarvestError):
+    """Custom error class for rate limit exceeded."""
+
+
+class HarvestInternalServerError(Server5xxError):
+    """Custom error class for internal server error."""
+
 
 ERROR_CODE_EXCEPTION_MAPPING = {
     400: {
@@ -50,7 +60,7 @@ ERROR_CODE_EXCEPTION_MAPPING = {
     },
     403: {
         "raise_exception": HarvestForbiddenError,
-        "message": "User does not have permission to access the resource or "\
+        "message": "User does not have permission to access the resource or "
                    "related feature is disabled."
     },
     404: {
@@ -62,14 +72,15 @@ ERROR_CODE_EXCEPTION_MAPPING = {
         "message": "The request was not able to process right now."
     },
     429: {
-        "raise_exception": HarvestRateLimitExceeededError,
+        "raise_exception": HarvestRateLimitExceededError,
         "message": "API rate limit exceeded."
     },
     500: {
-        "raise_exception": HarvestInternalServiceError,
+        "raise_exception": HarvestInternalServerError,
         "message": "An error has occurred at Harvest's end."
     }
 }
+
 
 def raise_for_error(response):
     """
@@ -87,13 +98,15 @@ def raise_for_error(response):
         exc = Server5xxError
     else:
         exc = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", HarvestError)
+
     error_message = response_json.get("error_description", ERROR_CODE_EXCEPTION_MAPPING.get(
-            error_code, {}).get("message", "An Unknown Error occurred."))
+        error_code, {}).get("message", "An Unknown Error occurred."))
     message = "HTTP-error-code: {}, Error: {}".format(error_code, error_message)
 
     raise exc(message) from None
 
-class HarvestClient: #pylint: disable=too-many-instance-attributes
+
+class HarvestClient:  # pylint: disable=too-many-instance-attributes
     """
     The client class is used for making REST calls to the Harvest API.
     """
@@ -104,6 +117,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         self._client_secret = config['client_secret']
         self._refresh_token = config['refresh_token']
         self._user_agent = config['user_agent']
+        self._account_id = None
         self.session = requests.Session()
         self._access_token = None
         self._expires_at = None
@@ -137,8 +151,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         raise Exception("The entered timeout is invalid, it should be a valid none-zero integer.")
 
     @backoff.on_exception(backoff.expo,
-                          (HarvestRateLimitExceeededError, Server5xxError,
-                           requests.Timeout, requests.ConnectionError),
+                          (Server5xxError, requests.Timeout, requests.ConnectionError),
                           max_tries=5,
                           factor=2)
     def _refresh_access_token(self):
@@ -182,8 +195,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         return self._access_token
 
     @backoff.on_exception(backoff.expo,
-                          (HarvestRateLimitExceeededError, Server5xxError,
-                           requests.Timeout, requests.ConnectionError),
+                          (Server5xxError, requests.Timeout, requests.ConnectionError),
                           max_tries=5,
                           factor=2)
     def get_account_id(self):
@@ -205,6 +217,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
             time.sleep(retry_after)
             return self.get_account_id()
 
+        # Raise an error if not success response
         if response.status_code != 200:
             raise_for_error(response)
 
@@ -215,8 +228,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
         raise Exception("No Active Harvest Account found") from None
 
     @backoff.on_exception(backoff.expo,
-                          (HarvestRateLimitExceeededError, Server5xxError,
-                           requests.Timeout, requests.ConnectionError),
+                          (Server5xxError, requests.Timeout, requests.ConnectionError),
                           max_tries=5,
                           factor=2)
     @utils.ratelimit(100, 15)
@@ -242,6 +254,7 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
             time.sleep(retry_after)
             return self.request(url, params)
 
+        # Raise an error if not success response
         if resp.status_code != 200:
             raise_for_error(resp)
 

@@ -22,6 +22,7 @@ class MockArgs:
         self.state = state
         self.discover = discover
 
+
 @mock.patch("tap_harvest.HarvestClient.get_account_id")
 @mock.patch("tap_harvest.HarvestClient._refresh_access_token")
 @mock.patch("singer.utils.parse_args")

@@ -5,7 +5,8 @@ import requests
 import json
 from tap_harvest.client import HarvestClient, REQUEST_TIMEOUT
 
-def get_mock_http_response(status_code, content={}, headers = {}):
+
+def get_mock_http_response(status_code, content={}, headers={}):
     """
     Returns mock response.
     """
@@ -42,7 +43,8 @@ class TestRequestRateLimitHandling(unittest.TestCase):
         """
         Test that when the rate limit is exceeded, the function is called again after `Retry-After` seconds.
         """
-        mock_request.side_effect = [get_mock_http_response(429, headers={"Retry-After": retry_seconds}), get_mock_http_response(200)]
+        mock_request.side_effect = [get_mock_http_response(429, headers={"Retry-After": retry_seconds}),
+                                    get_mock_http_response(200)]
         _client = HarvestClient(TEST_CONFIG)
         _client._access_token = "TEST_TOKEN"
         _client._account_id = "1234"
@@ -67,6 +69,7 @@ class TestRequestRateLimitHandling(unittest.TestCase):
         # Verify that `requests` method is called once.
         self.assertEqual(mock_request.call_count, 1)
         mock_request.assert_called_with(mock.ANY, timeout=REQUEST_TIMEOUT)
+
 
 @mock.patch("requests.Session.request")
 @mock.patch("tap_harvest.client.time.sleep")
