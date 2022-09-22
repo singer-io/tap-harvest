@@ -3,6 +3,7 @@ from tap_harvest.streams import STREAMS
 
 LOGGER = singer.get_logger()
 
+
 def get_streams_to_sync(selected_streams):
     """
     Get lists of streams to call the sync method.
@@ -26,9 +27,10 @@ def get_streams_to_sync(selected_streams):
 
     return streams_to_sync
 
+
 def write_schemas_recursive(stream_id, catalog, selected_streams):
     """
-    Write the schemas for each stream.
+    Write the schemas for the selected parent and it's all child.
     """
     stream_obj = STREAMS[stream_id]()
 
@@ -37,6 +39,7 @@ def write_schemas_recursive(stream_id, catalog, selected_streams):
 
     for child in stream_obj.children:
         write_schemas_recursive(child, catalog, selected_streams)
+
 
 def sync(client, config, catalog, state):
     """
@@ -64,11 +67,14 @@ def sync(client, config, catalog, state):
     # sync method needs to be called
     stream_to_sync = get_streams_to_sync(selected_streams)
 
+    # Loop through all `stream_to_sync` streams
     for stream_name in stream_to_sync:
 
         LOGGER.info('START Syncing: %s', stream_name)
         # Set currently syncing stream
-        state = singer.set_currently_syncing(state, stream_name)
+        tap_state = singer.set_currently_syncing(tap_state, stream_name)
+        singer.write_state(tap_state)
+
         write_schemas_recursive(stream_name, catalog, selected_streams)
 
         stream_obj = STREAMS[stream_name]()
@@ -76,6 +82,6 @@ def sync(client, config, catalog, state):
 
         LOGGER.info('FINISHED Syncing: %s', stream_name)
 
-    # remove currently_syncing at the end of the sync
-    state = singer.set_currently_syncing(tap_state, None)
-    singer.write_state(tap_state)
+        # remove currently_syncing at the end of the sync
+        tap_state = singer.set_currently_syncing(tap_state, None)
+        singer.write_state(tap_state)

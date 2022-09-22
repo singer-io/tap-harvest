@@ -18,6 +18,7 @@ REQUIRED_CONFIG_KEYS = [
     "user_agent",
 ]
 
+
 def do_discover():
     """
     Call the discovery function.
@@ -26,6 +27,7 @@ def do_discover():
     catalog = _discover()
     json.dump(catalog.to_dict(), sys.stdout, indent=2)
     LOGGER.info('Finished discover')
+
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
@@ -42,11 +44,13 @@ def main():
             state = parsed_args.state
         if parsed_args.discover:
             do_discover()
-        elif parsed_args.catalog:
+        else:
+            catalog = parsed_args.catalog if parsed_args.catalog else _discover()
             _sync(client=client,
                   config=config,
-                  catalog=parsed_args.catalog,
+                  catalog=catalog,
                   state=state)
+
 
 if __name__ == '__main__':
     main()

@@ -6,11 +6,13 @@ from tap_harvest.streams import STREAMS
 # Reference:
 # https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#Metadata
 
+
 def get_abs_path(path):
     """
     Get the absolute path for the schema files.
     """
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
+
 
 def get_schemas():
     """

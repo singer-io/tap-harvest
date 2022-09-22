@@ -11,11 +11,12 @@ TEST_CONFIG = {
     "user_agent": "USER_AGENT"
 }
 
+
 class MockArgs:
     """Mock args object class"""
-    
-    def __init__(self, config = None, catalog = None, state = {}, discover = False) -> None:
-        self.config = config 
+
+    def __init__(self, config=None, catalog=None, state={}, discover=False) -> None:
+        self.config = config
         self.catalog = catalog
         self.state = state
         self.discover = discover
@@ -30,7 +31,8 @@ class TestSyncMode(unittest.TestCase):
     Test the main function for sync mode.
     """
 
-    mock_catalog = {"streams": [{"stream": "invoices", "schema": {}, "metadata": {}}]}
+    mock_catalog = {"streams": [
+        {"stream": "invoices", "schema": {}, "metadata": {}}]}
 
     @mock.patch("tap_harvest._discover")
     def test_sync_with_catalog(self, mock_discover, mock_sync, mock_args, mock_check_access_token, mock_get_account_id):
@@ -38,7 +40,8 @@ class TestSyncMode(unittest.TestCase):
         Test sync mode with catalog given in args.
         """
 
-        mock_args.return_value = MockArgs(config=TEST_CONFIG, catalog=Catalog.from_dict(self.mock_catalog))
+        mock_args.return_value = MockArgs(config=TEST_CONFIG,
+                                          catalog=Catalog.from_dict(self.mock_catalog))
         main()
 
         # Verify `_sync` is called with expected arguments
@@ -61,16 +64,18 @@ class TestSyncMode(unittest.TestCase):
         mock_args.return_value = MockArgs(config=TEST_CONFIG)
         main()
 
-        # verify `_discover` and `_sync` function is not called
-        self.assertFalse(mock_discover.called)
-        self.assertFalse(mock_sync.called)
+        # verify `_discover` and `_sync` function is called
+        self.assertTrue(mock_discover.called)
+        self.assertTrue(mock_sync.called)
 
     def test_sync_with_state(self, mock_sync, mock_args, mock_check_access_token, mock_get_account_id):
         """
         Test sync mode with the state given in args
         """
         mock_state = {"bookmarks": {"projec ts": ""}}
-        mock_args.return_value = MockArgs(config=TEST_CONFIG, catalog=Catalog.from_dict(self.mock_catalog), state=mock_state)
+        mock_args.return_value = MockArgs(config=TEST_CONFIG,
+                                          catalog=Catalog.from_dict(self.mock_catalog),
+                                          state=mock_state)
         main()
 
         # Verify `_sync` is called with expected arguments
@@ -78,6 +83,7 @@ class TestSyncMode(unittest.TestCase):
                                      config=TEST_CONFIG,
                                      catalog=Catalog.from_dict(self.mock_catalog),
                                      state=mock_state)
+
 
 class TestDiscover(unittest.TestCase):
     """Test `discover` function."""

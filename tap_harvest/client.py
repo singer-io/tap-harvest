@@ -1,4 +1,3 @@
-
 import backoff
 import requests
 import pendulum
@@ -10,7 +9,7 @@ LOGGER = singer.get_logger()
 
 BASE_ID_URL = "https://id.getharvest.com/api/v2/"
 BASE_API_URL = "https://api.harvestapp.com/v2/"
-# timeout request after 300 seconds
+# Timeout request after 300 seconds
 REQUEST_TIMEOUT = 300
 
 class HarvestError(Exception):
@@ -132,7 +131,8 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
 
         # If config request_timeout is other than 0,"0" or invalid string then use request_timeout
         if ((type(config_request_timeout) in [int, float]) or
-                (isinstance(config_request_timeout,str) and config_request_timeout.replace('.', '', 1).isdigit())) and float(config_request_timeout):
+                (isinstance(config_request_timeout, str) and
+                 config_request_timeout.replace('.', '', 1).isdigit())) and float(config_request_timeout):
             return float(config_request_timeout)
         raise Exception("The entered timeout is invalid, it should be a valid none-zero integer.")
 
@@ -230,7 +230,8 @@ class HarvestClient: #pylint: disable=too-many-instance-attributes
                    "Harvest-Account-Id": self._account_id,
                    "Authorization": "Bearer " + access_token,
                    "User-Agent": self._user_agent}
-        req = requests.Request("GET", url=url, params=params, headers=headers).prepare()
+        req = requests.Request(
+            "GET", url=url, params=params, headers=headers).prepare()
         LOGGER.info("GET %s", req.url)
         resp = self.session.send(req, timeout=self.request_timeout)
 
