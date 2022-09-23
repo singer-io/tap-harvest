@@ -117,3 +117,68 @@ class TestWriteSchemas(unittest.TestCase):
         self.assertEqual(mock_write_schema.call_count, len(selected_streams))
         for stream in selected_streams:
             mock_write_schema.assert_any_call(stream, mock.ANY, mock.ANY)
+
+
+@mock.patch("tap_harvest.streams.Stream.sync_endpoint")
+@mock.patch("tap_harvest.sync.write_schemas_recursive")
+class TestCurrentlySyncing(unittest.TestCase):
+    """
+    Test if sync was interrupter for child selected without parent selected.
+    """
+
+    catalog = Catalog.from_dict({
+        "streams": [
+            get_stream_catalog("tasks", is_selected=True),
+            get_stream_catalog("users"),
+            get_stream_catalog("user_projects"),
+            get_stream_catalog("user_project_tasks", is_selected=True),
+            get_stream_catalog("invoices"),
+            get_stream_catalog("invoice_line_items", is_selected=True),
+            get_stream_catalog("estimates"),
+            get_stream_catalog("estimate_line_items", is_selected=True),
+            get_stream_catalog("estimates"),
+            get_stream_catalog("estimate_messages", is_selected=True),
+        ]
+    })
+
+    def test_without_currently_syncing(self, mock_write_schema, mock_sync_object):
+        """
+        Test if sync was not interrupted that sync start normally.
+        """
+
+        client = mock.Mock()
+        sync(client=client,
+             config={},
+             state={},
+             catalog=self.catalog)
+        streams_in_order = ['tasks', 'user_project_tasks', 'invoice_line_items',
+                            'estimate_line_items', 'estimate_messages']
+
+        # Verify that selected steams are in order.
+        mock_sync_object.assert_called_with(mock.ANY, mock.ANY, mock.ANY,
+                                            mock.ANY, mock.ANY, streams_in_order)
+
+        # Verify that first syncing stream is first selected stream
+        self.assertEqual(mock_write_schema.mock_calls[0],
+                         mock.call("tasks", mock.ANY, streams_in_order))
+
+    def test_with_currently_syncing(self, mock_write_schema, mock_sync_object):
+        """
+        Test if sync was interrupted for selected child without parent,
+        First syncing stream is parent of interrupted child.
+        """
+        client = mock.Mock()
+        sync(client=client,
+             config={},
+             state={"currently_syncing": "invoices"},
+             catalog=self.catalog)
+        streams_in_order = ['invoice_line_items', 'estimate_line_items',
+                            'estimate_messages', 'tasks', 'user_project_tasks']
+
+        # Verify that selected steams are in order, starting with interrupted child.
+        mock_sync_object.assert_called_with(mock.ANY, mock.ANY, mock.ANY,
+                                            mock.ANY, mock.ANY, streams_in_order)
+
+        # Verify that forst syncing stream is parent of interrupted child
+        self.assertEqual(mock_write_schema.mock_calls[0],
+                         mock.call("invoices", mock.ANY, streams_in_order))

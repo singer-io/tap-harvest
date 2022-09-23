@@ -1,5 +1,5 @@
 from tap_tester import menagerie, runner
-from harvest_api import set_up_class, tear_cown_class
+from harvest_api import set_up, tear_down
 from base import BaseTapTest
 
 class HarvestParentInterruptedSyncTest(BaseTapTest):
@@ -10,11 +10,11 @@ class HarvestParentInterruptedSyncTest(BaseTapTest):
 
     @classmethod
     def setUpClass(cls):
-        set_up_class(cls)
+        set_up(cls)
 
     @classmethod
     def tearDownClass(cls):
-        tear_cown_class(cls)
+        tear_down(cls)
 
     def do_test(self, conn_id):
         """
@@ -40,7 +40,7 @@ class HarvestParentInterruptedSyncTest(BaseTapTest):
         self.select_all_streams_and_fields(
             conn_id, test_catalogs_automatic_fields, select_all_fields=False,
         )
-        
+
         # Run initial sync
         self.run_sync(conn_id)
 
@@ -78,64 +78,50 @@ class HarvestParentInterruptedSyncTest(BaseTapTest):
         for stream in streams_to_test:
             with self.subTest(stream=stream):
                 # set expectations
-                expected_replication_method = self.expected_replication_method()[stream]
                 expected_primary_keys = list(self.expected_primary_keys()[stream])
 
                 # gather results
                 full_records = [message['data'] for message in full_sync_records[stream]['messages']]
-                full_record_count = len(full_records)
                 interrupted_records = [message['data'] for message in interrupted_sync_records.get(stream, {}).get('messages', [])]
                 interrupted_record_count = len(interrupted_records)
                 
-                if expected_replication_method == self.INCREMENTAL:
-                    expected_replication_key = next(iter(self.expected_replication_keys().get(stream, set())))
+                expected_replication_key = next(iter(self.expected_replication_keys().get(stream, set())))
 
-                    if stream in interrupted_state.keys():
-                        interrupted_bookmark = interrupted_state[stream]
-                        if stream == interrupted_state['currently_syncing']:
-                            for record in interrupted_records:
-                    
-                                rec_time = record[expected_replication_key]
-                                self.assertGreaterEqual(rec_time, interrupted_bookmark)
-
-                                # Verify all interrupted recs are in full recs
-                                self.assertIn(record, full_records,  msg='incremental table record in interrupted sync not found in full sync')
-
-                                # Record count for all streams of interrupted sync match expectations
-                                full_records_after_interrupted_bookmark = 0
-
-                            for record in full_records:
-                                rec_time = record[expected_replication_key]
-
-                                if (rec_time > interrupted_bookmark):
-                                    full_records_after_interrupted_bookmark += 1
-
-                            self.assertEqual(full_records_after_interrupted_bookmark, len(interrupted_records), \
-                                                msg="Expected {} records in each sync".format(full_records_after_interrupted_bookmark))
-                        else:
-                            # Verify we collected records that have the same replication value as a bookmark for streams that are already synced
-                            self.assertGreaterEqual(interrupted_record_count, 0)
-                    
-                    else:
+                if stream in interrupted_state.keys():
+                    interrupted_bookmark = interrupted_state[stream]
+                    if stream == interrupted_state['currently_syncing']:
                         for record in interrupted_records:
+
+                            rec_time = record[expected_replication_key]
+                            self.assertGreaterEqual(rec_time, interrupted_bookmark)
+
+                            # Record count for all streams of interrupted sync match expectations
+                            full_records_after_interrupted_bookmark = 0
+
+                        for record in full_records:
+                            rec_time = record[expected_replication_key]
+
+                            if (rec_time > interrupted_bookmark):
+                                full_records_after_interrupted_bookmark += 1
+
+                        self.assertEqual(full_records_after_interrupted_bookmark, len(interrupted_records), \
+                                            msg="Expected {} records in each sync".format(full_records_after_interrupted_bookmark))
+                    else:
+                        # Verify we collected records that have the same replication value as a bookmark for streams that are already synced
+                        self.assertGreaterEqual(interrupted_record_count, 0)
+                
+                else:
+
+                    # Verify all interrupted recs are in full sync
+                    for record in interrupted_records:
+                        with self.subTest(record_primary_key=record[expected_primary_keys[0]]):
+
                             rec_time = record[expected_replication_key]
                             self.assertGreaterEqual(rec_time, self.DEFAULT_START_DATE)
 
-                        # Verify resuming sync replicates all records that were found in the full sync (uninterrupted)
-                        for record in interrupted_records:
-                            with self.subTest(record_primary_key=record[expected_primary_keys[0]]):
-                                self.assertIn(record, full_records, msg='Unexpected record replicated in resuming sync.')
-                        for record in full_records:
-                            with self.subTest(record_primary_key=record[expected_primary_keys[0]]):
-                                self.assertIn(record, interrupted_records, msg='Record missing from resuming sync.' )
+                            self.assertIn(record, full_records, msg='Unexpected record replicated in resuming sync.')
 
-                else:
-                     # Verify full table streams do not save bookmarked values at the conclusion of a succesful sync
-                    self.assertNotIn(stream, full_sync_state.keys())
-                    self.assertNotIn(stream, final_state.keys())
-
-                    # Verify first and second sync have the same records
-                    self.assertEqual(full_record_count, interrupted_record_count)
-                    for rec in interrupted_records:
-                        self.assertIn(rec, full_records, msg='full table record in interrupted sync not found in full sync')
-
+                    # Verify resuming sync replicates all records that were found in the full sync (uninterrupted)
+                    for record in full_records:
+                        with self.subTest(record_primary_key=record[expected_primary_keys[0]]):
+                            self.assertIn(record, interrupted_records, msg='Record missing from resuming sync.' )

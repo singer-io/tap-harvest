@@ -1,7 +1,7 @@
+import copy
 from datetime import datetime
 import singer
-import copy
-from singer import Transformer, utils, metadata
+from singer import Transformer, metadata, utils
 
 LOGGER = singer.get_logger()
 BASE_API_URL = "https://api.harvestapp.com/v2/"
@@ -91,6 +91,18 @@ class Stream:
             LOGGER.info('OS Error writing schema for: %s', self.tap_stream_id)
             raise err
 
+    def write_record_for_child_stream(self, transformer, record, catalog, state, start_date):
+        """
+        For child streams with parent bookmark, Transform and writes record.
+        """
+        if record['updated_at'] > get_bookmark(f'{self.tap_stream_id}_parent', state, start_date):
+            # Retrieve schema and metadata of stream from the catalog
+            schema, stream_metadata = self.get_schema_and_metadata(catalog)
+            time_extracted = utils.now()
+
+            transformed_record = transformer.transform(record, schema, stream_metadata)
+            singer.write_record(self.tap_stream_id, transformed_record, time_extracted=time_extracted)
+
     def get_min_bookmark(self, stream, selected_streams, bookmark, start_date, state):
         """
         Get the minimum bookmark from the parent and its corresponding child bookmarks.
@@ -157,7 +169,7 @@ class Stream:
         parent_row = parent_row or {}
 
         bookmark_field = next(iter(self.replication_keys))\
-                            if self.replication_keys else None
+            if self.replication_keys else None
         children = self.children
 
         current_time = datetime.now().strftime(DATE_FORMAT)
@@ -195,10 +207,7 @@ class Stream:
                     self.convert_object_to_id(row)
 
                     if self.parent_id:
-                        # Remove the last character `s` from the parent stream name and
-                        # join it with `_id` to save the parent id in the child record.
-                        # For example if a parent is `invoices`, then save parent id in
-                        # invoice_id key to the child.
+                        # Add parent id in the row
                         row[self.parent_id_key] = parent_row.get(self.parent_id)
 
                     # Remove empty date-time fields from the record.
@@ -287,21 +296,18 @@ class UserRoles(Stream):
         Prepare a record of the user_roles stream using the parent record's fields.
         """
         if self.tap_stream_id in selected_streams:
-            # Retrieve schema and metadata of stream from the catalog
-            schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
             with Transformer() as transformer:
                 # Loop through all records of the parent
                 for user_id in parent_row['user_ids']:
-                    time_extracted = utils.now()
 
                     pivot_row = {
                         'updated_at': parent_row['updated_at'],
                         'role_id': parent_row['id'],
                         'user_id': user_id
                     }
-                    transformed_record = transformer.transform(pivot_row, schema, stream_metadata)
-                    singer.write_record("user_roles", transformed_record, time_extracted=time_extracted)
+                    self.write_record_for_child_stream(
+                        transformer, pivot_row, catalog, state, config['start_date'])
 
 
 class Roles(Stream):
@@ -376,23 +382,19 @@ class UserProjectTasks(Stream):
         Prepare a record of the `user_project_tasks` stream using the parent record's fields.
         """
         if self.tap_stream_id in selected_streams:
-            # Retrieve schema and metadata of stream from the catalog
-            schema, stream_metadata = self.get_schema_and_metadata(catalog)
+
             with Transformer() as transformer:
-                user_id = parent_row['user_id']
                 # Loop through all records of the parent
                 for project_task in parent_row['task_assignments']:
 
-                    time_extracted = utils.now()
                     pivot_row = {
                         'updated_at': parent_row['updated_at'],
-                        'user_id': user_id,
+                        'user_id': parent_row['user_id'],
                         'project_task_id': project_task['id']
                     }
 
-                    transformed_record = transformer.transform(pivot_row, schema, stream_metadata)
-                    singer.write_record(self.tap_stream_id, transformed_record,
-                                        time_extracted=time_extracted)
+                    self.write_record_for_child_stream(
+                        transformer, pivot_row, catalog, state, config['start_date'])
 
 
 class UserProjects(Stream):
@@ -520,12 +522,10 @@ class InvoiceLineItems(Stream):
         Prepare a record of the `invoice_line_items` stream using the parent record's fields
         """
         if self.tap_stream_id in selected_streams:
-            schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
             with Transformer() as transformer:
                 # Loop through all records of the parent
                 for line_item in parent_row['line_items']:
-                    time_extracted = utils.now()
 
                     # Add parent replication-key and id
                     line_item['updated_at'] = parent_row['updated_at']
@@ -534,9 +534,8 @@ class InvoiceLineItems(Stream):
                         line_item['project_id'] = line_item['project']['id']
                     else:
                         line_item['project_id'] = None
-                    line_item = transformer.transform(line_item, schema, stream_metadata)
-
-                    singer.write_record("invoice_line_items", line_item, time_extracted=time_extracted)
+                    self.write_record_for_child_stream(
+                        transformer, line_item, catalog, state, config['start_date'])
 
 
 class Invoices(Stream):
@@ -591,19 +590,17 @@ class EstimateLineItems(Stream):
         Prepare a record of the `estimate_line_items` stream using the parent record's fields.
         """
         if self.tap_stream_id in selected_streams:
-            schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
             with Transformer() as transformer:
                 # Loop through all records of the parent
                 for line_item in parent_row['line_items']:
-                    time_extracted = utils.now()
 
                     # Add parent replication-key and id
                     line_item['updated_at'] = parent_row['updated_at']
                     line_item['estimate_id'] = parent_row['id']
-                    line_item = transformer.transform(line_item, schema, stream_metadata)
 
-                    singer.write_record(self.tap_stream_id, line_item, time_extracted=time_extracted)
+                    self.write_record_for_child_stream(
+                        transformer, line_item, catalog, state, config['start_date'])
 
 
 class Estimates(Stream):
@@ -634,19 +631,17 @@ class ExternalReferences(Stream):
         """
         Prepare a record of the `external_reference` stream using the parent record's fields.
         """
-        schema, stream_metadata = self.get_schema_and_metadata(catalog)
 
         if self.tap_stream_id in selected_streams and parent_row['external_reference']:
             with Transformer() as transformer:
-                time_extracted = utils.now()
 
                 # Create record for external_reference
                 external_reference = parent_row['external_reference']
                 # Add parent replication-key
                 external_reference['updated_at'] = parent_row['updated_at']
 
-                transformed_external_reference = transformer.transform(external_reference, schema, stream_metadata)
-                singer.write_record(self.tap_stream_id, transformed_external_reference, time_extracted=time_extracted)
+                self.write_record_for_child_stream(
+                    transformer, external_reference, catalog, state, config['start_date'])
 
 
 class TimeEntryExternalReferences(Stream):
@@ -667,7 +662,8 @@ class TimeEntryExternalReferences(Stream):
         Prepare a record of the `time_entry_external_reference` stream using
         the parent record's fields.
         """
-        if self.tap_stream_id in selected_streams and parent_row['external_reference']:
+        if (self.tap_stream_id in selected_streams) and parent_row.get('external_reference') and \
+                parent_row['updated_at'] > get_bookmark(f'{self.tap_stream_id}_parent', state, config['start_date']):
             external_reference = parent_row['external_reference']
             time_extracted = utils.now()
 
@@ -697,27 +693,27 @@ class TimeEntries(Stream):
 STREAMS = {
     'clients': Clients,
     'contacts': Contacts,
-    'user_roles': UserRoles,
     'roles': Roles,
+    'user_roles': UserRoles,
     'projects': Projects,
     'tasks': Tasks,
     'project_tasks': ProjectTasks,
     'project_users': ProjectUsers,
-    'user_project_tasks': UserProjectTasks,
-    'user_projects': UserProjects,
     'users': Users,
-    'expense_categories': ExpenseCategories,
+    'user_projects': UserProjects,
+    'user_project_tasks': UserProjectTasks,
     'expenses': Expenses,
-    'invoice_item_categories': InvoiceItemCategories,
+    'expense_categories': ExpenseCategories,
+    'invoices': Invoices,
+    'invoice_line_items': InvoiceLineItems,
     'invoice_messages': InvoiceMessages,
     'invoice_payments': InvoicePayments,
-    'invoice_line_items': InvoiceLineItems,
-    'invoices': Invoices,
-    'estimate_item_categories': EstimateItemCategories,
-    'estimate_messages': EstimateMessages,
-    'estimate_line_items': EstimateLineItems,
+    'invoice_item_categories': InvoiceItemCategories,
     'estimates': Estimates,
+    'estimate_line_items': EstimateLineItems,
+    'estimate_messages': EstimateMessages,
+    'estimate_item_categories': EstimateItemCategories,
+    'time_entries': TimeEntries,
     'external_reference': ExternalReferences,
     'time_entry_external_reference': TimeEntryExternalReferences,
-    'time_entries': TimeEntries
 }

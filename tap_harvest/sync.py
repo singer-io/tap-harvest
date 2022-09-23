@@ -7,7 +7,8 @@ LOGGER = singer.get_logger()
 def get_streams_to_sync(selected_streams):
     """
     Get lists of streams to call the sync method.
-    For children, ensure that dependent parent_stream is included even if it is not selected.
+    For children, ensure that dependent parent_stream is included even
+    if it is not selected.
     """
     streams_to_sync = []
 
@@ -22,7 +23,7 @@ def get_streams_to_sync(selected_streams):
             streams_to_sync.append(stream_name)
         else:
             # Append un-selected parent streams of selected children
-            if parent_stream not in selected_streams and parent_stream not in streams_to_sync:
+            if parent_stream not in selected_streams + streams_to_sync:
                 streams_to_sync.append(parent_stream)
 
     return streams_to_sync
@@ -63,8 +64,8 @@ def sync(client, config, catalog, state):
     # tap_state will be updated and written to output based on current sync
     tap_state = state.copy()
 
-    # Get the list of streams(to sync stream itself or its child stream) for which
-    # sync method needs to be called
+    # Get the list of streams(to sync stream itself or its child stream)
+    # for which sync method needs to be called
     stream_to_sync = get_streams_to_sync(selected_streams)
 
     # Loop through all `stream_to_sync` streams
@@ -82,6 +83,7 @@ def sync(client, config, catalog, state):
 
         LOGGER.info('FINISHED Syncing: %s', stream_name)
 
-        # remove currently_syncing at the end of the sync
-        tap_state = singer.set_currently_syncing(tap_state, None)
         singer.write_state(tap_state)
+    # remove currently_syncing at the end of the sync
+    tap_state = singer.set_currently_syncing(tap_state, None)
+    singer.write_state(tap_state)
