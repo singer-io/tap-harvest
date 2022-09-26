@@ -76,13 +76,15 @@ class TestGetStreamsToSync(unittest.TestCase):
     @parameterized.expand([
         # ["test_name", "selected_streams", "expected_streams"]
         ['test_parent_selected', ["estimates"], ["estimates"]],
-        ['test_child_selected', ["estimate_messages", "estimate_line_items"], ["estimates"]],
-        ['test_both_selected', ["estimate_messages", "invoices", "estimates"], ["invoices", "estimates"]]
+        ['test_child_selected', ["estimate_messages", "estimate_line_items"],
+         ['estimates', 'estimate_line_items', 'estimate_messages']],
+        ['test_both_selected', ["estimate_messages", "invoices", "estimates"],
+         ['invoices', 'estimates', 'estimate_messages']]
     ])
     def test_sync_streams(self, test_name, selected_streams, expected_streams):
         """
         Test that if an only child is selected in the catalog,
-        then `get_stream_to_sync` returns the parent streams if selected stream is child.
+        then `get_stream_to_sync` returns the list with parent streams if selected stream is child.
         """
         sync_streams = get_streams_to_sync(selected_streams)
 
@@ -156,7 +158,7 @@ class TestCurrentlySyncing(unittest.TestCase):
 
         # Verify that selected steams are in order.
         mock_sync_object.assert_called_with(mock.ANY, mock.ANY, mock.ANY,
-                                            mock.ANY, mock.ANY, streams_in_order)
+                                            mock.ANY, mock.ANY, streams_in_order, mock.ANY)
 
         # Verify that first syncing stream is first selected stream
         self.assertEqual(mock_write_schema.mock_calls[0],
@@ -177,8 +179,8 @@ class TestCurrentlySyncing(unittest.TestCase):
 
         # Verify that selected steams are in order, starting with interrupted child.
         mock_sync_object.assert_called_with(mock.ANY, mock.ANY, mock.ANY,
-                                            mock.ANY, mock.ANY, streams_in_order)
+                                            mock.ANY, mock.ANY, streams_in_order, mock.ANY)
 
-        # Verify that forst syncing stream is parent of interrupted child
+        # Verify that first syncing stream is parent of interrupted child
         self.assertEqual(mock_write_schema.mock_calls[0],
                          mock.call("invoices", mock.ANY, streams_in_order))

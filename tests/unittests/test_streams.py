@@ -3,7 +3,7 @@ from parameterized import parameterized
 import unittest
 from singer.schema import Schema
 from singer.catalog import Catalog, CatalogEntry
-from tap_harvest.streams import remove_empty_date_times, append_times_to_dates, get_bookmark, Invoices, TimeEntries, Roles, Users, Expenses, Estimates
+from tap_harvest.streams import remove_empty_date_times, get_bookmark, Invoices, TimeEntries, Roles, Users, Expenses, Estimates
 from tap_harvest.client import HarvestClient
 
 START_DATE = '2022-07-30T00:00:00.000000Z'
@@ -226,28 +226,6 @@ class TestStreamsUtils(unittest.TestCase):
         self.assertEqual(expected_record, actual_record)
 
     @parameterized.expand([
-        # ["test_name", "date_fields", "record", "expected_record"]
-        ['test_no_date_fields_in_tap', [], {'id': 1}, {'id': 1}],
-        ['test_single_date_fields', ['issue_date'], {'issue_date': '2022-08-30', 'resolve_date': '2021-08-30'}, {
-            'issue_date': '2022-08-30T00:00:00.000000Z', 'resolve_date': '2021-08-30'}],
-        ['test_multiple_date_fields', ['issue_date', 'resolve_date'], {'issue_date': '2022-08-30', 'resolve_date': '2021-08-30'}, {
-            'issue_date': '2022-08-30T00:00:00.000000Z', 'resolve_date': '2021-08-30T00:00:00.000000Z'}],
-        ['test_no_date_fields_in_record', ['issue_date'], {'id': 1}, {'id': 1}]
-    ])
-    def test_append_times_to_dates(self, test_name, date_fields, record, expected_record):
-        """
-        Test that `append_times_to_dates` function substitute date-time format value to date format field.
-        Case 1: If no date format field is given, function does not mae any change.
-        Case 2: Changes only one key if one field is passed in argument.
-        Case 3: Change multiple keys if multiple keys are passed in argument.
-        Case 4: Does not make any changes if passed field in argument is not available in response.
-        """
-        append_times_to_dates(record, date_fields)
-
-        # Verify expected record
-        self.assertEqual(record, expected_record)
-
-    @parameterized.expand([
         # ["test_name", "stream_name", "state", "expected_output"]
         ['test_none_state', 'a', None, "default"],
         ['test_empty_state', 'a', {}, "default"],
@@ -315,7 +293,7 @@ class TestSyncEndpoint(unittest.TestCase):
         ['test_only_parent_selected_with_1_record', ['invoices'],
          [{'invoices': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z', 'client': ID_OBJECT, 'estimate': ID_OBJECT, 'retainer': None, 'creator': ID_OBJECT}], 'next_page': None},
           {'invoice_messages': [], 'next_page': None}, {'invoice_payments': [], 'next_page': None}],
-         {'invoices': '2022-08-30T10:08:18Z'}, 3, 1],
+         {'invoices': '2022-08-30T10:08:18Z'}, 1, 1],
 
         ['test_only_parent_selected_with_0_record', ['invoices'],
          [{'invoices': [], 'next_page': None}], {}, 1, 0],
@@ -323,7 +301,7 @@ class TestSyncEndpoint(unittest.TestCase):
         ['test_only_single_child_selected_with_no_bookmark', ['invoice_messages'],
          [{'invoices': [{'id': 1, 'updated_at': '2022-08-00T10:08:18Z', 'client': ID_OBJECT, 'estimate': ID_OBJECT, 'retainer': None, 'creator': ID_OBJECT}], 'next_page': None},
           {'invoice_messages': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z'}], 'next_page': None}, {'invoice_payments': [], 'next_page': None}],
-         {'invoice_messages': '2022-08-30T10:08:18Z', 'invoice_messages_parent': '2022-08-00T10:08:18Z'}, 3, 1],
+         {'invoice_messages': '2022-08-30T10:08:18Z', 'invoice_messages_parent': '2022-08-00T10:08:18Z'}, 2, 1],
 
         ['test_only_multiple_child_selected_with_no_bookmark', ['invoice_messages', 'invoice_payments'],
          [{'invoices': [{'id': 1, 'updated_at': '2022-08-00T10:08:18Z', 'client': ID_OBJECT, 'estimate': ID_OBJECT, 'retainer': None, 'creator': ID_OBJECT}], 'next_page': None},
@@ -335,9 +313,9 @@ class TestSyncEndpoint(unittest.TestCase):
         ['test_both_parent_child_selected_with_no_bookmark', ['invoice_messages', 'invoices'],
          [{'invoices': [{'id': 1, 'updated_at': '2022-08-00T10:08:18Z', 'client': ID_OBJECT, 'estimate': ID_OBJECT, 'retainer': None, 'creator': ID_OBJECT}], 'next_page': None},
           {'invoice_messages': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z'}], 'next_page': None}, {'invoice_payments': [], 'next_page': None}],
-         {'invoice_messages': '2022-08-30T10:08:18Z', 'invoice_messages_parent': '2022-08-00T10:08:18Z', 'invoices': '2022-08-00T10:08:18Z'}, 3, 2]
+         {'invoice_messages': '2022-08-30T10:08:18Z', 'invoice_messages_parent': '2022-08-00T10:08:18Z', 'invoices': '2022-08-00T10:08:18Z'}, 2, 2]
     ])
-    def test_sync_endpoint_for_parent_child_streams(self, mock_singer, mock_request, mock_write_record, test_name, selected_streams,
+    def test_sync_endpoint_for_parent_child_streams(self, mock_write_state, mock_request, mock_write_record, test_name, selected_streams,
                                                     response, expected_bookmark, write_state_call_count,
                                                     write_record_call_count):
         """
@@ -345,19 +323,23 @@ class TestSyncEndpoint(unittest.TestCase):
         """
         client = HarvestClient(CONFIG)
         obj = Invoices()
+        streams_to_sync = selected_streams if 'invoices' in selected_streams else ['invoices'] + selected_streams
 
         mock_request.side_effect = response
         obj.sync_endpoint(client=client, catalog=CATALOG, config=CONFIG, state={},
-                          tap_state={}, selected_streams=selected_streams)
+                          tap_state={}, selected_streams=selected_streams,
+                          streams_to_sync=streams_to_sync)
 
         # Verify that tap writes the expected bookmark for each stream.
-        mock_singer.assert_called_with(expected_bookmark)
+        mock_write_state.assert_called_with(expected_bookmark)
         # Verify request method is called for the expected no of time.
-        self.assertEqual(mock_request.call_count, write_state_call_count)
+        self.assertEqual(mock_request.call_count, len(streams_to_sync))
         # Verify that write_record is called for the expected no of time.
         self.assertEqual(mock_write_record.call_count, write_record_call_count)
+        # Verify that write_state was called for expected time
+        self.assertEqual(mock_write_state.call_count, write_state_call_count)
 
-    def test_sync_endpoint_for_user_roles_stream(self, mock_singer, mock_request, mock_write_record):
+    def test_sync_endpoint_for_user_roles_stream(self, mock_write_state, mock_request, mock_write_record):
         """
         Test sync_endpoint function for `roles` stream
         """
@@ -368,12 +350,13 @@ class TestSyncEndpoint(unittest.TestCase):
             {'id': 1, 'updated_at': '2022-08-30T10:08:18Z', 'user_ids': ['1', '2']}], 'next_page': None}]
 
         obj.sync_endpoint(client=client, catalog=CATALOG, config=CONFIG,
-                          state={}, tap_state={}, selected_streams=['user_roles'])
+                          state={}, tap_state={}, selected_streams=['user_roles'],
+                          streams_to_sync=['roles', 'user_roles'])
         args, kwargs = mock_write_record.call_args
         # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])
 
-    def test_sync_endpoint_for_user_project_tasks_stream(self, mock_singer, mock_request, mock_write_record):
+    def test_sync_endpoint_for_user_project_tasks_stream(self, mock_write_state, mock_request, mock_write_record):
         """
         Test sync_endpoint function for `project_tasks` stream
         """
@@ -384,7 +367,8 @@ class TestSyncEndpoint(unittest.TestCase):
                                     {'project_assignments': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z', 'task_assignments': [ID_OBJECT]}], 'next_page': None}]
 
         obj.sync_endpoint(client=client, catalog=CATALOG, config=CONFIG, state={},
-                          tap_state={}, selected_streams=['user_project_tasks'])
+                          tap_state={}, selected_streams=['user_project_tasks'],
+                          streams_to_sync=['users', 'user_projects', 'user_project_tasks'])
         args, kwargs = mock_write_record.call_args
         # Verify that tap writes the expected record.
         self.assertEqual(args[1], expected_record)
@@ -400,7 +384,7 @@ class TestSyncEndpoint(unittest.TestCase):
           'receipt': {'url': 'URL', 'file_name': 'abc.txt', 'file_size': '10mb', 'content_type': 'text'}, 'client_id': None, 'project_id': None, 'expense_category_id': None,
           'user_id': None, 'user_assignment_id': None, 'invoice_id': None}],
     ])
-    def test_sync_endpoint_for_expense_stream(self, mock_singer, mock_request, mock_write_record, test_name, response, expected_record):
+    def test_sync_endpoint_for_expense_stream(self, mock_write_state, mock_request, mock_write_record, test_name, response, expected_record):
         """
         Test sync_endpoint function for `expense` stream
         Case 1: Add the reciept fields as None, if no reciept object is available.
@@ -411,7 +395,8 @@ class TestSyncEndpoint(unittest.TestCase):
         mock_request.side_effect = response
 
         obj.sync_endpoint(client=client, catalog=CATALOG, config=CONFIG,
-                          state={}, tap_state={}, selected_streams=['expenses'])
+                          state={}, tap_state={}, selected_streams=['expenses'],
+                          streams_to_sync=['expenses'])
         args, kwargs = mock_write_record.call_args
         # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])
@@ -429,7 +414,7 @@ class TestSyncEndpoint(unittest.TestCase):
           {'invoice_payments': [{'id': 2, 'updated_at': '2022-08-30T10:08:18Z', 'payment_gateway': {}}], 'next_page': None}],
          {'id': 1, 'invoice_id': 2, 'project_id': 1, 'project': ID_OBJECT, 'updated_at': '2022-08-30T10:08:18Z'}],
     ])
-    def test_sync_endpoint_for_invoice_line_iteams_stream(self, mock_singer, mock_request, mock_write_record, test_name, response, expected_record):
+    def test_sync_endpoint_for_invoice_line_iteams_stream(self, mock_write_state, mock_request, mock_write_record, test_name, response, expected_record):
         """
         Test sync_endpoint function for `invoice_line_iteams` stream
         Case 1: Add project_id as None, if no project is available.
@@ -440,12 +425,13 @@ class TestSyncEndpoint(unittest.TestCase):
         mock_request.side_effect = response
 
         obj.sync_endpoint(client=client, catalog=CATALOG, config=CONFIG, state={},
-                          tap_state={}, selected_streams=['invoice_line_items'])
+                          tap_state={}, selected_streams=['invoice_line_items'],
+                          streams_to_sync=['invoices', 'invoice_line_items'])
         args, kwargs = mock_write_record.call_args
         # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])
 
-    def test_sync_endpoint_for_estimate_line_items_stream(self, mock_singer, mock_request, mock_write_record):
+    def test_sync_endpoint_for_estimate_line_items_stream(self, mock_write_state, mock_request, mock_write_record):
         """
         Test sync_endpoint function for `estimate_line_items` stream
         """
@@ -455,13 +441,14 @@ class TestSyncEndpoint(unittest.TestCase):
         mock_request.side_effect = [{'estimates': [{'id': 2, 'updated_at': '2022-08-30T10:08:18Z', 'line_items': [{'id': 1}]}], 'next_page': None},
                                     {'estimate_messages': [{'id': 1, 'updated_at': '2022-08-30T10:08:18Z', }], 'next_page': None}]
 
-        obj.sync_endpoint(client, CATALOG, CONFIG, {},
-                          {}, ['estimate_line_items'])
+        obj.sync_endpoint(client=client, catalog=CATALOG, config=CONFIG, state={},
+                          tap_state={}, selected_streams=['estimate_line_items'],
+                          streams_to_sync=['estimates', 'estimate_line_items'])
         args, kwargs = mock_write_record.call_args
         # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])
 
-    def test_sync_endpoint_for_external_reference_stream(self, mock_singer, mock_request, mock_write_record):
+    def test_sync_endpoint_for_external_reference_stream(self, mock_write_state, mock_request, mock_write_record):
         """
         Test sync_endpoint function for `external_reference` stream
         """
@@ -472,12 +459,13 @@ class TestSyncEndpoint(unittest.TestCase):
             {'id': 2, 'updated_at': '2022-08-30T10:08:18Z', 'external_reference': {'id': 1}}], 'next_page': None}]
 
         obj.sync_endpoint(client=client, catalog=CATALOG, config=CONFIG, state={},
-                          tap_state={}, selected_streams=['external_reference'])
+                          tap_state={}, selected_streams=['external_reference'],
+                          streams_to_sync=['time_entries', 'external_reference'])
         args, kwargs = mock_write_record.call_args
         # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])
 
-    def test_sync_endpoint_for_time_entry_external_reference_stream(self, mock_singer, mock_request, mock_write_record):
+    def test_sync_endpoint_for_time_entry_external_reference_stream(self, mock_write_state, mock_request, mock_write_record):
         """
         Test sync_endpoint function for `time_entry_external_reference` stream
         """
@@ -488,7 +476,8 @@ class TestSyncEndpoint(unittest.TestCase):
             {'id': 2, 'updated_at': '2022-08-30T10:08:18Z', 'external_reference': {'id': 1}}], 'next_page': None}]
 
         obj.sync_endpoint(client=client, catalog=CATALOG, config=CONFIG, state={},
-                          tap_state={}, selected_streams=['time_entry_external_reference'])
+                          tap_state={}, selected_streams=['time_entry_external_reference'],
+                          streams_to_sync=['time_entries', 'time_entry_external_reference'])
         args, kwargs = mock_write_record.call_args
         # Verify that tap writes the expected record.
         self.assertEqual(expected_record, args[1])

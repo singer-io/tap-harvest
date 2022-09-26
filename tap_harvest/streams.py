@@ -14,20 +14,14 @@ def remove_empty_date_times(item, schema):
     If null, parsing the date results in an error.
     Instead, removing the attribute before parsing ignores this error.
     """
-    fields = []
 
     # Loop through all keys of the schema
     for key in schema['properties']:
         subschema = schema['properties'][key]
 
-        # Append key with datatype date-time into the `fields` list
-        if subschema.get('format') == 'date-time':
-            fields.append(key)
-
-    for field in fields:
         # Remove field with datatype date-time from the record if the value is None
-        if item.get(field) is None:
-            del item[field]
+        if subschema.get('format') == 'date-time' and item.get(key) is None:
+            del item[key]
 
 
 def get_url(endpoint):
@@ -35,17 +29,6 @@ def get_url(endpoint):
     Return URL which contains BASE_API_URL and endpoint path itself.
     """
     return BASE_API_URL + endpoint
-
-
-def append_times_to_dates(item, date_fields):
-    """
-    Convert the date field into the standard format
-    For example: 2021-02-02 to 2021-02-02T00:00:00Z
-    """
-    if date_fields:
-        for date_field in date_fields:
-            if item.get(date_field):
-                item[date_field] = utils.strftime(utils.strptime_with_tz(item[date_field]))
 
 
 def get_bookmark(stream_name, state, default):
@@ -73,7 +56,6 @@ class Stream:
     children = []
     endpoint = None
     path = None
-    date_fields = None
 
     def add_field_at_1st_level(self, row=None):
         """Method to add fields at first level."""
@@ -160,6 +142,7 @@ class Stream:
                       state,
                       tap_state,
                       selected_streams,
+                      streams_to_sync,
                       parent_row=None):
         """
         A common function to sync incremental streams.
@@ -180,7 +163,8 @@ class Stream:
                                                                 state)
 
         # Get the latest bookmark for the stream and set the last_datetime
-        last_datetime = get_bookmark(self.tap_stream_id, state, config['start_date'])
+        bookmark_value = get_bookmark(self.tap_stream_id, state, config['start_date'])
+        last_datetime = bookmark_value
 
         with Transformer() as transformer:
             page = 1
@@ -216,10 +200,9 @@ class Stream:
                     parent_row = copy.deepcopy(row)
                     transformed_record = transformer.transform(row, schema, stream_metadata)
 
-                    # Convert date field into the standard format
-                    append_times_to_dates(transformed_record, self.date_fields)
-
-                    if self.tap_stream_id in selected_streams:
+                    if (self.tap_stream_id in selected_streams) and (
+                        transformed_record[bookmark_field] > bookmark_value
+                    ):
                         # Write the record of a parent if it is selected.
                         singer.write_record(self.tap_stream_id,
                                             transformed_record,
@@ -227,10 +210,11 @@ class Stream:
 
                     # Loop thru parent batch records for each child's objects
                     for child_stream_name in children:
-                        # Sync child stream if it is selected.
-                        child_obj = STREAMS[child_stream_name]()
-                        child_obj.sync_endpoint(client, catalog, config, state,
-                                                tap_state, selected_streams, parent_row)
+                        if child_stream_name in streams_to_sync:
+                            # Sync child stream if it is selected.
+                            child_obj = STREAMS[child_stream_name]()
+                            child_obj.sync_endpoint(client, catalog, config, state,
+                                                    tap_state, selected_streams, streams_to_sync, parent_row)
 
                     if bookmark_field:
                         # Get replication key value from the record for the incremental stream
@@ -291,7 +275,7 @@ class UserRoles(Stream):
     parent = "roles"
 
     def sync_endpoint(self, client, catalog, config, state,
-                      tap_state, selected_streams, parent_row=None):
+                      tap_state, selected_streams, streams_to_sync, parent_row=None):
         """
         Prepare a record of the user_roles stream using the parent record's fields.
         """
@@ -372,12 +356,12 @@ class UserProjectTasks(Stream):
     key_properties = ["user_id", "project_task_id"]
     replication_method = "INCREMENTAL"
     replication_keys = ["updated_at"]
-    parent = "users"
+    parent = "user_projects"
     parent_id_key = "user_id"
     parent_id = 'id'
 
     def sync_endpoint(self, client, catalog, config, state,
-                      tap_state, selected_streams, parent_row=None):
+                      tap_state, selected_streams, streams_to_sync, parent_row=None):
         """
         Prepare a record of the `user_project_tasks` stream using the parent record's fields.
         """
@@ -494,7 +478,6 @@ class InvoicePayments(Stream):
     parent = "invoices"
     parent_id_key = "invoice_id"
     parent_id = "id"
-    date_fields = ["send_reminder_on"]
 
     def add_field_at_1st_level(self, row=None):
         """
@@ -517,7 +500,7 @@ class InvoiceLineItems(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                      tap_state, selected_streams, parent_row=None):
+                      tap_state, selected_streams, streams_to_sync, parent_row=None):
         """
         Prepare a record of the `invoice_line_items` stream using the parent record's fields
         """
@@ -566,7 +549,6 @@ class EstimateMessages(Stream):
     replication_method = "INCREMENTAL"
     replication_keys = ["updated_at"]
     path = 'estimate_messages'
-    date_fields = ["send_reminder_on"]
     endpoint = "estimates/{}/messages"
     parent = "estimates"
     parent_id_key = "estimate_id"
@@ -585,7 +567,7 @@ class EstimateLineItems(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                      tap_state, selected_streams, parent_row=None):
+                      tap_state, selected_streams, streams_to_sync, parent_row=None):
         """
         Prepare a record of the `estimate_line_items` stream using the parent record's fields.
         """
@@ -610,7 +592,6 @@ class Estimates(Stream):
     tap_stream_id = 'estimates'
     replication_method = "INCREMENTAL"
     replication_keys = ["updated_at"]
-    date_fields = ["issue_date"]
     object_to_id = ['client', 'creator']
     children = ["estimate_messages", "estimate_line_items"]
 
@@ -627,7 +608,7 @@ class ExternalReferences(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                      tap_state, selected_streams, parent_row=None):
+                      tap_state, selected_streams, streams_to_sync, parent_row=None):
         """
         Prepare a record of the `external_reference` stream using the parent record's fields.
         """
@@ -657,7 +638,7 @@ class TimeEntryExternalReferences(Stream):
     parent_id = "id"
 
     def sync_endpoint(self, client, catalog, config, state,
-                      tap_state, selected_streams, parent_row=None):
+                      tap_state, selected_streams, streams_to_sync, parent_row=None):
         """
         Prepare a record of the `time_entry_external_reference` stream using
         the parent record's fields.
