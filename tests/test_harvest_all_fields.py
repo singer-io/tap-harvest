@@ -5,8 +5,9 @@ from tap_tester import menagerie, runner
 # Can not generate given fields while creating records
 KNOWN_MISSING_FIELDS = {
     "external_reference": {
-        "task_id",
+        "task_id",  # Field not available in docs and response
     },
+    # Given fields are available in response but not written by tap
     "invoice_messages": {
         "send_reminder_on",
     },

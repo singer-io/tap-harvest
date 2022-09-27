@@ -4,6 +4,9 @@
     "id": {
       "type": ["null", "integer"]
     },
+    "recurring_invoice_id": {
+      "type": ["null", "integer"]
+    },
     "client_id": {
       "type": ["null", "integer"]
     },

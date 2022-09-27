@@ -10,6 +10,9 @@
     "is_project_manager": {
       "type": ["null", "boolean"]
     },
+    "use_default_rates": {
+      "type": ["null", "boolean"]
+    },
     "hourly_rate": {
       "type": ["null", "number"]
     },

@@ -35,6 +35,12 @@
     "hours": {
       "type": ["null", "number"]
     },
+    "hours_without_timer": {
+      "type": ["null", "number"]
+    },
+    "rounded_hours": {
+      "type": ["null", "number"]
+    },
     "notes": {
       "type": ["null", "string"]
     },
