@@ -28,9 +28,6 @@ KNOWN_MISSING_FIELDS = {
     "projects": {
         "over_budget_notification_date",
     },
-    "user_projects": {
-        "task_assignments_id"   # NOTE: Remove from map after dict-base implementatation
-    },
 }
 
 
