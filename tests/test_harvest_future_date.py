@@ -14,14 +14,7 @@ class TestFutureDate(BaseTapTest):
         state = {}
 
         # Skipped streams are sub-streams which does not make any HTTP calls
-        state_streams = self.expected_streams() - {
-            "estimate_line_items",
-            "external_reference",
-            "invoice_line_items",
-            "time_entry_external_reference",
-            "user_project_tasks",
-            "user_roles",
-        }
+        state_streams = self.expected_streams() - self.PARENT_REP_VALUE_STREAMS
 
         # Add the next day as the state for all streams
         for state_stream in state_streams:

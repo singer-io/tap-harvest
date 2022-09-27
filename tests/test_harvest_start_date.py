@@ -10,17 +10,6 @@ from dateutil.parser import parse
 from harvest_api import set_up, tear_down, update_streams
 from tap_tester import LOGGER, menagerie, runner
 
-# Given streams does not have their own replication keys
-# Uses respective parent's replication key value
-PARENT_REP_VALUE_STREAMS = {
-    "invoice_line_items",
-    "estimate_line_items",
-    "user_project_tasks",
-    "user_roles",
-    "external_reference",
-    "time_entry_external_reference",
-}
-
 
 class StartDateTest(BaseTapTest):
     """
@@ -169,7 +158,7 @@ class StartDateTest(BaseTapTest):
                 # Verify that sync 2 has at least one record synced
                 self.assertGreater(second_sync_record_count.get(stream, 0), 0)
 
-                if stream not in PARENT_REP_VALUE_STREAMS:
+                if stream not in self.PARENT_REP_VALUE_STREAMS:
                     # Verify by primary key values, that all records in the 1st sync are included in the 2nd sync.
                     self.assertTrue(primary_keys_sync_2.issubset(primary_keys_sync_1))
 
@@ -179,7 +168,7 @@ class StartDateTest(BaseTapTest):
                 target_value = next(iter(second_min_bookmark.values()))
 
                 stream_state_name = (
-                    stream + "_parent" if stream in PARENT_REP_VALUE_STREAMS else stream
+                    stream + "_parent" if stream in self.PARENT_REP_VALUE_STREAMS else stream
                 )
 
                 if target_value:

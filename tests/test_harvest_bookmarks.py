@@ -4,15 +4,6 @@ from base import BaseTapTest
 from harvest_api import insert_one_record, set_up, tear_down, update_streams
 from tap_tester import LOGGER, menagerie, runner
 
-PARENT_REP_VALUE_STREAMS = {
-    "invoice_line_items",
-    "estimate_line_items",
-    "user_project_tasks",
-    "user_roles",
-    "external_reference",
-    "time_entry_external_reference",
-}
-
 
 class BookmarkTest(BaseTapTest):
     """Test tap sets a bookmark and respects it for the next sync of a stream."""
@@ -40,10 +31,10 @@ class BookmarkTest(BaseTapTest):
             Boolean: Return true if expected record is actual record else False.
         """
         dict_items = actual_record.items()
-        for items in expected_record.items():
-            if items in dict_items:
-                return True
-        return False
+        for item in expected_record.items():
+            if item not in dict_items:
+                return False
+        return True
 
     def do_test(self, conn_id):
         """
@@ -142,7 +133,7 @@ class BookmarkTest(BaseTapTest):
         for stream in streams_to_test:
             with self.subTest(stream=stream):
                 stream_state_name = (
-                    stream + "_parent" if stream in PARENT_REP_VALUE_STREAMS else stream
+                    stream + "_parent" if stream in self.PARENT_REP_VALUE_STREAMS else stream
                 )
 
                 # Get bookmark values from state and target data

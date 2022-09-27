@@ -3,15 +3,6 @@ import re
 from base import BaseTapTest
 from tap_tester import menagerie
 
-NO_REPLICATION_KEYS_STREAMS = {
-    "invoice_line_items",
-    "time_entry_external_reference",
-    "user_roles",
-    "user_project_tasks",
-    "estimate_line_items",
-    "external_reference",
-}
-
 
 class HarvestDiscovery(BaseTapTest):
     """Test tap discovery mode and metadata."""
@@ -31,7 +22,6 @@ class HarvestDiscovery(BaseTapTest):
         • Verify replication key(s)
         • Verify primary key(s)
         • Verify that if there is a replication key we are doing INCREMENTAL otherwise FULL
-        • Verify the actual replication matches our expected replication method
         • Verify that primary, replication and foreign keys are given the inclusion of automatic.
         • Verify that all other fields have the inclusion of available metadata.
         """
@@ -127,13 +117,8 @@ class HarvestDiscovery(BaseTapTest):
                 self.assertSetEqual(expected_primary_keys, actual_primary_keys)
 
                 # Verify that if there is a replication key then it's INCREMENTAL otherwise FULL TABLE stream
-                if actual_replication_keys or stream in NO_REPLICATION_KEYS_STREAMS:
-                    self.assertEqual(self.INCREMENTAL, actual_replication_method)
-                else:
-                    self.assertEqual(self.FULL, actual_replication_method)
-
-                # Verify the replication method matches our expectations
-                self.assertEqual(expected_replication_method, actual_replication_method)
+                # NOTE: As all the streams are INCREMENTAL we are directly asserting replicatoin method
+                self.assertEqual(self.INCREMENTAL, actual_replication_method)
 
                 # Verify that primary keys and replication keys
                 # are given the inclusion of automatic in metadata.

@@ -21,6 +21,17 @@ class TapSpec:
         datetime.datetime.today(), "%Y-%m-%dT00:00:00Z"
     )
 
+    # Given streams does not have their own replication keys
+    # Uses respective parent's replication key value
+    PARENT_REP_VALUE_STREAMS = {
+        "invoice_line_items",
+        "estimate_line_items",
+        "user_project_tasks",
+        "user_roles",
+        "external_reference",
+        "time_entry_external_reference",
+    }
+
     @staticmethod
     def tap_name():
         """The name of the tap."""
