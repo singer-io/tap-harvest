@@ -24,6 +24,9 @@ UPDATED_SINCE = datetime.datetime.strptime(
 
 
 def _make_refresh_token_request():
+    """
+    Get refresh token call response.
+    """
     return requests.request(
         "POST",
         url="https://id.getharvest.com/api/v2/oauth2/token",
@@ -38,6 +41,7 @@ def _make_refresh_token_request():
 
 
 def _refresh_access_token():
+    """Get Access token."""
     print("Refreshing access token")
     resp = _make_refresh_token_request()
     resp_json = {}
@@ -55,6 +59,7 @@ def _refresh_access_token():
 
 
 def get_access_token():
+    """Get access token and create one if not available."""
     global _ACCESS_TOKEN
     if _ACCESS_TOKEN is not None:
         return _ACCESS_TOKEN
@@ -63,6 +68,7 @@ def get_access_token():
 
 
 def get_account_id():
+    """Get account id and make http call if available."""
     global _ACCOUNT_ID
     global _ACCESS_TOKEN
     if _ACCOUNT_ID is not None:
@@ -97,7 +103,8 @@ HEADERS = {
 ####################
 # return value: key value pair for the create stream's ID
 
-# def create_user(): free plan allows for only 1 user
+# Free plan allows for only 1 user, Use this function if plan is upfraded.
+# def create_user():
 #     assert None
 #     email ="bob{}@someemail.com".format(random.randint(0,1000))
 #     data = {"email":email,"first_name":"FirstName","last_name":"LastName","is_project_manager":True}
@@ -118,7 +125,7 @@ HEADERS = {
 
 
 def create_client():
-    """required | name."""
+    """Required | name."""
     data = {
         "name": "New {} Client {}".format(
             random.randint(0, 1000000), random.randint(0, 1000000)
@@ -144,7 +151,7 @@ def create_client():
 
 
 def create_contact(client_id):
-    """required | first_name, client_id."""
+    """Required | first_name, client_id."""
     data = {
         "client_id": client_id,
         "first_name": "George",
@@ -163,7 +170,7 @@ def create_contact(client_id):
 
 
 def create_estimate(client_id):
-    """used for estimate_line_items as well."""
+    """Used for estimate_line_items as well."""
     line_items = [
         {
             "kind": "Service",
@@ -186,6 +193,7 @@ def create_estimate(client_id):
 
 
 def create_estimate_item_category():
+    """Funcrion to create estimate item catogaries"""
     data = {
         "name": "Random {} Category {}".format(
             random.randint(0, 1000000), random.randint(0, 1000000)
@@ -207,7 +215,7 @@ def create_estimate_item_category():
 
 
 def create_estimate_message(estimate_id):
-    """required | recipients."""
+    """Required | recipients."""
     rand = random.randint(0, 1000000)
     data = {
         "subject": f"Estimate #{estimate_id}_{random.randint(0, 1000000)}",
@@ -234,7 +242,7 @@ def create_estimate_message(estimate_id):
 
 
 def create_expense(project_id):
-    """required | project_id, expense_category_id, spent_date."""
+    """Required | project_id, expense_category_id, spent_date."""
     rand_month = random.randint(1, 5)
     spent_date = date.today() - relativedelta(months=rand_month)
     data = {
@@ -255,7 +263,7 @@ def create_expense(project_id):
 
 
 def create_expense_category():
-    """required | name."""
+    """Required | name."""
     data = {
         "name": "Expense {} category {}".format(
             random.randint(0, 1000000), random.randint(0, 1000000)
@@ -275,6 +283,7 @@ def create_expense_category():
 
 
 def create_invoice(client_id, estimate_id: str = "", project_id: str = ""):
+    """Require | client_id, kind"""
     if estimate_id == "":
         estimate_id = get_random("estimates")
     if project_id == "":
@@ -306,6 +315,7 @@ def create_invoice(client_id, estimate_id: str = "", project_id: str = ""):
 
 
 def create_invoice_message(invoice_id):
+    """Required | recipients"""
     data = {
         "subject": f"Invoice #{invoice_id}",
         "body": "The invoice is attached below.",
@@ -327,7 +337,7 @@ def create_invoice_message(invoice_id):
 
 
 def create_invoice_payment(invoice_id):
-    """amount | required."""
+    """Required | amount"""
     invoice = requests.get(
         url=f"https://api.harvestapp.com/v2/invoices/{invoice_id}",
         headers=HEADERS,
@@ -354,7 +364,7 @@ def create_invoice_payment(invoice_id):
 
 
 def create_invoice_item_category():
-    """amount | requireed."""
+    """Required | amount"""
     rand_1 = random.randint(0, 1000000)
     rand_2 = random.randint(0, 1000000)
     data = {"name": f"Category {rand_1} {rand_2}"}
@@ -374,6 +384,7 @@ def create_invoice_item_category():
 
 
 def create_project(client_id):
+    """Required | client_id, name, is_billable, bill_by, budget_by"""
     data = {
         "client_id": client_id,
         "name": "Created {} Project {}".format(
@@ -413,6 +424,7 @@ def create_project_task(project_id, task_id):
 
 
 def create_project_user(project_id, user_id):
+    """Required | user_id"""
     data = {
         "user_id": user_id,
         "use_default_rates": False,
@@ -450,6 +462,7 @@ def create_role():
 
 
 def create_task():
+    """Required | name"""
     rand_1 = random.randint(0, 1000000)
     rand_2 = random.randint(0, 1000000)
     rand_3 = random.randint(0, 1000000)
@@ -467,7 +480,7 @@ def create_task():
 
 
 def create_time_entry(project_id, task_id):
-    """required | project_id, task_id, spend_date."""
+    """Required | project_id, task_id, spend_date."""
     rand_month = random.randint(1, 12)
     spent_date = date.today() - relativedelta(months=rand_month)
     data = {
@@ -497,6 +510,10 @@ def create_time_entry(project_id, task_id):
 
 
 def update_client(client_id):
+    """
+    Functoin to update client.
+    Updating client name.
+    """
     data = {"name": f"client test name #{random.randint(0, 10000000)}"}
     response = requests.patch(
         url=f"https://api.harvestapp.com/v2/clients/{client_id}",
@@ -510,6 +527,7 @@ def update_client(client_id):
 
 
 def update_contact(contact_id):
+    """Update contact (Updating title field)"""
     data = {"title": f"Title{random.randint(0, 1000000)}"}
     response = requests.patch(
         url=f"https://api.harvestapp.com/v2/contacts/{contact_id}",
@@ -536,19 +554,12 @@ def update_estimate(estimate_id):
     return response.json()
 
 
-# def update_estimate_line_items(estimate_id):
-#     line_items = [{"kind":"Service","description":"updated estimate description {}".format(random.randint(0,1000000)),
-#                    "unit_price":42.0}]
-#     data = {"line_items":line_items}
-#     response = requests.patch(url="https://api.harvestapp.com/v2/estimates/{}".format(estimate_id), headers=HEADERS, json=data)
-#     if response.status_code >= 400:
-#         LOGGER.warning('update_estimate_line_items: {} {}'.format(response.status_code, response.text))
-#         assert None
-#     return response.json()
-
-
 def update_estimate_message(estimate_id):
-    # mark = ["accept", "decline", "sent", "re-open", "view", "invoice"]
+    """
+    Used to update estimate message.
+    Updating event_type.
+    """
+
     data = {"event_type": "accept"}
     response = requests.post(
         url=f"https://api.harvestapp.com/v2/estimates/{estimate_id}/messages",
@@ -578,6 +589,7 @@ def update_estimate_message(estimate_id):
 
 
 def update_estimate_item_category(category_id):
+    """Updating name of estimate item catogary."""
     data = {"name": f"Updated Category {random.randint(0, 1000000)}"}
     response = requests.patch(
         url="https://api.harvestapp.com/v2/estimate_item_categories/{}".format(
@@ -607,6 +619,7 @@ def update_estimate_item_category(category_id):
 
 
 def update_expense(expense_id):
+    """Updating spent_date of expense."""
     spent_date = date.today() - relativedelta(months=random.randint(7, 12))
     data = {"spent_date": str(spent_date)}
     response = requests.patch(
@@ -621,6 +634,7 @@ def update_expense(expense_id):
 
 
 def update_expense_category(category_id):
+    """Updating name if expense category."""
     data = {"name": f"Updated Category {random.randint(0, 1000000)}"}
     response = requests.patch(
         url=f"https://api.harvestapp.com/v2/expense_categories/{category_id}",
@@ -636,6 +650,7 @@ def update_expense_category(category_id):
 
 
 def update_invoice(invoice_id):
+    """Updating purchase_order of invoice."""
     data = {"purchase_order": f"{random.randint(1000, 10000000)}"}
     response = requests.patch(
         url=f"https://api.harvestapp.com/v2/invoices/{invoice_id}",
@@ -649,6 +664,7 @@ def update_invoice(invoice_id):
 
 
 def update_invoice_message(invoice_id):
+    """Updating event_type of invoice message."""
     mark = ["close", "send", "re-open", "view", "draft"]
     for event_type in mark:
         try:
@@ -674,6 +690,7 @@ def update_invoice_message(invoice_id):
 
 
 def update_invoice_payment(invoice_id):
+    """Updating invoice payment amount, paid_at, notes."""
     rand_month = random.randint(1, 12)
     paid_date = date.today() - relativedelta(months=rand_month)
     data = {
@@ -695,6 +712,7 @@ def update_invoice_payment(invoice_id):
 
 
 def update_invoice_item_category(category_id):
+    """Updating invoice item category name."""
     data = {"name": f"Updated Category {random.randint(0, 1000000)}"}
     response = requests.patch(
         url="https://api.harvestapp.com/v2/invoice_item_categories/{}".format(
@@ -714,6 +732,7 @@ def update_invoice_item_category(category_id):
 
 
 def update_project(project_id):
+    """Updating hourly rate of a project."""
     data = {"hourly_rate": str(random.randint(20, 90))}
     response = requests.patch(
         url=f"https://api.harvestapp.com/v2/projects/{project_id}",
@@ -743,6 +762,7 @@ def update_project_task(project_id, task_assignment_id):
 
 
 def update_project_user(project_id, project_user_id):
+    """Updating budget of project user"""
     data = {"budget": random.randint(15, 80)}
     response = requests.patch(
         url="https://api.harvestapp.com/v2/projects/{}/user_assignments/{}".format(
@@ -758,6 +778,7 @@ def update_project_user(project_id, project_user_id):
 
 
 def update_role(role_id, user_ids=None):
+    """Updating name of the role."""
     data = {"name": f"Update Manager #{random.randint(0, 1000000)}"}
     if user_ids is not None:
         data["user_ids"] = user_ids
@@ -773,6 +794,7 @@ def update_role(role_id, user_ids=None):
 
 
 def update_task(task_id):
+    """updating name of the task."""
     data = {"name": f"Updated Task Name {random.randint(0, 1000000)}"}
     response = requests.patch(
         url=f"https://api.harvestapp.com/v2/tasks/{task_id}",
@@ -797,6 +819,7 @@ def update_task(task_id):
 
 
 def update_time_entry(time_entry_id):
+    """Updating notes and external reference of time entry."""
     data = {
         "notes": f"Updated Time Entry Note {random.randint(0, 1000000)}",
         "external_reference": {
@@ -832,6 +855,7 @@ def update_time_entry(time_entry_id):
 
 
 def update_user(user_id, role_names=None):
+    """Updating telephone no. of user."""
     rand_2 = random.randint(1000000000, 9999999999)
     data = {"telephone": f"{rand_2}"}
     if role_names is not None:
@@ -852,6 +876,7 @@ def update_user(user_id, role_names=None):
 ####################
 # return value: list of current streams
 def get_all(stream):
+    """Returns all the records (One page) of stream."""
     response = requests.get(
         url=f"https://api.harvestapp.com/v2/{stream}", headers=HEADERS
     )
@@ -861,7 +886,9 @@ def get_all(stream):
     return response.json()[stream]
 
 
+# NOTE: To get multiple pages of data use below function
 # def get_all(stream):
+#     """Returns all the records of stream."""
 #     return_response =[]
 #     response = requests.get(url="https://api.harvestapp.com/v2/{}".format(stream), headers=HEADERS)
 #     pages = response.json()["total_pages"]
@@ -872,105 +899,13 @@ def get_all(stream):
 #         return_response.append(response.json()[stream])
 #         response = requests.get(url="https://api.harvestapp.com/v2/{}".format(stream), headers=HEADERS)
 
-# Complex streams require their own functions
-def get_user_projects(user_id):
-    response = requests.get(
-        url="https://api.harvestapp.com/v2/users/{}/project_assignments".format(
-            user_id
-        ),
-        headers=HEADERS,
-    )
-    if response.status_code >= 400:
-        LOGGER.warning(
-            "get_all_project_users: {} {}".format(
-                stream, response.status_code, response.text
-            )
-        )
-        assert None
-    return response.json()["project_assignments"]
-
-
-def get_user_projects_all():
-    response = requests.get(
-        url="https://api.harvestapp.com/v2/users/me/project_assignments",
-        headers=HEADERS,
-    )
-    if response.status_code >= 400:
-        LOGGER.warning(
-            "get_all_project_users: {} {}".format(
-                stream, response.status_code, response.text
-            )
-        )
-        assert None
-    return response.json()["project_assignments"]
-
-
-def get_all_estimate_messages(estimate_id):
-    response = requests.get(
-        url=f"https://api.harvestapp.com/v2/estimates/{estimate_id}/messages",
-        headers=HEADERS,
-    )
-    if response.status_code >= 400:
-        LOGGER.warning(
-            "get_all_estimate_messages: {} {}".format(
-                response.status_code, response.text
-            )
-        )
-        assert None
-    return response.json()[stream]
-
-
-def get_all_invoice_messages(invoice_id):
-    response = requests.get(
-        url=f"https://api.harvestapp.com/v2/invoices/{invoice_id}/messages",
-        headers=HEADERS,
-    )
-    if response.status_code >= 400:
-        LOGGER.warning(
-            "get_all_invoice_messages: {} {}".format(
-                response.status_code, response.text
-            )
-        )
-        assert None
-    return response.json()["invoice_messages"]
-
-
-def get_all_invoice_payments(invoice_id):
-    response = requests.get(
-        url=f"https://api.harvestapp.com/v2/invoices/{invoice_id}/payments",
-        headers=HEADERS,
-    )
-    if response.status_code >= 400:
-        LOGGER.warning(
-            "get_all_invoice_payments: {} {}".format(
-                response.status_code, response.text
-            )
-        )
-        assert None
-    return response.json()["invoice_payments"]
-
-
-def get_all_project_tasks(project_id):
-    response = requests.get(
-        url="https://api.harvestapp.com/v2/projects/{}/task_assignments".format(
-            project_id
-        ),
-        headers=HEADERS,
-    )
-    if response.status_code >= 400:
-        LOGGER.warning(f"get_all_project_tasks: {response.status_code} {response.text}")
-        assert None
-    num_project_tasks = len(response.json()["task_assignments"]) - 1
-    return response.json()["task_assignments"][random.randint(0, num_project_tasks)][
-        "id"
-    ]
-
 
 ####################
 # Get Counts       #
 ####################
 # return value: tuple (number of pages, number of records)
 def get_stream_counts(stream, parameters=[("updated_since", UPDATED_SINCE)]):
+    """Returns the count of records and list of record ids."""
     if stream == "estimate_line_items":
         stream = (
             "estimates"  # All estimates that are created by us have a line_items field
@@ -1006,8 +941,9 @@ def get_stream_counts(stream, parameters=[("updated_since", UPDATED_SINCE)]):
 # Works for simple streams (simple = has one pk and does not rely on other streams for access)
 # return value: ID value from the stream
 def get_random(stream):
-    """get random instance of stream | role, contact, estimate, invoice, client
-    ..."""
+    """
+    Get random instance of stream | role, contact, estimate, invoice, client ...
+    """
     response = requests.get(
         url=f"https://api.harvestapp.com/v2/{stream}", headers=HEADERS
     )
@@ -1018,71 +954,14 @@ def get_random(stream):
     return response.json()[stream][random.randint(0, num_streams)]["id"]
 
 
-# Complex streams require their own functions
-def get_random_project_user(project_id):
-    response = requests.get(
-        url="https://api.harvestapp.com/v2/projects/{}/user_assignments".format(
-            project_id
-        ),
-        headers=HEADERS,
-    )
-    if response.status_code >= 400:
-        LOGGER.warning(
-            f"get_random_project_user: {response.status_code} {response.text}"
-        )
-        assert None
-    num_users = len(response.json()["user_assignments"]) - 1
-    return response.json()["user_assignments"][random.randint(0, num_users)]["id"]
-
-
-def get_random_project_task(project_id):
-    response = requests.get(
-        url="https://api.harvestapp.com/v2/projects/{}/task_assignments".format(
-            project_id
-        ),
-        headers=HEADERS,
-    )
-    if response.status_code >= 400:
-        LOGGER.warning(
-            f"get_random_project_taks: {response.status_code} {response.text}"
-        )
-        assert None
-    num_project_tasks = len(response.json()["task_assignments"]) - 1
-    return response.json()["task_assignments"][random.randint(0, num_project_tasks)][
-        "id"
-    ]
-
-
-def get_random_task(project_id: str = None):
-    if project_id:
-        response = requests.get(
-            url="https://api.harvestapp.com/v2/projects/{}/task_assignments".format(
-                project_id
-            ),
-            headers=HEADERS,
-        )
-        if response.status_code >= 400:
-            LOGGER.warning(f"get_random_task: {response.status_code} {response.text}")
-            assert None
-        num_project_tasks = len(response.json()["task_assignments"]) - 1
-        return response.json()["task_assignments"][
-            random.randint(0, num_project_tasks)
-        ]["task"]["id"]
-    response = requests.get(url="https://api.harvestapp.com/v2/tasks", headers=HEADERS)
-    if response.status_code >= 400:
-        LOGGER.warning(f"get_random_task: {response.status_code} {response.text}")
-        assert None
-    num_tasks = len(response.json()["tasks"]) - 1
-    return response.json()["tasks"][random.randint(0, num_tasks)]["id"]
-
-
 ####################
 # Get Random       #
 ####################
 # Use to alter our field expectations to mimic tap field naming based
 # on things like client: {id, name} != client_id
 def get_fields(stream):
-    """Checks a stream's keys (using the json response from an api call) for
+    """
+    Checks a stream's keys (using the json response from an api call) for
     values that are dictionaries.
 
     This indicates it has subfields. returns the keys with necessary id-
@@ -1145,26 +1024,13 @@ def get_fields(stream):
 ####################
 # return value: response from delete
 def delete_stream(stream, stream_id):
-    """delete specific stream | role, contact, estimate, invoice, client ..."""
+    """Delete specific stream | role, contact, estimate, invoice, client ..."""
     response = requests.delete(
         url=f"https://api.harvestapp.com/v2/{stream}/{stream_id}",
         headers=HEADERS,
     )
     if response.status_code >= 400:
         LOGGER.warning(f"delete_{stream}: {response.status_code} {response.text}")
-    return response.json()
-
-
-# Complex streams require their own functions
-def delete_project_user(project_id, project_user_id):
-    response = requests.delete(
-        url="https://api.harvestapp.com/v2/projects/{}/user_assignments{}".format(
-            project_id, project_user_id
-        ),
-        headers=HEADERS,
-    )
-    if response.status_code >= 400:
-        LOGGER.warning(f"delete_project_user: {response.status_code} {response.text}")
     return response.json()
 
 
@@ -1191,56 +1057,33 @@ def set_up(cls, rec_count=2):
         "clients": {"test": True, "child": False},
         "contacts": {"test": True, "child": False},
         "estimate_item_categories": {"test": True, "child": False},
-        "estimate_line_items": {
-            "test": True,
-            "child": True,
-        },
-        "estimate_messages": {
-            "test": False,
-            "child": False,
-        },  # BUG see (https://github.com/singer-io/tap-harvest/issues/35)
+        "estimate_line_items": {"test": True, "child": True},
+        "estimate_messages": {"test": False, "child": False},
         "estimates": {"test": True, "child": False},
         "expense_categories": {"test": True, "child": False},
         "expenses": {"test": True, "child": False},
-        "external_reference": {
-            "test": True,
-            "child": True,
-        },
+        "external_reference": {"test": True, "child": True},
         "invoice_item_categories": {"test": True, "child": False},
-        "invoice_line_items": {
-            "test": True,
-            "child": True,
-        },
-        "invoice_messages": {
-            "test": False,
-            "child": False,
-        },  # BUG (see issue/35 ^ )
-        "invoice_payments": {
-            "test": False,
-            "child": False,
-        },  # BUG (see issue/35 ^ )
+        "invoice_line_items": {"test": True, "child": True},
+        "invoice_messages": {"test": False, "child": False},
+        "invoice_payments": {"test": False, "child": False},
         "invoices": {"test": True, "child": False},
         "project_tasks": {"test": True, "child": False},
-        "project_users": {
-            "test": False,
-            "child": False,
-        },  # Unable to test - limited by projects
-        "projects": {"test": False, "child": False},  # Unable to test - limit 2
+        "project_users": {"test": False, "child": False},   # Unable to test - limited by projects
+        "projects": {"test": False, "child": False},        # Unable to test - limit 2
         "roles": {"test": True, "child": False},
         "tasks": {"test": True, "child": False},
         "time_entries": {"test": True, "child": False},
         "time_entry_external_reference": {"test": True, "child": True},
-        "user_project_tasks": {
-            "test": False,
-            "child": False,
-        },  # Unable to test - limited by users
-        "user_projects": {
-            "test": False,
-            "child": False,
-        },  # Unable to test - limited by projects
-        "user_roles": {"test": False, "child": False},  # TODO TEST THIS STREAM
-        "users": {"test": False, "child": False},  # Unable to test - limit 1
+        "user_project_tasks": {"test": False, "child": False},  # Unable to test - limited by users
+        "user_projects": {"test": False, "child": False},       # Unable to test - limited by projects
+        "user_roles": {"test": False, "child": False},
+        "users": {"test": False, "child": False},               # Unable to test - limit 1 user
     }
+
+    # NOTE: Tap is writting only 'id' of object fields instead of whole object.
+    # Skip such fields in expected fields
+    remove_expected = set()
 
     # Assign attributes to each stream that is under test
     for stream in cls._master:
@@ -1264,14 +1107,13 @@ def set_up(cls, rec_count=2):
     for itter in range(rec_count):
         LOGGER.info(f"Creating {itter + 1} round(s) of data ...")
 
+        # BUG (https://github.com/singer-io/tap-harvest/issues/37)
         # Clients
         if cls._master["clients"]["total"] < rec_count:
             LOGGER.info("  Creating Client")
             client = create_client()
             cls._master["clients"]["total"] += 1
-            # BUG (https://github.com/singer-io/tap-harvest/issues/37)
-            remove_expected = {"statement_key"}  # field removed so tests pass
-            expectations = get_fields(client) - remove_expected
+            expectations = get_fields(client)
             cls._master["clients"]["expected_fields"].update(expectations)
             cls._master["clients"]["delete_me"].append({"id": client["id"]})
 
@@ -1280,7 +1122,7 @@ def set_up(cls, rec_count=2):
             LOGGER.info("  Creating Contact")
             contact = create_contact(get_random("clients"))
             cls._master["contacts"]["total"] += 1
-            remove_expected = {"client"}  # this is a correct expectation
+            remove_expected = {"client"}  # See the note below 'cls._master'
             expectations = get_fields(contact) - remove_expected
             cls._master["contacts"]["expected_fields"].update(expectations)
             cls._master["contacts"]["delete_me"].append({"id": contact["id"]})
@@ -1290,7 +1132,7 @@ def set_up(cls, rec_count=2):
             LOGGER.info("  Creating Role")
             role = create_role()
             cls._master["roles"]["total"] += 1
-            # BUG (see clients bug above)
+            # See the note below 'cls._master'
             remove_expected = {"user_ids"}  # field removed
             expectations = get_fields(role) - remove_expected
             cls._master["roles"]["expected_fields"].update(expectations)
@@ -1344,12 +1186,7 @@ def set_up(cls, rec_count=2):
             # NOTE: time_entries has fields which are set to null in a create and so do not get picked up
             # automatically when checking the keys, so we set partial expectations manually.
             add_expected = {"invoice_id"}
-            remove_expected = {
-                "invoice",
-                "timer_started_at",
-                "rounded_hours",
-                "hours_without_timer",
-            }  # BUG (for timer_started_at see clients bug above)
+            remove_expected = {"invoice"}  # See the note below 'cls._master'
             expectations = add_expected.union(get_fields(time_entry) - remove_expected)
             cls._master["time_entries"]["expected_fields"].update(expectations)
             cls._master["time_entries"]["delete_me"].append({"id": time_entry["id"]})
@@ -1378,12 +1215,7 @@ def set_up(cls, rec_count=2):
             client_id = cls._master["clients"]["delete_me"][0]["id"]
             estimate = create_estimate(client_id)
             cls._master["estimates"]["total"] += 1
-            # BUG (see clients bug above)
-            remove_expected = {
-                "declined_at",
-                "accepted_at",
-            }  # field removed so tests pass
-            expectations = get_fields(estimate) - remove_expected
+            expectations = get_fields(estimate)
             cls._master["estimates"]["expected_fields"].update(expectations)
             cls._master["estimates"]["delete_me"].append({"id": estimate["id"]})
 
@@ -1420,16 +1252,7 @@ def set_up(cls, rec_count=2):
                 project_id=get_all("projects")[0]["id"],
             )
             cls._master["invoices"]["total"] += 1
-            # BUG see bug in clients above, removing so tests pass
-            remove_expected = {
-                "closed_at",
-                "paid_at",
-                "recurring_invoice_id",
-                "paid_date",
-                "period_start",
-                "period_end",
-            }  # 'sent_at',
-            expectations = get_fields(invoice) - remove_expected
+            expectations = get_fields(invoice)
             cls._master["invoices"]["expected_fields"].update(expectations)
             cls._master["invoices"]["delete_me"].append({"id": invoice["id"]})
 
@@ -1476,7 +1299,7 @@ def set_up(cls, rec_count=2):
                 "receipt_file_size",
                 "invoice_id",
             }
-            remove_expected = {"receipt", "invoice"}
+            remove_expected = {"receipt", "invoice"} # See the note below 'cls._master'
             expectations = add_expected.union(get_fields(expense) - remove_expected)
             cls._master["expenses"]["expected_fields"].update(expectations)
             cls._master["expenses"]["delete_me"].append({"id": expense["id"]})
@@ -1528,7 +1351,7 @@ def tear_down(cls):
         delete_stream("estimates", estimate["id"])
     for category in cls._master["estimate_item_categories"]["delete_me"]:
         delete_stream("estimate_item_categories", category["id"])
-    ### Time Entries and Tasks can not be deleted as they are time tracked
+    # Time Entries and Tasks can not be deleted as they are time tracked
     # Invoices
     for invoice in cls._master["invoices"]["delete_me"]:
         delete_stream("invoices", invoice["id"])
@@ -1558,7 +1381,9 @@ def update_streams(cls, expected=None):
     """A common function to update streams records.
 
     Args:
-        expected (dict, optional): Dictionary containaing streams name with list to append updated records. Defaults to None.
+        expected (dict, optional): Dictionary containaing streams name with list
+                                   to append updated records.
+        Defaults to None.
 
     Returns:
         dict: Returns 'expected' dictionary.
@@ -1645,14 +1470,6 @@ def update_streams(cls, expected=None):
     updated_project = update_project(project_id)
     expected["projects"].append({"id": project_id})
     LOGGER.info(updated_project["updated_at"])
-
-    # # TODO - Why is this the same as user_roles update ^
-    # # LOGGER.info("Updating user_project_tasks")
-    # user_id = get_random('users')
-    # update_user_role = update_role(role_id, [])
-    # updated_user_role = update_role(role_id, [user_id])
-    # expected['user_roles'].append({"roles": user_id, "role_id": role_id})
-    # LOGGER.info(updated_user_role['updated_at'])
 
     LOGGER.info("Updating expenses")
     expense_id = cls._master["expenses"]["delete_me"][0]["id"]

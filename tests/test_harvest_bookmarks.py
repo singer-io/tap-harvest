@@ -33,7 +33,7 @@ class BookmarkTest(BaseTapTest):
         actual_record.
 
         Args:
-            expected_record (dict): Ecpected record (created/updated)
+            expected_record (dict): Expected record (created/updated)
             actual_record (dict): Actual record (Fetched from tap.)
 
         Returns:
@@ -68,7 +68,6 @@ class BookmarkTest(BaseTapTest):
         # IF THERE ARE STREAMS THAT SHOULD NOT BE TESTED
         # REPLACE THE EMPTY SET BELOW WITH THOSE STREAMS
         untested_streams = {
-            # TODO - BUG (https://github.com/singer-io/tap-harvest/issues/35)
             "projects",  # Limited to 2 projects on free plan
             "users",  # Limited to a single user on the free plan
             "user_projects",  # Limited by projects

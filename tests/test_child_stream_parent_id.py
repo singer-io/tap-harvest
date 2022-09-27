@@ -3,8 +3,8 @@ from harvest_api import *
 from tap_tester import LOGGER, menagerie, runner
 
 
-class TestStartDateHonoring(BaseTapTest):
-    """Test that the start_date is respected for some streams."""
+class TestChildStreamParentIds(BaseTapTest):
+    """Test that Synced child streams respects the parent id."""
 
     @classmethod
     def setUpClass(cls):
@@ -68,7 +68,7 @@ class TestStartDateHonoring(BaseTapTest):
 
     @classmethod
     def tearDownClass(cls):
-        # Clean up the data created in the setup
+        """Clean up the data created in the setup."""
         LOGGER.info("Starting Teardown")
         for project in cls._teardown_delete["projects"]:
             delete_stream("projects", project["id"])
@@ -92,6 +92,13 @@ class TestStartDateHonoring(BaseTapTest):
                 return data.get("data").get("id")
 
     def do_test(self, conn_id):
+        """
+        Test the following assertions:
+
+        • Verify if all the invoice ids or estimate ids were collected in the synced records
+        • Verify if the second highest updated ids are present in the ids collected
+          from the synced parent records
+        """
 
         # Table and field selection
         expected_streams = [
@@ -99,6 +106,11 @@ class TestStartDateHonoring(BaseTapTest):
             "invoice_payments",
             "invoice_messages",
             "estimates",
+            "estimate_messages",
+        ]
+        streams_to_test = [
+            "invoice_payments",
+            "invoice_messages",
             "estimate_messages",
         ]
         found_catalogs = menagerie.get_catalogs(conn_id)
@@ -117,43 +129,41 @@ class TestStartDateHonoring(BaseTapTest):
         sync_records = runner.get_records_from_target_output()
 
         for stream in expected_streams:
-            if stream not in [
-                "invoice_payments",
-                "invoice_messages",
-                "estimate_messages",
-            ]:
-                continue
+            with self.subTest(stream=stream):
 
-            if stream in ["invoice_payments", "invoice_messages"]:
-                parent_stream = "invoices"
-                parent_stream_pk = "invoice_id"
-            if stream in ["estimate_messages"]:
-                parent_stream = "estimates"
-                parent_stream_pk = "estimate_id"
+                if stream not in streams_to_test:
+                    continue
 
-            # Get invoice ids or estimate ids created during startup
-            parent_ids_created_before_sync = [
-                parent["id"] for parent in self._teardown_delete[parent_stream]
-            ]
+                if stream in ["invoice_payments", "invoice_messages"]:
+                    parent_stream = "invoices"
+                    parent_stream_pk = "invoice_id"
+                if stream in ["estimate_messages"]:
+                    parent_stream = "estimates"
+                    parent_stream_pk = "estimate_id"
 
-            # Getting invoice ids of all the invoice_payments, invoice_messages
-            # or estimate ids of all estimate_messages
-            parent_ids_collected_from_sync = [
-                message.get("data").get(parent_stream_pk)
-                for message in sync_records.get(stream).get("messages")
-            ]
+                # Get invoice ids or estimate ids created during startup
+                parent_ids_created_before_sync = [
+                    parent["id"] for parent in self._teardown_delete[parent_stream]
+                ]
 
-            record_count_sync = sync_record_count.get(stream, 0)
-            self.assertGreater(record_count_sync, 1)
+                # Getting invoice ids of all the invoice_payments, invoice_messages
+                # or estimate ids of all estimate_messages
+                parent_ids_collected_from_sync = [
+                    message.get("data").get(parent_stream_pk)
+                    for message in sync_records.get(stream).get("messages")
+                ]
 
-            # Check if all the invoice ids or estimate ids were collected in the synced records
-            for ids in parent_ids_created_before_sync:
-                self.assertTrue(ids in parent_ids_collected_from_sync)
+                record_count_sync = sync_record_count.get(stream, 0)
+                self.assertGreater(record_count_sync, 1)
 
-            second_updated_parent_id = self.get_second_updated_parent_id(
-                sync_records, parent_stream
-            )
+                # Check if all the invoice ids or estimate ids were collected in the synced records
+                for ids in parent_ids_created_before_sync:
+                    self.assertTrue(ids in parent_ids_collected_from_sync)
 
-            # Check if the second highest updated invoice ids or estimate ids
-            # is present in the ids collected from the synced records
-            self.assertTrue(second_updated_parent_id in parent_ids_collected_from_sync)
+                second_updated_parent_id = self.get_second_updated_parent_id(
+                    sync_records, parent_stream
+                )
+
+                # Check if the second highest updated invoice ids or estimate ids
+                # is present in the ids collected from the synced parent records
+                self.assertTrue(second_updated_parent_id in parent_ids_collected_from_sync)

@@ -4,6 +4,8 @@ from tap_tester import menagerie
 
 
 class HarvestParentChildIndependentTest(BaseTapTest):
+    """Test that child steam sync without selecting parent stream"""
+
     @classmethod
     def setUpClass(cls):
         set_up(cls)

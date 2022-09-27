@@ -14,9 +14,11 @@ KNOWN_MISSING_FIELDS = {
         "paid_at",
         "paid_date",
         "period_end",
+        "closed_at",
         "period_start",
     },
     "estimates": {
+        "accepted_at",
         "declined_at",
     },
     "time_entries": {

@@ -27,6 +27,7 @@ class HarvestDiscovery(BaseTapTest):
         • Verify stream names follow the naming convention
           streams should only have lowercase alphas and underscore
         • Verify there is only 1 top level of breadcrumb
+        • Verify there is no duplicate metadata entries
         • Verify replication key(s)
         • Verify primary key(s)
         • Verify that if there is a replication key we are doing INCREMENTAL otherwise FULL
@@ -97,6 +98,11 @@ class HarvestDiscovery(BaseTapTest):
                     if item.get("metadata").get("inclusion") == "automatic"
                 }
 
+                actual_fields = []
+                for md_entry in metadata:
+                    if md_entry['breadcrumb'] != []:
+                        actual_fields.append(md_entry['breadcrumb'][1])
+
                 ##########################################################################
                 ### Metadata assertions
                 ##########################################################################
@@ -109,6 +115,10 @@ class HarvestDiscovery(BaseTapTest):
                     )
                     + f"\nstream_properties | {stream_properties}",
                 )
+
+                # Verify there is no duplicate metadata entries
+                self.assertEqual(len(actual_fields), len(
+                    set(actual_fields)), msg="duplicates in the fields retrieved")
 
                 # Verify replication key(s) match expectations
                 self.assertSetEqual(expected_replication_keys, actual_replication_keys)

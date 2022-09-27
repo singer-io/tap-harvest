@@ -10,6 +10,8 @@ from dateutil.parser import parse
 from harvest_api import set_up, tear_down, update_streams
 from tap_tester import LOGGER, menagerie, runner
 
+# Given streams does not have their own replication keys
+# Uses respective parent's replication key value
 PARENT_REP_VALUE_STREAMS = {
     "invoice_line_items",
     "estimate_line_items",
@@ -39,7 +41,7 @@ class StartDateTest(BaseTapTest):
     def do_test(self, conn_id):
         """
         Test that the start_date configuration is respected
-        
+
         • Verify that a sync with a later start date has at least one record synced
           and fewer records than the 1st sync with a previous start date
         • Verify that each stream has fewer records than the earlier start date sync
@@ -59,9 +61,7 @@ class StartDateTest(BaseTapTest):
 
         # IF THERE ARE STREAMS THAT SHOULD NOT BE TESTED
         # REPLACE THE EMPTY SET BELOW WITH THOSE STREAMS
-        untested_streams = self.child_streams().union(
-            {"estimate_messages", "invoice_messages", "invoice_payments"}
-        )
+        untested_streams = {"estimate_messages", "invoice_messages", "invoice_payments"}
 
         our_catalogs = [
             catalog
@@ -75,10 +75,7 @@ class StartDateTest(BaseTapTest):
         )
 
         # Run a sync job using orchestrator
-        first_sync_record_count = self.run_sync(conn_id)
-        first_total_records = reduce(
-            lambda a, b: a + b, first_sync_record_count.values()
-        )
+        self.run_sync(conn_id)
 
         # Count actual rows synced
         first_sync_records = runner.get_records_from_target_output()

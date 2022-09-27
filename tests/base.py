@@ -185,7 +185,7 @@ class BaseTapTest(TapSpec, unittest.TestCase):
         for stream, batch in sync_records.items():
 
             upsert_messages = [
-                m for m in batch.get("messages") if m["action"] == "upsert"
+                msg for msg in batch.get("messages") if msg["action"] == "upsert"
             ]
             stream_bookmark_key = self.expected_replication_keys().get(stream, set())
             if stream_bookmark_key:
@@ -215,7 +215,7 @@ class BaseTapTest(TapSpec, unittest.TestCase):
         for stream, batch in sync_records.items():
 
             upsert_messages = [
-                m for m in batch.get("messages") if m["action"] == "upsert"
+                msg for msg in batch.get("messages") if msg["action"] == "upsert"
             ]
             stream_bookmark_key = self.expected_replication_keys().get(stream, set())
             if stream_bookmark_key:
