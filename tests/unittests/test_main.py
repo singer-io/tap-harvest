@@ -22,6 +22,7 @@ class MockArgs:
         self.discover = discover
 
 
+@mock.patch("tap_harvest.HarvestClient.get_account_id")
 @mock.patch("tap_harvest.HarvestClient._refresh_access_token")
 @mock.patch("singer.utils.parse_args")
 @mock.patch("tap_harvest._sync")
@@ -34,7 +35,7 @@ class TestSyncMode(unittest.TestCase):
         {"stream": "invoices", "schema": {}, "metadata": {}}]}
 
     @mock.patch("tap_harvest._discover")
-    def test_sync_with_catalog(self, mock_discover, mock_sync, mock_args, mock_check_access_token):
+    def test_sync_with_catalog(self, mock_discover, mock_sync, mock_args, mock_check_access_token, mock_get_account_id):
         """
         Test sync mode with catalog given in args.
         """
@@ -53,7 +54,7 @@ class TestSyncMode(unittest.TestCase):
         self.assertFalse(mock_discover.called)
 
     @mock.patch("tap_harvest._discover")
-    def test_without_catalog(self, mock_discover, mock_sync, mock_args, mock_check_access_token):
+    def test_without_catalog(self, mock_discover, mock_sync, mock_args, mock_check_access_token, mock_get_account_id):
         """
         Test sync mode without catalog given in args.
         """
@@ -67,7 +68,7 @@ class TestSyncMode(unittest.TestCase):
         self.assertTrue(mock_discover.called)
         self.assertTrue(mock_sync.called)
 
-    def test_sync_with_state(self, mock_sync, mock_args, mock_check_access_token):
+    def test_sync_with_state(self, mock_sync, mock_args, mock_check_access_token, mock_get_account_id):
         """
         Test sync mode with the state given in args
         """
