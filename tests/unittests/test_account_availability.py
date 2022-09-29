@@ -31,7 +31,8 @@ class TestAccountAvailability(unittest.TestCase):
     """
 
     @mock.patch("tap_harvest.client.HarvestClient._refresh_access_token")
-    @mock.patch('requests.Session.request', return_value=get_mock_http_response(200, {"accounts": []}))
+    @mock.patch('requests.Session.send',
+                return_value=get_mock_http_response(200, {"accounts": []}))
     def test_get_account_id(self, mock_request, mock_refresh_access_token):
         """
         Test if no account is available in the success response,
@@ -48,7 +49,8 @@ class TestAccountAvailability(unittest.TestCase):
         self.assertEqual(str(e.exception), str(expected_message))
 
     @mock.patch("tap_harvest.client.HarvestClient._refresh_access_token")
-    @mock.patch('requests.Session.request', return_value=get_mock_http_response(200, {"accounts": [{"id": 12345}]}))
+    @mock.patch('requests.Session.send',
+                return_value=get_mock_http_response(200, {"accounts": [{"id": 12345}]}))
     def test_success_get_account_id(self, mock_request, mock_refresh_access_token):
         """
         Test if an account is present in the response,

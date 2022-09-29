@@ -71,7 +71,7 @@ class TestRequestRateLimitHandling(unittest.TestCase):
         mock_request.assert_called_with(mock.ANY, timeout=REQUEST_TIMEOUT)
 
 
-@mock.patch("requests.Session.request")
+@mock.patch("requests.Session.send")
 @mock.patch("tap_harvest.client.time.sleep")
 class TestGetAccountIdRateLimitHandling(unittest.TestCase):
     """

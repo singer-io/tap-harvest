@@ -32,7 +32,8 @@ class TestDiscoverMode(unittest.TestCase):
     """
 
     @mock.patch("tap_harvest._discover")
-    def test_discover_with_config(self, mock_discover, mock_args, mock_verify_access, mock_account_id):
+    def test_discover_with_config(self, mock_discover, mock_args,
+                                  mock_verify_access, mock_account_id):
         """Test `_discover` function is called for discover mode"""
         mock_discover.return_value = Catalog([])
         mock_args.return_value = MockArgs(discover=True, config=TEST_CONFIG)

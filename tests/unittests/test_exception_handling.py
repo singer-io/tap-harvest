@@ -149,7 +149,7 @@ class TestBackOffHandling(unittest.TestCase):
         ["For Connection Error", requests.ConnectionError, requests.ConnectionError],
         ["For timeout Error", requests.Timeout, requests.Timeout],
     ])
-    @mock.patch("requests.Session.request")
+    @mock.patch("requests.Session.send")
     @mock.patch("time.sleep")
     def test_get_account_id_backoff(self, name, mock_response, error, mocked_sleep, mock_request):
         """

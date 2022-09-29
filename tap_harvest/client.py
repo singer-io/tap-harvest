@@ -125,7 +125,7 @@ class HarvestClient:  # pylint: disable=too-many-instance-attributes
 
     def __enter__(self):
         self._refresh_access_token()
-        self._account_id = self.get_account_id()
+        self.get_account_id()
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -194,43 +194,25 @@ class HarvestClient:  # pylint: disable=too-many-instance-attributes
         self._refresh_access_token()
         return self._access_token
 
-    @backoff.on_exception(backoff.expo,
-                          (Server5xxError, requests.Timeout, requests.ConnectionError),
-                          max_tries=5,
-                          factor=2)
     def get_account_id(self):
         """
         Get the account Id of the Active Harvest account.
         It will throw an exception if no active harvest account is found.
         """
 
-        response = self.session.request('GET',
-                                        url=BASE_ID_URL + 'accounts',
-                                        headers={'Authorization': 'Bearer ' + self._access_token,
-                                                 'User-Agent': self._user_agent},
-                                        timeout=self.request_timeout)
+        response = self.make_request_call(method='GET',
+                                          url=BASE_ID_URL + 'accounts',
+                                          params={},
+                                          headers={'Authorization': 'Bearer ' + self._access_token,
+                                                   'User-Agent': self._user_agent})
 
-        # Call the function again if the rate limit is exceeded
-        if 'Retry-After' in response.headers:
-            retry_after = int(response.headers['Retry-After'])
-            LOGGER.info("Rate limit reached. Sleeping for %s seconds", retry_after)
-            time.sleep(retry_after)
-            return self.get_account_id()
-
-        # Raise an error if not success response
-        if response.status_code != 200:
-            raise_for_error(response)
-
+        # Set account-id if any account is available in response
         if response.json().get('accounts'):
             self._account_id = str(response.json()['accounts'][0]['id'])
-            return self._account_id
+            return
 
         raise Exception("No Active Harvest Account found") from None
 
-    @backoff.on_exception(backoff.expo,
-                          (Server5xxError, requests.Timeout, requests.ConnectionError),
-                          max_tries=5,
-                          factor=2)
     @utils.ratelimit(100, 15)
     def request(self, url, params=None):
         """
@@ -242,20 +224,32 @@ class HarvestClient:  # pylint: disable=too-many-instance-attributes
                    "Harvest-Account-Id": self._account_id,
                    "Authorization": "Bearer " + access_token,
                    "User-Agent": self._user_agent}
+
+        resp = self.make_request_call("GET", url, params, headers)
+        return resp.json()
+
+    @backoff.on_exception(backoff.expo,
+                          (Server5xxError, requests.Timeout, requests.ConnectionError),
+                          max_tries=5,
+                          factor=2)
+    def make_request_call(self, method, url, params, headers):
+        """
+        A common method to make request calls that handle errors and backoff.
+        """
         req = requests.Request(
-            "GET", url=url, params=params, headers=headers).prepare()
-        LOGGER.info("GET %s", req.url)
-        resp = self.session.send(req, timeout=self.request_timeout)
+            method, url=url, params=params, headers=headers).prepare()
+        LOGGER.info("%s %s", method, req.url)
+        response = self.session.send(req, timeout=self.request_timeout)
 
         # Call the function again if the rate limit is exceeded
-        if 'Retry-After' in resp.headers:
-            retry_after = int(resp.headers['Retry-After'])
+        if 'Retry-After' in response.headers:
+            retry_after = int(response.headers['Retry-After'])
             LOGGER.info("Rate limit reached. Sleeping for %s seconds", retry_after)
             time.sleep(retry_after)
-            return self.request(url, params)
+            return self.make_request_call(method, url, params, headers)
 
         # Raise an error if not success response
-        if resp.status_code != 200:
-            raise_for_error(resp)
+        if response.status_code != 200:
+            raise_for_error(response)
 
-        return resp.json()
+        return response
