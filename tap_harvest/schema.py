@@ -3,9 +3,6 @@ import json
 from singer import metadata
 from tap_harvest.streams import STREAMS
 
-# Reference:
-# https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#Metadata
-
 
 def get_abs_path(path):
     """

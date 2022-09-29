@@ -242,8 +242,6 @@ class Stream:
                     # Reset the child stream's bookmark to current_time if max_bookmark is greater than current_time.
                     tap_state[child_stream_name] = current_time
 
-        singer.write_state(tap_state)
-
 
 class Clients(Stream):
     """

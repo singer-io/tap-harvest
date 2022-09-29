@@ -42,11 +42,8 @@ class HarvestClient:  # pylint: disable=too-many-instance-attributes
         Else return the default value.
         """
         # Get `request_timeout` value from config.
-        config_request_timeout = self.config.get('request_timeout')
-
         # If timeout is not passed in the config then set it to the default(300 seconds)
-        if config_request_timeout is None:
-            return REQUEST_TIMEOUT
+        config_request_timeout = self.config.get('request_timeout', REQUEST_TIMEOUT)
 
         # If config request_timeout is other than 0,"0" or invalid string then use request_timeout
         if ((type(config_request_timeout) in [int, float]) or
@@ -56,7 +53,7 @@ class HarvestClient:  # pylint: disable=too-many-instance-attributes
         raise Exception(
             "The entered timeout is invalid, it should be a valid none-zero integer.")
 
-    # backoff for Timeout error is already included in "requests.exceptions.RequestException"
+    # Backoff for Timeout error is already included in "requests.exceptions.RequestException"
     # as it is a parent class of "Timeout" error
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
@@ -115,6 +112,7 @@ class HarvestClient:  # pylint: disable=too-many-instance-attributes
                                                  'User-Agent': self._user_agent},
                                         timeout=self.request_timeout)
 
+        # Set account-id if any account is available in response
         if response.json().get('accounts'):
             self._account_id = str(response.json()['accounts'][0]['id'])
             return self._account_id
