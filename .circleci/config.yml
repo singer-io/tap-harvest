@@ -54,4 +54,5 @@ workflows:
                 - update/harvest-circle-config
                 #- master
     jobs:
-      - build
+      - build:
+          context: circleci-user
