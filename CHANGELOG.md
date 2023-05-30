@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.1.3
+  * Dependabot update [#58](https://github.com/singer-io/tap-harvest/pull/58)
+
 ## 2.1.2
   * Request Timeout Implemented [#51](https://github.com/singer-io/tap-harvest/pull/51)
 ## 2.1.1
