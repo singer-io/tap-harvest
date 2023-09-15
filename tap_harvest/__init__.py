@@ -5,6 +5,7 @@ import os
 import backoff
 import requests
 import pendulum
+from datetime import datetime
 
 import singer
 from singer import Transformer, utils
@@ -173,6 +174,19 @@ def remove_empty_date_times(item, schema):
         if item.get(field) is None:
             del item[field]
 
+def remove_faulty_started_time(item, schema):
+    fields = []
+
+    for key in schema['properties']:
+        subschema = schema['properties'][key]
+        if subschema.get('format') == 'date-time':
+            fields.append(key)
+
+    for field in fields:
+        try:
+            datetime.strpos(item.get(field), "hh:mm:ss")
+        except:
+            del item[field]
 
 def append_times_to_dates(item, date_fields):
     if date_fields:
@@ -225,6 +239,7 @@ def sync_endpoint(schema_name, endpoint=None, path=None, date_fields=None, with_
                             row[key + '_id'] = None
 
                 remove_empty_date_times(row, schema)
+                remove_faulty_started_time(row, schema)
 
                 item = transformer.transform(row, schema)
 
