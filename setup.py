@@ -11,7 +11,7 @@ setup(name='tap-harvest',
       py_modules=['tap_harvest'],
       install_requires=[
           'singer-python==5.12.1',
-          'requests==2.31.0',
+          'requests==2.32.0',
           'pendulum==1.2.0',
           'backoff==1.8.0',
           'pytz==2018.4',
