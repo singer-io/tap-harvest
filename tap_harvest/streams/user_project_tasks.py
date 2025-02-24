@@ -21,6 +21,7 @@ class User_project_tasks(IncrementalStream):
         state: Dict,
         schema: Dict,
         stream_metadata: Dict,
+        transformer: Transformer,
         selected_streams: List,
         parent_obj: Dict = None,
     ) -> Dict:

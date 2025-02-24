@@ -108,6 +108,7 @@ class BaseStream(ABC):
 
         while page:
             LOGGER.info("Calling Page %s", page)
+            self.params["page"] = page
             response = self.client.get(
                 extraction_url, self.params, self.headers, self.path
             )

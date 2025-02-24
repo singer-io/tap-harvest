@@ -14,3 +14,17 @@ class External_reference(IncrementalStream):
     replication_keys = ["updated_at"]
     data_key = "external_reference"
     path = "external_reference"
+    parent = "time_entries"
+
+
+    def sync(
+        self,
+        state: Dict,
+        schema: Dict,
+        stream_metadata: Dict,
+        transformer: Transformer,
+        selected_streams: List,
+        parent_obj: Dict = None,
+    ) -> Dict:
+        """Abstract implementation for `type: Incremental` stream."""
+        pass
