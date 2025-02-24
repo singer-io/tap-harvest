@@ -6,17 +6,23 @@ jobs:
     steps:
       - checkout
       - run:
-          name: 'Setup'
+          name: 'Setup virtual env'
           command: |
-            virtualenv -p python3 ~/.virtualenvs/tap-harvest
-            source ~/.virtualenvs/tap-harvest/bin/activate
-            pip install .
-            pip install pylint
+            python3 -mvenv /usr/local/share/virtualenvs/tap-harvest
+            source /usr/local/share/virtualenvs/tap-harvest/bin/activate
+            pip install -U 'pip==22.2.2' 'setuptools==65.3.0'
+            pip install .[dev]
       - run:
-          name: 'Pylint'
+          name: 'JSON Validator'
           command: |
-            source ~/.virtualenvs/tap-harvest/bin/activate
-            pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals,consider-using-f-string,broad-exception-raised
+            source /usr/local/share/virtualenvs/tap-tester/bin/activate
+            stitch-validate-json tap_harvest/schemas/*.json
+      - run:
+          name: 'pylint'
+          command: |
+            source /usr/local/share/virtualenvs/tap-harvest/bin/activate
+            pylint tap_harvest -d C,R,W
+      - add_ssh_keys
       - run:
           name: 'Unit Tests'
           command: |
