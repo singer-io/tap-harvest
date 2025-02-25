@@ -8,7 +8,7 @@ from tap_harvest.streams.abstracts import IncrementalStream
 LOGGER = get_logger()
 
 
-class Project_tasks(IncrementalStream):
+class ProjectTasks(IncrementalStream):
     tap_stream_id = "project_tasks"
     key_properties = ["id"]
     replication_keys = ["updated_at"]

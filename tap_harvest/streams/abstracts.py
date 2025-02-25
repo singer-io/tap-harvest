@@ -10,7 +10,7 @@ from singer import (
     write_record,
     write_schema,
 )
-from singer.utils import strftime, strptime_to_utc, strftime, strptime_with_tz
+from singer.utils import strftime, strftime, strptime_with_tz
 
 LOGGER = get_logger()
 
@@ -35,7 +35,14 @@ class BaseStream(ABC):
     object_to_id = []
     date_fields = []
     children = []
+    support_filter = True
     parent = ""
+
+    def __init__(self, client=None, schema=None, metadata=None) -> None:
+        self.client = client
+        self.schema = schema
+        self.metadata = metadata
+        self.child_to_sync = []
 
     @property
     @abstractmethod
@@ -77,10 +84,7 @@ class BaseStream(ABC):
     def sync(
         self,
         state: Dict,
-        schema: Dict,
-        stream_metadata: Dict,
         transformer: Transformer,
-        selected_streams: List,
         parent_obj: Dict = None,
     ) -> Dict:
         """
@@ -88,8 +92,8 @@ class BaseStream(ABC):
         ~~~
         Args:
          - state (dict): represents the state file for the tap.
-         - schema (dict): Schema of the stream
          - transformer (object): A Object of the singer.transformer class.
+         - parent_obj (dict): The parent object for the stream.
 
         Returns:
          - bool: The return value. True for success, False otherwise.
@@ -98,31 +102,26 @@ class BaseStream(ABC):
          - https://github.com/singer-io/getting-started/blob/master/docs/SYNC_MODE.md
         """
 
-    def __init__(self, client=None) -> None:
-        self.client = client
-
     def get_records(self) -> List:
         """Interacts with api client interaction and pagination."""
-        extraction_url = self.url_endpoint
         page = 1
-
         while page:
             LOGGER.info("Calling Page %s", page)
             self.params["page"] = page
             response = self.client.get(
-                extraction_url, self.params, self.headers, self.path
+                self.url_endpoint, self.params, self.headers, self.path
             )
             raw_records = response.get(self.data_key, [])
 
             page = response.get(self.next_page_key)
             yield from raw_records
 
-    def write_schema(self, schema):
+    def write_schema(self):
         """
         Write a schema message.
         """
         try:
-            write_schema(self.tap_stream_id, schema, self.key_properties)
+            write_schema(self.tap_stream_id, self.schema, self.key_properties)
         except OSError as err:
             LOGGER.error(
                 "OS Error while writing schema for: {}".format(self.tap_stream_id)
@@ -133,7 +132,8 @@ class BaseStream(ABC):
         """
         Update the filter key and value for the stream
         """
-        self.params.update(kwargs)
+        if self.support_filter:
+            self.params.update(kwargs)
 
     def add_object_to_id(self, record: Dict) -> Dict:
         """
@@ -148,21 +148,23 @@ class BaseStream(ABC):
 
         return record
 
-    def map_object(self, record: Dict) -> Dict:
+    def modify_object(self, record: Dict, parent_record: Dict = None) -> Dict:
         """
         Modify the record before writing to the stream
         """
+        record = self.add_object_to_id(record)
+        self.remove_empty_date_times(record)
         return record
 
-    def remove_empty_date_times(self, record: Dict, schema: Dict):
+    def remove_empty_date_times(self, record: Dict):
         """
         Remove empty date-time fields from the item
         """
         fields = []
 
-        for key in schema["properties"]:
-            subschema = schema["properties"][key]
-            if subschema.get("format") == "date-time":
+        for key in self.schema["properties"]:
+            sub_schema = self.schema["properties"][key]
+            if sub_schema.get("format") == "date-time":
                 fields.append(key)
 
         for field in fields:
@@ -176,6 +178,12 @@ class BaseStream(ABC):
         for date_field in self.date_fields:
             if record.get(date_field):
                 record[date_field] = strftime(strptime_with_tz(record[date_field]))
+
+    def get_url_endpoint(self, parent_obj: Dict = None) -> str:
+        """
+        Get the URL endpoint for the stream
+        """
+        return self.url_endpoint
 
 
 class IncrementalStream(BaseStream):
@@ -205,23 +213,19 @@ class IncrementalStream(BaseStream):
     def sync(
         self,
         state: Dict,
-        schema: Dict,
-        stream_metadata: Dict,
         transformer: Transformer,
-        selected_streams: List,
         parent_obj: Dict = None,
     ) -> Dict:
+        """Implementation for `type: Incremental` stream."""
         current_max_bookmark_date = bookmark_date = self.get_bookmark(state)
         self.update_filter_params(updated_since=bookmark_date)
+        self.url_endpoint = self.get_url_endpoint(parent_obj)
 
         with metrics.record_counter(self.tap_stream_id) as counter:
             for record in self.get_records():
-                record = self.map_object(record)
-                record = self.add_object_to_id(record)
-                self.remove_empty_date_times(record, schema)
-
+                record = self.modify_object(record, parent_obj)
                 transformed_record = transformer.transform(
-                    record, schema, stream_metadata
+                    record, self.schema, self.metadata
                 )
                 self.append_times_to_dates(transformed_record)
 
@@ -232,6 +236,9 @@ class IncrementalStream(BaseStream):
                         current_max_bookmark_date, record_timestamp
                     )
                     counter.increment()
+
+                    for child in self.child_to_sync:
+                        child.sync(state=state, transformer=transformer, parent_obj=record)
 
             state = self.write_bookmark(state, value=current_max_bookmark_date)
             return counter.value

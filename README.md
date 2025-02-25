@@ -14,47 +14,47 @@ This tap:
 
     - Contacts(https://github.com/singer-io)
 
-    - Estimate_item_categories(https://github.com/singer-io)
+    - EstimateItemCategories(https://github.com/singer-io)
 
-    - Estimate_line_items(https://github.com/singer-io)
+    - EstimateLineItems(https://github.com/singer-io)
 
-    - Estimate_messages(https://github.com/singer-io)
+    - EstimateMessages(https://github.com/singer-io)
 
     - Estimates(https://github.com/singer-io)
 
-    - Expense_categories(https://github.com/singer-io)
+    - ExpenseCategories(https://github.com/singer-io)
 
     - Expenses(https://github.com/singer-io)
 
-    - External_reference(https://github.com/singer-io)
+    - ExternalReference(https://github.com/singer-io)
 
-    - Invoice_item_categories(https://github.com/singer-io)
+    - InvoiceItemCategories(https://github.com/singer-io)
 
-    - Invoice_line_items(https://github.com/singer-io)
+    - InvoiceLineItems(https://github.com/singer-io)
 
-    - Invoice_messages(https://github.com/singer-io)
+    - InvoiceMessages(https://github.com/singer-io)
 
-    - Invoice_payments(https://github.com/singer-io)
+    - InvoicePayments(https://github.com/singer-io)
 
     - Invoices(https://github.com/singer-io)
 
-    - Project_tasks(https://github.com/singer-io)
+    - ProjectTasks(https://github.com/singer-io)
 
-    - Project_users(https://github.com/singer-io)
+    - ProjectUsers(https://github.com/singer-io)
 
     - Roles(https://github.com/singer-io)
 
     - Tasks(https://github.com/singer-io)
 
-    - Time_entries(https://github.com/singer-io)
+    - TimeEntries(https://github.com/singer-io)
 
-    - Time_entry_external_reference(https://github.com/singer-io)
+    - TimeEntryExternalReference(https://github.com/singer-io)
 
-    - User_project_tasks(https://github.com/singer-io)
+    - UserProjectTasks(https://github.com/singer-io)
 
-    - User_projects(https://github.com/singer-io)
+    - UserProjects(https://github.com/singer-io)
 
-    - User_roles(https://github.com/singer-io)
+    - UserRoles(https://github.com/singer-io)
 
     - (https://github.com/singer-io)
 
@@ -67,127 +67,127 @@ This tap:
 
 ** [projects](https://github.com/singer-io)**
 - Data Key = projects
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [clients](https://github.com/singer-io)**
 - Data Key = clients
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [contacts](https://github.com/singer-io)**
 - Data Key = contacts
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [estimate_item_categories](https://github.com/singer-io)**
 - Data Key = estimate_item_categories
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [estimate_line_items](https://github.com/singer-io)**
 - Data Key = estimate_line_items
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [estimate_messages](https://github.com/singer-io)**
 - Data Key = estimate_messages
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [estimates](https://github.com/singer-io)**
 - Data Key = estimates
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [expense_categories](https://github.com/singer-io)**
 - Data Key = expense_categories
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [expenses](https://github.com/singer-io)**
 - Data Key = expenses
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [external_reference](https://github.com/singer-io)**
 - Data Key = external_reference
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [invoice_item_categories](https://github.com/singer-io)**
 - Data Key = invoice_item_categories
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [invoice_line_items](https://github.com/singer-io)**
 - Data Key = invoice_line_items
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [invoice_messages](https://github.com/singer-io)**
 - Data Key = invoice_messages
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [invoice_payments](https://github.com/singer-io)**
 - Data Key = invoice_payments
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [invoices](https://github.com/singer-io)**
 - Data Key = invoices
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [project_tasks](https://github.com/singer-io)**
 - Data Key = project_tasks
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [project_users](https://github.com/singer-io)**
 - Data Key = project_users
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [roles](https://github.com/singer-io)**
 - Data Key = roles
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [tasks](https://github.com/singer-io)**
 - Data Key = tasks
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [time_entries](https://github.com/singer-io)**
 - Data Key = time_entries
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [time_entry_external_reference](https://github.com/singer-io)**
 - Data Key = time_entry_external_reference
-- Primary keys: ['time_entry_id', 'external_reference_id']
+- Primary keys: ["time_entry_id", "external_reference_id"]
 - Replication strategy: INCREMENTAL
 
 ** [user_project_tasks](https://github.com/singer-io)**
 - Data Key = user_project_tasks
-- Primary keys: ['user_id', 'project_task_id']
+- Primary keys: ["user_id", "project_task_id"]
 - Replication strategy: INCREMENTAL
 
 ** [user_projects](https://github.com/singer-io)**
 - Data Key = user_projects
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 ** [user_roles](https://github.com/singer-io)**
 - Data Key = user_roles
-- Primary keys: ['role_id', 'user_id']
+- Primary keys: ["role_id", "user_id"]
 - Replication strategy: INCREMENTAL
 
 ** [](https://github.com/singer-io)**
 - Data Key = user_projects
-- Primary keys: ['id']
+- Primary keys: ["id"]
 - Replication strategy: INCREMENTAL
 
 
@@ -218,7 +218,7 @@ This tap:
     - [singer-tools](https://github.com/singer-io/singer-tools)
     - [target-stitch](https://github.com/singer-io/target-stitch)
 
-3. Create your tap's `config.json` file.  The tap config file for this tap should include these entries:
+3. Create your tap"s `config.json` file.  The tap config file for this tap should include these entries:
    - `start_date` - the default value to use if no bookmark exists for an endpoint (rfc3339 date string)
    - `user_agent` (string, optional): Process and email for API logging purposes. Example: `tap-harvest <api_user_email@your_company.com>`
    - `request_timeout` (integer, `300`): Max time for which request should wait to get a response. Default request_timeout is 300 seconds.
@@ -318,7 +318,7 @@ This tap:
     Note, you may need to install test dependencies.
 
     ```
-    pip install -e .'[dev]'
+    pip install -e ."[dev]"
     ```
 ---
 

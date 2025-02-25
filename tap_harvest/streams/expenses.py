@@ -1,8 +1,5 @@
-from typing import Dict, Iterator, List
-
-from singer import Transformer, get_logger, metrics, write_record
-from singer.utils import strftime, strptime_to_utc
-
+from typing import Dict
+from singer import get_logger
 from tap_harvest.streams.abstracts import IncrementalStream
 
 LOGGER = get_logger()
@@ -23,10 +20,11 @@ class Expenses(IncrementalStream):
         "invoice",
     ]
 
-    def map_object(self, record: Dict) -> Dict:
+    def modify_object(self, record: Dict, parent_record: Dict = None) -> Dict:
         """
         Modify receipt object to be more easily accessible
         """
+        record = super().modify_object(record, parent_record)
         if record["receipt"] is None:
             record["receipt_url"] = None
             record["receipt_file_name"] = None
