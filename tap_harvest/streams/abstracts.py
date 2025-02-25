@@ -30,7 +30,6 @@ class BaseStream(ABC):
     path = ""
     page_size = 100
     next_page_key = "next_page"
-    params = {}
     headers = {"Accept": "application/json"}
     object_to_id = []
     date_fields = []
@@ -43,6 +42,7 @@ class BaseStream(ABC):
         self.schema = schema
         self.metadata = metadata
         self.child_to_sync = []
+        self.params = {}
 
     @property
     @abstractmethod

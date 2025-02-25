@@ -1,0 +1,219 @@
+{
+    "tap_name": "Harvest",
+    "required_config_keys": ["refresh_token", "client_id", "client_secret", "start_date", "user_agent"],
+    "page_size": 100,
+    "next_page_key": "next_page",
+    "pagination_key": "page",
+    "headers": {"Accept": "application/json"},
+    "params": {},
+    "auth_header_key": "Authorization",
+    "auth_config_key": "access_token",
+    "base_url": "https://api.harvestapp.com/v2/",
+    "streams": [
+      {
+        "name": "projects",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "projects",
+        "data_key": "projects"
+      },
+      {
+        "name": "clients",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "clients",
+        "data_key": "clients"
+      },
+      {
+        "name": "contacts",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "contacts",
+        "data_key": "contacts"
+      },
+      {
+        "name": "estimate_item_categories",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "estimate_item_categories",
+        "data_key": "estimate_item_categories"
+      },
+      {
+        "name": "estimate_line_items",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "estimate_line_items",
+        "data_key": "estimate_line_items"
+      },
+      {
+        "name": "estimate_messages",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "estimate_messages",
+        "data_key": "estimate_messages"
+      },
+      {
+        "name": "estimates",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "estimates",
+        "data_key": "estimates"
+      },
+      {
+        "name": "expense_categories",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "expense_categories",
+        "data_key": "expense_categories"
+      },
+      {
+        "name": "expenses",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "expenses",
+        "data_key": "expenses"
+      },
+      {
+        "name": "external_reference",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "external_reference",
+        "data_key": "external_reference"
+      },
+      {
+        "name": "invoice_item_categories",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "invoice_item_categories",
+        "data_key": "invoice_item_categories"
+      },
+      {
+        "name": "invoice_line_items",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "invoice_line_items",
+        "data_key": "invoice_line_items"
+      },
+      {
+        "name": "invoice_messages",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "invoice_messages",
+        "data_key": "invoice_messages"
+      },
+      {
+        "name": "invoice_payments",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "invoice_payments",
+        "data_key": "invoice_payments"
+      },
+      {
+        "name": "invoices",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "invoices",
+        "data_key": "invoices"
+      },
+      {
+        "name": "project_tasks",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "project_tasks",
+        "data_key": "project_tasks"
+      },
+      {
+        "name": "project_users",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "project_users",
+        "data_key": "project_users"
+      },
+      {
+        "name": "roles",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "roles",
+        "data_key": "roles"
+      },
+      {
+        "name": "tasks",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "tasks",
+        "data_key": "tasks"
+      },
+      {
+        "name": "time_entries",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "time_entries",
+        "data_key": "time_entries"
+      },
+      {
+        "name": "time_entry_external_reference",
+        "key_properties": ["time_entry_id", "external_reference_id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "time_entry_external_reference",
+        "data_key": "time_entry_external_reference"
+      },
+      {
+        "name": "user_project_tasks",
+        "key_properties": ["user_id", "project_task_id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "user_project_tasks",
+        "data_key": "user_project_tasks"
+      },
+      {
+        "name": "user_projects",
+        "key_properties": ["id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "user_projects",
+        "data_key": "user_projects"
+      },
+      {
+        "name": "user_roles",
+        "key_properties": ["role_id", "user_id"],
+        "replication_method": "INCREMENTAL",
+        "replication_keys": ["updated_at"],
+        "path": "user_roles",
+        "data_key": "user_roles"
+      }
+    ],
+    "tap_tester_creds": {
+      "client_id": "TAP_HARVEST_CLIENT_ID",
+      "client_secret": "TAP_HARVEST_CLIENT_SECRET",
+      "refresh_token": "TAP_HARVEST_REFRESH_TOKEN"
+    },
+    "author": "Stitch",
+    "third_party_dependencies": [
+        "singer-python==5.12.1",
+        "requests==2.31.0",
+        "pendulum==1.2.0",
+        "backoff==1.8.0",
+        "pytz==2018.4"
+    ]
+  }
