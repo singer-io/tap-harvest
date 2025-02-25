@@ -21,6 +21,6 @@ class InvoiceMessages(IncrementalStream):
         """
         Modify the record before writing to the stream
         """
-        record = super().modify_object(record, parent_record)
         record["invoice_id"] = parent_record["id"]
+        record = super().modify_object(record, parent_record)
         return record

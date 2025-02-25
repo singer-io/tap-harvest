@@ -106,7 +106,6 @@ class BaseStream(ABC):
         """Interacts with api client interaction and pagination."""
         page = 1
         while page:
-            LOGGER.info("Calling Page %s", page)
             self.params["page"] = page
             response = self.client.get(
                 self.url_endpoint, self.params, self.headers, self.path

@@ -14,3 +14,4 @@ class Roles(IncrementalStream):
     replication_keys = ["updated_at"]
     data_key = "roles"
     path = "roles"
+    children = ["user_roles"]

@@ -21,7 +21,8 @@ class ExternalReference(IncrementalStream):
     ) -> Dict:
         """Abstract implementation for `type: Incremental` stream."""
         external_reference = parent_obj["external_reference"]
-        external_reference = transformer.transform(
-            external_reference, self.schema, self.metadata
-        )
-        write_record(self.tap_stream_id, external_reference)
+        if external_reference:
+            external_reference = transformer.transform(
+                external_reference, self.schema, self.metadata
+            )
+            write_record(self.tap_stream_id, external_reference)

@@ -23,6 +23,6 @@ class UserProjects(IncrementalStream):
         """
         Modify the record before writing to the stream
         """
-        record = super().modify_object(record, parent_record)
         record["user"] = parent_record
+        record = super().modify_object(record, parent_record)
         return record
