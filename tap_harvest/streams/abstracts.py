@@ -36,6 +36,7 @@ class BaseStream(ABC):
     children = []
     support_filter = True
     parent = ""
+    data_key = ""
 
     def __init__(self, client=None, schema=None, metadata=None) -> None:
         self.client = client
