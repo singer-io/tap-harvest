@@ -9,6 +9,7 @@ from singer import (
     write_bookmark,
     write_record,
     write_schema,
+    metadata
 )
 from singer.utils import strftime, strftime, strptime_with_tz
 
@@ -37,11 +38,14 @@ class BaseStream(ABC):
     support_filter = True
     parent = ""
     data_key = ""
+    parent_bookmark_key = ""
+    bookmark_value = None
 
-    def __init__(self, client=None, schema=None, metadata=None) -> None:
+    def __init__(self, client=None, catalog=None) -> None:
         self.client = client
-        self.schema = schema
-        self.metadata = metadata
+        self.catalog = catalog
+        self.schema = catalog.schema.to_dict()
+        self.metadata = metadata.to_map(catalog.metadata)
         self.child_to_sync = []
         self.params = {}
 
@@ -67,19 +71,11 @@ class BaseStream(ABC):
 
     @property
     @abstractmethod
-    def forced_replication_method(self) -> str:
-        """Defines the sync mode of a stream."""
-
-    @property
-    @abstractmethod
     def key_properties(self) -> Tuple[str, str]:
         """List of key properties for stream."""
 
-    @property
-    def selected_by_default(self) -> bool:
-        """Indicates if a node in the schema should be replicated, if a user
-        has not expressed any opinion on whether or not to replicate it."""
-        return False
+    def is_selected(self):
+        return metadata.get(self.metadata, (), "selected")
 
     @abstractmethod
     def sync(
@@ -128,9 +124,9 @@ class BaseStream(ABC):
             )
             raise err
 
-    def update_filter_params(self, **kwargs):
+    def update_params(self, **kwargs):
         """
-        Update the filter key and value for the stream
+        Update params for the stream
         """
         if self.support_filter:
             self.params.update(kwargs)
@@ -183,31 +179,30 @@ class BaseStream(ABC):
         """
         Get the URL endpoint for the stream
         """
-        return self.url_endpoint
+        return self.url_endpoint or f"{self.client.base_url}/{self.path}"
 
 
 class IncrementalStream(BaseStream):
     """Base Class for Incremental Stream."""
 
-    replication_method = "INCREMENTAL"
-    forced_replication_method = "INCREMENTAL"
-    config_start_key = "start_date"
 
-    def get_bookmark(self, state: dict, key: Any = None) -> int:
+    def get_bookmark(self, state: dict, stream: str, key: Any = None) -> int:
         """A wrapper for singer.get_bookmark to deal with compatibility for
         bookmark values or start values."""
         return get_bookmark(
             state,
-            self.tap_stream_id,
+            stream,
             key or self.replication_keys[0],
-            self.client.config.get(self.config_start_key, False),
+            self.client.config["start_date"],
         )
 
-    def write_bookmark(self, state: dict, key: Any = None, value: Any = None) -> Dict:
+    def write_bookmark(self, state: dict, stream: str, key: Any = None, value: Any = None) -> Dict:
         """A wrapper for singer.get_bookmark to deal with compatibility for
         bookmark values or start values."""
+        current_bookmark = get_bookmark(state, stream, key or self.replication_keys[0], self.client.config["start_date"])
+        value = max(current_bookmark, value)
         return write_bookmark(
-            state, self.tap_stream_id, key or self.replication_keys[0], value
+            state, stream, key or self.replication_keys[0], value
         )
 
     def sync(
@@ -217,8 +212,8 @@ class IncrementalStream(BaseStream):
         parent_obj: Dict = None,
     ) -> Dict:
         """Implementation for `type: Incremental` stream."""
-        current_max_bookmark_date = bookmark_date = self.get_bookmark(state)
-        self.update_filter_params(updated_since=bookmark_date)
+        current_max_bookmark_date = bookmark_date = self.get_bookmark(state, self.tap_stream_id)
+        self.update_params(updated_since=bookmark_date)
         self.url_endpoint = self.get_url_endpoint(parent_obj)
 
         with metrics.record_counter(self.tap_stream_id) as counter:
@@ -231,14 +226,16 @@ class IncrementalStream(BaseStream):
 
                 record_timestamp = transformed_record[self.replication_keys[0]]
                 if record_timestamp >= bookmark_date:
-                    write_record(self.tap_stream_id, transformed_record)
+                    if self.is_selected():
+                        write_record(self.tap_stream_id, transformed_record)
+                        counter.increment()
+
                     current_max_bookmark_date = max(
                         current_max_bookmark_date, record_timestamp
                     )
-                    counter.increment()
 
                     for child in self.child_to_sync:
                         child.sync(state=state, transformer=transformer, parent_obj=record)
 
-            state = self.write_bookmark(state, value=current_max_bookmark_date)
+            state = self.write_bookmark(state, self.tap_stream_id, value=current_max_bookmark_date)
             return counter.value

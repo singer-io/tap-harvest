@@ -9,6 +9,7 @@ class Expenses(IncrementalStream):
     tap_stream_id = "expenses"
     key_properties = ["id"]
     replication_keys = ["updated_at"]
+    replication_method = "INCREMENTAL"
     data_key = "expenses"
     path = "expenses"
     object_to_id = [

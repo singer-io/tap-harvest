@@ -8,9 +8,10 @@ LOGGER = get_logger()
 class InvoicePayments(IncrementalStream):
     tap_stream_id = "invoice_payments"
     key_properties = ["id"]
+    replication_method = "INCREMENTAL"
     replication_keys = ["updated_at"]
-    path = "invoices/{}/payments"
     data_key = "invoice_payments"
+    path = "invoices/{}/payments"
     parent = "invoices"
     date_fields = ["send_reminder_on"]
     support_filter = False
@@ -29,7 +30,7 @@ class InvoicePayments(IncrementalStream):
         record["payment_gateway_name"] = record["payment_gateway"]["name"]
         return record
 
-    def get_bookmark(self, state: dict, key: Any = None) -> int:
+    def get_bookmark(self, state: Dict, stream: str, key: Any = None) -> int:
         """A wrapper for singer.get_bookmark to deal with compatibility for
         bookmark values or start values."""
         if not self.bookmark_value:        

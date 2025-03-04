@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Any
 from singer import Transformer, get_logger, write_record
 from tap_harvest.streams.abstracts import IncrementalStream
 
@@ -8,7 +8,8 @@ LOGGER = get_logger()
 class UserProjectTasks(IncrementalStream):
     tap_stream_id = "user_project_tasks"
     key_properties = ["user_id", "project_task_id"]
-    replication_keys = ["updated_at"]
+    replication_method = "INCREMENTAL"
+    replication_keys = None
     data_key = "user_project_tasks"
     path = "user_project_tasks"
     parent = "user_projects"
@@ -20,8 +21,14 @@ class UserProjectTasks(IncrementalStream):
         parent_obj: Dict = None,
     ) -> Dict:
         """Abstract implementation for `type: Incremental` stream."""
-        record = {
-            "user_id": parent_obj["user"]["id"],
-            "project_task_id": parent_obj["id"],
-        }
-        write_record(self.tap_stream_id, record)
+        for project_task in parent_obj['task_assignments']:
+            record = {
+                "user_id": parent_obj["user_id"],
+                "project_task_id": project_task["id"],
+            }
+            write_record(self.tap_stream_id, record)
+
+    def write_bookmark(self, state: dict, stream: str, key: Any = None, value: Any = None) -> Dict:
+        """A wrapper for singer.get_bookmark to deal with compatibility for
+        bookmark values or start values."""
+        return state

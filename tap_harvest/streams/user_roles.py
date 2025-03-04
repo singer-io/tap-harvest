@@ -8,6 +8,7 @@ LOGGER = get_logger()
 class UserRoles(IncrementalStream):
     tap_stream_id = "user_roles"
     key_properties = ["role_id", "user_id"]
+    replication_method = "INCREMENTAL"
     replication_keys = ["updated_at"]
     data_key = "user_roles"
     parent = "roles"
