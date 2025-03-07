@@ -8,55 +8,55 @@ This tap:
 
 - Pulls raw data from the [Harvest API].
 - Extracts the following resources:
-    - Projects(https://github.com/singer-io)
+    - [Projects](https://help.getharvest.com/api-v2/projects-api/projects/projects/)
 
-    - Clients(https://github.com/singer-io)
+    - [Clients](https://help.getharvest.com/api-v2/clients-api/clients/clients/)
 
-    - Contacts(https://github.com/singer-io)
+    - [Contacts](https://help.getharvest.com/api-v2/clients-api/clients/contacts/)
 
-    - EstimateItemCategories(https://github.com/singer-io)
+    - [EstimateItemCategories](https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-item-categories/)
 
-    - EstimateLineItems(https://github.com/singer-io)
+    - [EstimateLineItems](https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/#the-estimate-line-item-object)
 
-    - EstimateMessages(https://github.com/singer-io)
+    - [EstimateMessages](https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-messages/)
 
-    - Estimates(https://github.com/singer-io)
+    - [Estimates](https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/)
 
-    - ExpenseCategories(https://github.com/singer-io)
+    - [ExpenseCategories](https://help.getharvest.com/api-v2/expenses-api/expenses/expense-categories/)
 
-    - Expenses(https://github.com/singer-io)
+    - [Expenses](https://help.getharvest.com/api-v2/expenses-api/expenses/expenses/)
 
-    - ExternalReference(https://github.com/singer-io)
+    - [ExternalReference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)
 
-    - InvoiceItemCategories(https://github.com/singer-io)
+    - [InvoiceItemCategories](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-item-categories/)
 
-    - InvoiceLineItems(https://github.com/singer-io)
+    - [InvoiceLineItems](https://help.getharvest.com/api-v2/invoices-api/invoices/invoices#the-invoice-line-item-object)
 
-    - InvoiceMessages(https://github.com/singer-io)
+    - [InvoiceMessages](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-messages/)
 
-    - InvoicePayments(https://github.com/singer-io)
+    - [InvoicePayments](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-payments/)
 
-    - Invoices(https://github.com/singer-io)
+    - [Invoices](https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/)
 
-    - ProjectTasks(https://github.com/singer-io)
+    - [ProjectTasks](https://help.getharvest.com/api-v2/projects-api/projects/task-assignments/)
 
-    - ProjectUsers(https://github.com/singer-io)
+    - [ProjectUsers](https://help.getharvest.com/api-v2/projects-api/projects/user-assignments/)
 
-    - Roles(https://github.com/singer-io)
+    - [Roles](https://help.getharvest.com/api-v2/roles-api/roles/roles/)
 
-    - Tasks(https://github.com/singer-io)
+    - [Tasks](https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/)
 
-    - TimeEntries(https://github.com/singer-io)
+    - [TimeEntries](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)
 
-    - TimeEntryExternalReference(https://github.com/singer-io)
+    - [TimeEntryExternalReference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)
 
-    - UserProjectTasks(https://github.com/singer-io)
+    - [UserProjectTasks](https://help.getharvest.com/api-v2/)
 
-    - UserProjects(https://github.com/singer-io)
+    - [UserProjects](https://help.getharvest.com/api-v2/clients-api/clients/contacts/)
 
-    - UserRoles(https://github.com/singer-io)
+    - [UserRoles](https://help.getharvest.com/api-v2/)
 
-    - (https://github.com/singer-io)
+    - [Users](https://help.getharvest.com/api-v2/users-api/users/users/)
 
 - Outputs the schema for each resource
 - Incrementally pulls data based on the input state
@@ -65,129 +65,129 @@ This tap:
 ## Streams
 
 
-** [projects](https://github.com/singer-io)**
+** [projects](https://help.getharvest.com/api-v2/projects-api/projects/projects/)**
 - Data Key = projects
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [clients](https://github.com/singer-io)**
+** [clients](https://help.getharvest.com/api-v2/clients-api/clients/clients/)**
 - Data Key = clients
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [contacts](https://github.com/singer-io)**
+** [contacts](https://help.getharvest.com/api-v2/clients-api/clients/contacts/)**
 - Data Key = contacts
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [estimate_item_categories](https://github.com/singer-io)**
+** [estimate_item_categories](https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-item-categories/)**
 - Data Key = estimate_item_categories
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [estimate_line_items](https://github.com/singer-io)**
+** [estimate_line_items](https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/#the-estimate-line-item-object)**
 - Data Key = estimate_line_items
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [estimate_messages](https://github.com/singer-io)**
+** [estimate_messages](https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-messages/)**
 - Data Key = estimate_messages
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [estimates](https://github.com/singer-io)**
+** [estimates](https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/)**
 - Data Key = estimates
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [expense_categories](https://github.com/singer-io)**
+** [expense_categories](https://help.getharvest.com/api-v2/expenses-api/expenses/expense-categories/)**
 - Data Key = expense_categories
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [expenses](https://github.com/singer-io)**
+** [expenses](https://help.getharvest.com/api-v2/expenses-api/expenses/expenses/)**
 - Data Key = expenses
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [external_reference](https://github.com/singer-io)**
+** [external_reference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)**
 - Data Key = external_reference
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [invoice_item_categories](https://github.com/singer-io)**
+** [invoice_item_categories](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-item-categories/)**
 - Data Key = invoice_item_categories
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [invoice_line_items](https://github.com/singer-io)**
+** [invoice_line_items](https://help.getharvest.com/api-v2/invoices-api/invoices/invoices#the-invoice-line-item-object)**
 - Data Key = invoice_line_items
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [invoice_messages](https://github.com/singer-io)**
+** [invoice_messages](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-messages/)**
 - Data Key = invoice_messages
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [invoice_payments](https://github.com/singer-io)**
+** [invoice_payments](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-payments/)**
 - Data Key = invoice_payments
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [invoices](https://github.com/singer-io)**
+** [invoices](https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/)**
 - Data Key = invoices
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [project_tasks](https://github.com/singer-io)**
-- Data Key = project_tasks
-- Primary keys: ["id"]
+** [project_tasks](https://help.getharvest.com/api-v2/projects-api/projects/task-assignments/)**
+- Data Key = task_assignments
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [project_users](https://github.com/singer-io)**
+** [project_users](https://help.getharvest.com/api-v2/projects-api/projects/user-assignments/)**
 - Data Key = project_users
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [roles](https://github.com/singer-io)**
+** [roles](https://help.getharvest.com/api-v2/roles-api/roles/roles/)**
 - Data Key = roles
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [tasks](https://github.com/singer-io)**
+** [tasks](https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/)**
 - Data Key = tasks
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [time_entries](https://github.com/singer-io)**
+** [time_entries](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)**
 - Data Key = time_entries
-- Primary keys: ["id"]
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [time_entry_external_reference](https://github.com/singer-io)**
+** [time_entry_external_reference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)**
 - Data Key = time_entry_external_reference
-- Primary keys: ["time_entry_id", "external_reference_id"]
+- Primary keys: ['time_entry_id', 'external_reference_id']
 - Replication strategy: INCREMENTAL
 
-** [user_project_tasks](https://github.com/singer-io)**
+** [user_project_tasks](https://help.getharvest.com/api-v2/)**
 - Data Key = user_project_tasks
-- Primary keys: ["user_id", "project_task_id"]
+- Primary keys: ['user_id', 'project_task_id']
 - Replication strategy: INCREMENTAL
 
-** [user_projects](https://github.com/singer-io)**
-- Data Key = user_projects
-- Primary keys: ["id"]
+** [user_projects](https://help.getharvest.com/api-v2/clients-api/clients/contacts/)**
+- Data Key = project_assignments
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [user_roles](https://github.com/singer-io)**
+** [user_roles](https://help.getharvest.com/api-v2/)**
 - Data Key = user_roles
-- Primary keys: ["role_id", "user_id"]
+- Primary keys: ['role_id', 'user_id']
 - Replication strategy: INCREMENTAL
 
-** [](https://github.com/singer-io)**
-- Data Key = user_projects
-- Primary keys: ["id"]
+** [users](https://help.getharvest.com/api-v2/users-api/users/users/)**
+- Data Key = users
+- Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
 
@@ -213,52 +213,33 @@ This tap:
     > pip install singer-python
     > pip install target-stitch
     > pip install target-json
-    
+
     ```
     - [singer-tools](https://github.com/singer-io/singer-tools)
     - [target-stitch](https://github.com/singer-io/target-stitch)
 
-3. Create your tap"s `config.json` file.  The tap config file for this tap should include these entries:
+3. Create your tap's `config.json` file.  The tap config file for this tap should include these entries:
    - `start_date` - the default value to use if no bookmark exists for an endpoint (rfc3339 date string)
    - `user_agent` (string, optional): Process and email for API logging purposes. Example: `tap-harvest <api_user_email@your_company.com>`
    - `request_timeout` (integer, `300`): Max time for which request should wait to get a response. Default request_timeout is 300 seconds.
-   
+
     ```json
     {
-        "client_id": "OAUTH_CLIENT_ID",
-        "client_secret": "OAUTH_CLIENT_SECRET",
-        "refresh_token": "YOUR_OAUTH_REFRESH_TOKEN",
-        "start_date": "2017-04-19T13:37:30Z",
-        "user_agent": "MyApp (your.email@example.com)",
-        "request_timeout": 300
+        "start_date": "2019-01-01T00:00:00Z",
+        "user_agent": "tap-harvest <api_user_email@your_company.com>",
+        "request_timeout": 300,
+        ...
     }
-    ```
 
-3. [Optional] Create the initial state file
+    Optionally, also create a `state.json` file. `currently_syncing` is an optional attribute used for identifying the last object to be synced in case the job is interrupted mid-stream. The next run would begin where the last job left off.
 
     ```json
     {
         "currently_syncing": "engage",
         "bookmarks": {
-        "clients": "2000-01-01T00:00:00Z",
-        "contacts": "2000-01-01T00:00:00Z",
-        "estimate_item_categories": "2000-01-01T00:00:00Z",
-        "estimate_messages": "2000-01-01T00:00:00Z",
-        "estimates": "2000-01-01T00:00:00Z",
-        "expense_categories": "2000-01-01T00:00:00Z",
-        "expenses": "2000-01-01T00:00:00Z",
-        "invoice_item_categories": "2000-01-01T00:00:00Z",
-        "invoice_messages": "2000-01-01T00:00:00Z",
-        "invoice_payments": "2000-01-01T00:00:00Z",
-        "invoices": "2000-01-01T00:00:00Z",
-        "project_tasks": "2000-01-01T00:00:00Z",
-        "project_users": "2000-01-01T00:00:00Z",
-        "projects": "2000-01-01T00:00:00Z",
-        "roles": "2000-01-01T00:00:00Z",
-        "tasks": "2000-01-01T00:00:00Z",
-        "time_entries": "2000-01-01T00:00:00Z",
-        "user_projects": "2000-01-01T00:00:00Z",
-        "users": "2000-01-01T00:00:00Z"
+            "export": "2019-09-27T22:34:39.000000Z",
+            "funnels": "2019-09-28T15:30:26.000000Z",
+            "revenue": "2019-09-28T18:23:53Z"
         }
     }
     ```
@@ -290,7 +271,7 @@ This tap:
     ```
 
 6. Test the Tap
-    
+
     While developing the harvest tap, the following utilities were run in accordance with Singer.io best practices:
     Pylint to improve [code quality](https://github.com/singer-io/getting-started/blob/master/docs/BEST_PRACTICES.md
     ```bash
@@ -303,7 +284,7 @@ This tap:
 
     To [check the tap](https://github.com/singer-io/singer-tools
     ```bash
-    > tap-mixpanel --config tap_config.json --catalog catalog.json | singer-check-tap > state.json
+    > tap_harvest --config tap_config.json --catalog catalog.json | singer-check-tap > state.json
     > tail -1 state.json > state.json.tmp && mv state.json.tmp state.json
     ```
 
@@ -318,8 +299,8 @@ This tap:
     Note, you may need to install test dependencies.
 
     ```
-    pip install -e ."[dev]"
+    pip install -e .'[dev]'
     ```
 ---
 
-Copyright &copy; 2017 Stitch
+Copyright &copy; 2019 Stitch
