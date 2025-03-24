@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.0.0
+  * Complete tap refactoring [#64](https://github.com/singer-io/tap-harvest/pull/64)
+
 ## 2.1.3
   * Dependabot update [#58](https://github.com/singer-io/tap-harvest/pull/58)
 
