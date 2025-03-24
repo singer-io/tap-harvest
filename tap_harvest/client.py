@@ -15,7 +15,7 @@ from tap_harvest.exceptions import (
 
 LOGGER = get_logger()
 REQUEST_TIMEOUT = 300
-REFRESH_TOKEN_URL = "https://id.getharvest.com/api/v2"
+REFRESH_URL = "https://id.getharvest.com/api/v2"
 
 
 def raise_for_error(response: requests.Response) -> None:
@@ -31,19 +31,12 @@ def raise_for_error(response: requests.Response) -> None:
         response_json = {}
     if response.status_code not in [200, 201, 204]:
         if response_json.get("error"):
-            message = "HTTP-error-code: {}, Error: {}".format(
-                response.status_code, response_json.get("error")
-            )
+            message = f"HTTP-error-code: {response.status_code}, Error: {response_json.get('error')}"
         else:
-            message = "HTTP-error-code: {}, Error: {}".format(
-                response.status_code,
-                response_json.get(
-                    "message",
-                    ERROR_CODE_EXCEPTION_MAPPING.get(response.status_code, {}).get(
-                        "message", "Unknown Error"
-                    ),
-                ),
-            )
+            error_message = ERROR_CODE_EXCEPTION_MAPPING.get(
+                response.status_code, {}
+            ).get("message", "Unknown Error")
+            message = f"HTTP-error-code: {response.status_code}, Error: {response_json.get('message', error_message)}"
         exc = ERROR_CODE_EXCEPTION_MAPPING.get(response.status_code, {}).get(
             "raise_exception", HarvestError
         )
@@ -51,9 +44,8 @@ def raise_for_error(response: requests.Response) -> None:
 
 
 class Client:
-    """
-    A Wrapper class.
-    ~~~
+    """A Wrapper class. ~~~
+
     Performs:
      - Authentication
      - Response parsing
@@ -84,10 +76,10 @@ class Client:
         self._session.close()
 
     def _refresh_access_token(self) -> None:
-        """Refreshes the access token"""
+        """Refreshes the access token."""
         LOGGER.info("Refreshing Access Token")
         resp_json = self.post(
-            endpoint=REFRESH_TOKEN_URL + "/oauth2/token",
+            endpoint=REFRESH_URL + "/oauth2/token",
             headers={"User-Agent": self.config["user_agent"]},
             body={
                 "refresh_token": self.config["refresh_token"],
@@ -102,9 +94,7 @@ class Client:
         LOGGER.info("Got refreshed access token")
 
     def get_access_token(self) -> str:
-        """
-        Return access token if available or generate one.
-        """
+        """Return access token if available or generate one."""
         if self._access_token and self._expires_at > pendulum.now():
             return self._access_token
 
@@ -112,8 +102,8 @@ class Client:
         return self._access_token
 
     def check_api_credentials(self) -> None:
-        """Check if the API credentials are valid"""
-        resp_json = self.get(endpoint=REFRESH_TOKEN_URL + "/accounts")
+        """Check if the API credentials are valid."""
+        resp_json = self.get(endpoint=REFRESH_URL + "/accounts")
 
         # Set account-id if any account is available in response
         if resp_json.get("accounts"):
@@ -123,7 +113,7 @@ class Client:
         raise Exception("No Active Harvest Account found") from None
 
     def authenticate(self, headers: Dict, params: Dict) -> Tuple[Dict, Dict]:
-        """Authenticates the request with the token"""
+        """Authenticates the request with the token."""
         headers["Authorization"] = f"Bearer {self.get_access_token()}"
         headers["User-Agent"] = self.config["user_agent"]
         if self._account_id:
@@ -191,7 +181,7 @@ class Client:
         Returns:
             Dict,List,None: Returns a `Json Parsed` HTTP Response or None if exception
         """
-        with metrics.http_request_timer(endpoint) as timer:
+        with metrics.http_request_timer(endpoint):
             response = self._session.request(method, endpoint, **kwargs)
             raise_for_error(response)
 

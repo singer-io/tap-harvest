@@ -1,8 +1,6 @@
 from typing import Dict, Any
-from singer import get_logger, Transformer, write_record
+from singer import Transformer, write_record
 from tap_harvest.streams.abstracts import IncrementalStream
-
-LOGGER = get_logger()
 
 
 class TimeEntryExternalReference(IncrementalStream):
@@ -31,7 +29,9 @@ class TimeEntryExternalReference(IncrementalStream):
             )
             write_record(self.tap_stream_id, external_reference)
 
-    def write_bookmark(self, state: dict, stream: str, key: Any = None, value: Any = None) -> Dict:
+    def write_bookmark(
+        self, state: dict, stream: str, key: Any = None, value: Any = None
+    ) -> Dict:
         """A wrapper for singer.get_bookmark to deal with compatibility for
         bookmark values or start values."""
         return state

@@ -26,6 +26,7 @@ from tap_harvest.streams.user_projects import UserProjects
 from tap_harvest.streams.user_roles import UserRoles
 from tap_harvest.streams.users import Users
 
+
 STREAMS = {
     "projects": Projects,
     "clients": Clients,

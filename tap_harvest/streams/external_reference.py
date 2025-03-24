@@ -28,7 +28,9 @@ class ExternalReference(IncrementalStream):
             )
             write_record(self.tap_stream_id, external_reference)
 
-    def write_bookmark(self, state: dict, stream: str, key: Any = None, value: Any = None) -> Dict:
+    def write_bookmark(
+        self, state: dict, stream: str, key: Any = None, value: Any = None
+    ) -> Dict:
         """A wrapper for singer.get_bookmark to deal with compatibility for
         bookmark values or start values."""
         return state

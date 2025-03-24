@@ -7,9 +7,8 @@ LOGGER = singer.get_logger()
 
 
 def discover() -> Catalog:
-    """
-    Run the discovery mode, prepare the catalog file and return the catalog.
-    """
+    """Run the discovery mode, prepare the catalog file and return the
+    catalog."""
     schemas, field_metadata = get_schemas()
     catalog = Catalog([])
 
@@ -19,8 +18,8 @@ def discover() -> Catalog:
             mdata = field_metadata[stream_name]
         except Exception as err:
             LOGGER.error(err)
-            LOGGER.error("stream_name: {}".format(stream_name))
-            LOGGER.error("type schema_dict: {}".format(type(schema_dict)))
+            LOGGER.error(f"stream_name: {stream_name}")
+            LOGGER.error(f"type schema_dict: {type(schema_dict)}")
             raise err
 
         key_properties = metadata.to_map(mdata).get((), {}).get("table-key-properties")

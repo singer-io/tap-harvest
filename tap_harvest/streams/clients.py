@@ -1,8 +1,4 @@
-from typing import Dict
-from singer import get_logger
 from tap_harvest.streams.abstracts import IncrementalStream
-
-LOGGER = get_logger()
 
 
 class Clients(IncrementalStream):

@@ -9,16 +9,13 @@ LOGGER = singer.get_logger()
 
 
 def get_abs_path(path: str) -> str:
-    """
-    Get the absolute path for the schema files.
-    """
+    """Get the absolute path for the schema files."""
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
 
 
 def load_schema_references() -> Dict:
-    """
-    Load the schema files from the schema folder and return the schema references.
-    """
+    """Load the schema files from the schema folder and return the schema
+    references."""
     shared_schema_path = get_abs_path("schemas/shared")
 
     shared_file_names = []
@@ -38,15 +35,14 @@ def load_schema_references() -> Dict:
 
 
 def get_schemas() -> Tuple[Dict, Dict]:
-    """
-    Load the schema references, prepare metadata for each streams and return schema and metadata for the catalog.
-    """
+    """Load the schema references, prepare metadata for each streams and return
+    schema and metadata for the catalog."""
     schemas = {}
     field_metadata = {}
 
     refs = load_schema_references()
     for stream_name, stream_obj in STREAMS.items():
-        schema_path = get_abs_path("schemas/{}.json".format(stream_name))
+        schema_path = get_abs_path(f"schemas/{stream_name}.json")
         with open(schema_path) as file:
             schema = json.load(file)
 

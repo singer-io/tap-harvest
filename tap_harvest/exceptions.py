@@ -1,5 +1,5 @@
 class HarvestError(Exception):
-    """class representing Generic Http error."""
+    """Class representing Generic Http error."""
 
     def __init__(self, message=None, response=None):
         super().__init__(message)
@@ -8,73 +8,73 @@ class HarvestError(Exception):
 
 
 class HarvestBackoffError(HarvestError):
-    """class representing backoff error handling."""
+    """Class representing backoff error handling."""
 
     pass
 
 
 class HarvestBadRequestError(HarvestError):
-    """class representing 400 status code."""
+    """Class representing 400 status code."""
 
     pass
 
 
 class HarvestUnauthorizedError(HarvestError):
-    """class representing 401 status code."""
+    """Class representing 401 status code."""
 
     pass
 
 
 class HarvestForbiddenError(HarvestError):
-    """class representing 403 status code."""
+    """Class representing 403 status code."""
 
     pass
 
 
 class HarvestNotFoundError(HarvestError):
-    """class representing 404 status code."""
+    """Class representing 404 status code."""
 
     pass
 
 
 class HarvestConflictError(HarvestError):
-    """class representing 406 status code."""
+    """Class representing 406 status code."""
 
     pass
 
 
 class HarvestUnprocessableEntityError(HarvestBackoffError):
-    """class representing 409 status code."""
+    """Class representing 409 status code."""
 
     pass
 
 
 class HarvestRateLimitError(HarvestBackoffError):
-    """class representing 429 status code."""
+    """Class representing 429 status code."""
 
     pass
 
 
 class HarvestInternalServerError(HarvestBackoffError):
-    """class representing 500 status code."""
+    """Class representing 500 status code."""
 
     pass
 
 
 class HarvestNotImplementedError(HarvestBackoffError):
-    """class representing 501 status code."""
+    """Class representing 501 status code."""
 
     pass
 
 
 class HarvestBadGatewayError(HarvestBackoffError):
-    """class representing 502 status code."""
+    """Class representing 502 status code."""
 
     pass
 
 
 class HarvestServiceUnavailableError(HarvestBackoffError):
-    """class representing 503 status code."""
+    """Class representing 503 status code."""
 
     pass
 

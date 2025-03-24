@@ -1,8 +1,6 @@
 from typing import Dict, Any
-from singer import Transformer, get_logger, write_record
+from singer import Transformer, write_record
 from tap_harvest.streams.abstracts import IncrementalStream
-
-LOGGER = get_logger()
 
 
 class InvoiceLineItems(IncrementalStream):
@@ -30,7 +28,9 @@ class InvoiceLineItems(IncrementalStream):
             line_item = transformer.transform(line_item, self.schema, self.metadata)
             write_record(self.tap_stream_id, line_item)
 
-    def write_bookmark(self, state: dict, stream: str, key: Any = None, value: Any = None) -> Dict:
+    def write_bookmark(
+        self, state: dict, stream: str, key: Any = None, value: Any = None
+    ) -> Dict:
         """A wrapper for singer.get_bookmark to deal with compatibility for
         bookmark values or start values."""
         return state

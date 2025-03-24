@@ -1,8 +1,5 @@
 from typing import Dict
-from singer import get_logger
 from tap_harvest.streams.abstracts import IncrementalStream
-
-LOGGER = get_logger()
 
 
 class Expenses(IncrementalStream):
@@ -22,9 +19,7 @@ class Expenses(IncrementalStream):
     ]
 
     def modify_object(self, record: Dict, parent_record: Dict = None) -> Dict:
-        """
-        Modify receipt object to be more easily accessible
-        """
+        """Modify receipt object to be more easily accessible."""
         record = super().modify_object(record, parent_record)
         if record["receipt"] is None:
             record["receipt_url"] = None

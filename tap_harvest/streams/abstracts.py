@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 
 from singer import (
     Transformer,
@@ -97,7 +97,7 @@ class BaseStream(ABC):
          - https://github.com/singer-io/getting-started/blob/master/docs/SYNC_MODE.md
         """
 
-    def get_records(self) -> List:
+    def get_records(self) -> Any:
         """Interacts with api client interaction and pagination."""
         page = 1
         while page:
@@ -115,9 +115,7 @@ class BaseStream(ABC):
         try:
             write_schema(self.tap_stream_id, self.schema, self.key_properties)
         except OSError as err:
-            LOGGER.error(
-                "OS Error while writing schema for: {}".format(self.tap_stream_id)
-            )
+            LOGGER.error(f"OS Error while writing schema for: {self.tap_stream_id}")
             raise err
 
     def update_params(self, **kwargs):
@@ -127,33 +125,18 @@ class BaseStream(ABC):
 
     def add_object_to_id(self, record: Dict) -> Dict:
         """Add object_to_id to the stream."""
-        if self.object_to_id is not None:
-            for key in self.object_to_id:
-                if record[key] is not None:
-                    record[key + "_id"] = record[key]["id"]
-                else:
-                    record[key + "_id"] = None
+        for key in self.object_to_id:
+            if record[key] is not None:
+                record[key + "_id"] = record[key]["id"]
+            else:
+                record[key + "_id"] = None
 
         return record
 
     def modify_object(self, record: Dict, parent_record: Dict = None) -> Dict:
         """Modify the record before writing to the stream."""
         record = self.add_object_to_id(record)
-        self.remove_empty_date_times(record)
         return record
-
-    def remove_empty_date_times(self, record: Dict):
-        """Remove empty date-time fields from the item."""
-        fields = []
-
-        for key in self.schema["properties"]:
-            sub_schema = self.schema["properties"][key]
-            if sub_schema.get("format") == "date-time":
-                fields.append(key)
-
-        for field in fields:
-            if record.get(field) is None:
-                del record[field]
 
     def append_times_to_dates(self, record: Dict):
         """Append times to date fields."""
@@ -203,9 +186,8 @@ class IncrementalStream(BaseStream):
         parent_obj: Dict = None,
     ) -> Dict:
         """Implementation for `type: Incremental` stream."""
-        current_max_bookmark_date = bookmark_date = self.get_bookmark(
-            state, self.tap_stream_id
-        )
+        bookmark_date = self.get_bookmark(state, self.tap_stream_id)
+        current_max_bookmark_date = bookmark_date
         self.update_params(updated_since=bookmark_date)
         self.url_endpoint = self.get_url_endpoint(parent_obj)
 
@@ -227,6 +209,7 @@ class IncrementalStream(BaseStream):
                         current_max_bookmark_date, record_timestamp
                     )
 
+                    # Sync child streams
                     for child in self.child_to_sync:
                         child.sync(
                             state=state, transformer=transformer, parent_obj=record
@@ -236,3 +219,61 @@ class IncrementalStream(BaseStream):
                 state, self.tap_stream_id, value=current_max_bookmark_date
             )
             return counter.value
+
+
+class ParentBaseStream(IncrementalStream):
+    """Base Class for Parent Stream."""
+
+    def get_bookmark(self, state: Dict, stream: str, key: Any = None) -> int:
+        """A wrapper for singer.get_bookmark to deal with compatibility for
+        bookmark values or start values."""
+
+        min_parent_bookmark = (
+            super().get_bookmark(state, stream) if self.is_selected() else None
+        )
+        for child in self.child_to_sync:
+            if child.is_selected():
+                bookmark_key = f"{self.tap_stream_id}_{self.replication_keys[0]}"
+                child_bookmark = super().get_bookmark(
+                    state, child.tap_stream_id, key=bookmark_key
+                )
+                min_parent_bookmark = (
+                    min(min_parent_bookmark, child_bookmark)
+                    if min_parent_bookmark
+                    else child_bookmark
+                )
+
+        return min_parent_bookmark
+
+    def write_bookmark(
+        self, state: Dict, stream: str, key: Any = None, value: Any = None
+    ) -> Dict:
+        """A wrapper for singer.get_bookmark to deal with compatibility for
+        bookmark values or start values."""
+        if self.is_selected():
+            super().write_bookmark(state, stream, value=value)
+
+        for child in self.child_to_sync:
+            if child.is_selected():
+                bookmark_key = f"{self.tap_stream_id}_{self.replication_keys[0]}"
+                super().write_bookmark(
+                    state, child.tap_stream_id, key=bookmark_key, value=value
+                )
+
+        return state
+
+
+class ChildBaseStream(IncrementalStream):
+    """Base Class for Child Stream."""
+
+    def get_url_endpoint(self, parent_obj=None):
+        """Prepare URL endpoint for child streams."""
+        return f"{self.client.base_url}/{self.path.format(parent_obj['id'])}"
+
+    def get_bookmark(self, state: Dict, stream: str, key: Any = None) -> int:
+        """Singleton bookmark value for child streams."""
+        if not self.bookmark_value:
+            # Set bookmark value as singleton
+            self.bookmark_value = super().get_bookmark(state, key)
+
+        return self.bookmark_value
