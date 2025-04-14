@@ -12,3 +12,4 @@ class Invoices(ParentBaseStream):
     data_key = "invoices"
     path = "invoices"
     children = ["invoice_payments", "invoice_messages", "invoice_line_items"]
+    object_to_id = ["client", "estimate", "retainer", "creator"]

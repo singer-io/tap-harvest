@@ -7,7 +7,7 @@ class TimeEntryExternalReference(IncrementalStream):
     tap_stream_id = "time_entry_external_reference"
     key_properties = ["time_entry_id", "external_reference_id"]
     replication_method = "INCREMENTAL"
-    replication_keys = ["updated_at"]
+    replication_keys = None
     data_key = "time_entry_external_reference"
     path = "time_entry_external_reference"
     parent = "time_entries"

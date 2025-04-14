@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Tuple
+import copy
 
 from singer import (
     Transformer,
@@ -188,6 +189,7 @@ class IncrementalStream(BaseStream):
         """Implementation for `type: Incremental` stream."""
         bookmark_date = self.get_bookmark(state, self.tap_stream_id)
         current_max_bookmark_date = bookmark_date
+
         self.update_params(updated_since=bookmark_date)
         self.url_endpoint = self.get_url_endpoint(parent_obj)
 
@@ -195,7 +197,7 @@ class IncrementalStream(BaseStream):
             for record in self.get_records():
                 record = self.modify_object(record, parent_obj)
                 transformed_record = transformer.transform(
-                    record, self.schema, self.metadata
+                    copy.deepcopy(record), self.schema, self.metadata
                 )
                 self.append_times_to_dates(transformed_record)
 
@@ -274,6 +276,6 @@ class ChildBaseStream(IncrementalStream):
         """Singleton bookmark value for child streams."""
         if not self.bookmark_value:
             # Set bookmark value as singleton
-            self.bookmark_value = super().get_bookmark(state, key)
+            self.bookmark_value = super().get_bookmark(state, stream)
 
         return self.bookmark_value

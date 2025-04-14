@@ -7,7 +7,7 @@ class InvoiceLineItems(IncrementalStream):
     tap_stream_id = "invoice_line_items"
     key_properties = ["id"]
     replication_method = "INCREMENTAL"
-    replication_keys = ["updated_at"]
+    replication_keys = None
     data_key = "invoice_line_items"
     path = "invoice_line_items"
     parent = "invoices"

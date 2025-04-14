@@ -27,7 +27,7 @@ jobs:
       - run:
           name: 'Unit Tests'
           command: |
-            source ~/.virtualenvs/tap-harvest/bin/activate
+            source /usr/local/share/virtualenvs/tap-harvest/bin/activate
             pip install nose coverage
             nosetests --with-coverage --cover-erase --cover-package=tap_harvest --cover-html-dir=htmlcov tests/unittests
             coverage html

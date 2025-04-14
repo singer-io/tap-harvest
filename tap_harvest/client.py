@@ -62,10 +62,9 @@ class Client:
 
         # Set the request timeout
         config_request_timeout = config.get("request_timeout")
-        if config_request_timeout and float(config_request_timeout):
-            self.request_timeout = float(config_request_timeout)
-        else:
-            self.request_timeout = REQUEST_TIMEOUT
+        self.request_timeout = (
+            float(config_request_timeout) if config_request_timeout else REQUEST_TIMEOUT
+        )
 
     def __enter__(self):
         self._refresh_access_token()
@@ -169,18 +168,7 @@ class Client:
     def __make_request(
         self, method: str, endpoint: str, **kwargs
     ) -> Optional[Mapping[Any, Any]]:
-        """
-        Performs HTTP Operations
-        Args:
-            method (str): represents the state file for the tap.
-            endpoint (str): url of the resource that needs to be fetched
-            params (dict): A mapping for url params eg: ?name=Avery&age=3
-            headers (dict): A mapping for the headers that need to be sent
-            body (dict): only applicable to post request, body of the request
-
-        Returns:
-            Dict,List,None: Returns a `Json Parsed` HTTP Response or None if exception
-        """
+        """Performs HTTP Operations."""
         with metrics.http_request_timer(endpoint):
             response = self._session.request(method, endpoint, **kwargs)
             raise_for_error(response)

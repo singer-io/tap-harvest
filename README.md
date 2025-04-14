@@ -2,7 +2,7 @@
 
 This is a [Singer](https://singer.io) tap that produces JSON-formatted data
 following the [Singer
-spec](https://github.com/singer-io/getting-started/blob/master/SPEC.md).
+spec](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md).
 
 This tap:
 
@@ -65,127 +65,127 @@ This tap:
 ## Streams
 
 
-** [projects](https://help.getharvest.com/api-v2/projects-api/projects/projects/)**
+[projects](https://help.getharvest.com/api-v2/projects-api/projects/projects/)
 - Data Key = projects
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [clients](https://help.getharvest.com/api-v2/clients-api/clients/clients/)**
+[clients](https://help.getharvest.com/api-v2/clients-api/clients/clients/)
 - Data Key = clients
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [contacts](https://help.getharvest.com/api-v2/clients-api/clients/contacts/)**
+[contacts](https://help.getharvest.com/api-v2/clients-api/clients/contacts/)
 - Data Key = contacts
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [estimate_item_categories](https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-item-categories/)**
+[estimate_item_categories](https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-item-categories/)
 - Data Key = estimate_item_categories
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [estimate_line_items](https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/#the-estimate-line-item-object)**
+[estimate_line_items](https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/#the-estimate-line-item-object)
 - Data Key = estimate_line_items
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [estimate_messages](https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-messages/)**
+[estimate_messages](https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-messages/)
 - Data Key = estimate_messages
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [estimates](https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/)**
+[estimates](https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/)
 - Data Key = estimates
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [expense_categories](https://help.getharvest.com/api-v2/expenses-api/expenses/expense-categories/)**
+[expense_categories](https://help.getharvest.com/api-v2/expenses-api/expenses/expense-categories/)
 - Data Key = expense_categories
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [expenses](https://help.getharvest.com/api-v2/expenses-api/expenses/expenses/)**
+[expenses](https://help.getharvest.com/api-v2/expenses-api/expenses/expenses/)
 - Data Key = expenses
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [external_reference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)**
+[external_reference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)
 - Data Key = external_reference
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [invoice_item_categories](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-item-categories/)**
+[invoice_item_categories](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-item-categories/)
 - Data Key = invoice_item_categories
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [invoice_line_items](https://help.getharvest.com/api-v2/invoices-api/invoices/invoices#the-invoice-line-item-object)**
+[invoice_line_items](https://help.getharvest.com/api-v2/invoices-api/invoices/invoices#the-invoice-line-item-object)
 - Data Key = invoice_line_items
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [invoice_messages](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-messages/)**
+[invoice_messages](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-messages/)
 - Data Key = invoice_messages
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [invoice_payments](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-payments/)**
+[invoice_payments](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-payments/)
 - Data Key = invoice_payments
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [invoices](https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/)**
+[invoices](https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/)
 - Data Key = invoices
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [project_tasks](https://help.getharvest.com/api-v2/projects-api/projects/task-assignments/)**
+[project_tasks](https://help.getharvest.com/api-v2/projects-api/projects/task-assignments/)
 - Data Key = task_assignments
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [project_users](https://help.getharvest.com/api-v2/projects-api/projects/user-assignments/)**
+[project_users](https://help.getharvest.com/api-v2/projects-api/projects/user-assignments/)
 - Data Key = project_users
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [roles](https://help.getharvest.com/api-v2/roles-api/roles/roles/)**
+[roles](https://help.getharvest.com/api-v2/roles-api/roles/roles/)
 - Data Key = roles
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [tasks](https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/)**
+[tasks](https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/)
 - Data Key = tasks
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [time_entries](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)**
+[time_entries](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)
 - Data Key = time_entries
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [time_entry_external_reference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)**
+[time_entry_external_reference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)
 - Data Key = time_entry_external_reference
 - Primary keys: ['time_entry_id', 'external_reference_id']
 - Replication strategy: INCREMENTAL
 
-** [user_project_tasks](https://help.getharvest.com/api-v2/)**
+[user_project_tasks](https://help.getharvest.com/api-v2/)
 - Data Key = user_project_tasks
 - Primary keys: ['user_id', 'project_task_id']
 - Replication strategy: INCREMENTAL
 
-** [user_projects](https://help.getharvest.com/api-v2/clients-api/clients/contacts/)**
+[user_projects](https://help.getharvest.com/api-v2/clients-api/clients/contacts/)
 - Data Key = project_assignments
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
 
-** [user_roles](https://help.getharvest.com/api-v2/)**
+[user_roles](https://help.getharvest.com/api-v2/)
 - Data Key = user_roles
 - Primary keys: ['role_id', 'user_id']
 - Replication strategy: INCREMENTAL
 
-** [users](https://help.getharvest.com/api-v2/users-api/users/users/)**
+[users](https://help.getharvest.com/api-v2/users-api/users/users/)
 - Data Key = users
 - Primary keys: ['id']
 - Replication strategy: INCREMENTAL
@@ -230,6 +230,7 @@ This tap:
         "request_timeout": 300,
         ...
     }
+    ```
 
     Optionally, also create a `state.json` file. `currently_syncing` is an optional attribute used for identifying the last object to be synced in case the job is interrupted mid-stream. The next run would begin where the last job left off.
 
@@ -250,9 +251,9 @@ This tap:
     tap-harvest --config config.json --discover > catalog.json
     ```
    See the Singer docs on discovery mode
-   [here](https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md
+   [here](https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md)
 
-5. Run the Tap in Sync Mode (with catalog) and [write out to state file](https://github.com/singer-io/getting-started/blob/master/docs/RUNNING_AND_DEVELOPING.md
+5. Run the Tap in Sync Mode (with catalog) and [write out to state file](https://github.com/singer-io/getting-started/blob/master/docs/RUNNING_AND_DEVELOPING.md)
 
     For Sync mode:
     ```bash
@@ -273,7 +274,7 @@ This tap:
 6. Test the Tap
 
     While developing the harvest tap, the following utilities were run in accordance with Singer.io best practices:
-    Pylint to improve [code quality](https://github.com/singer-io/getting-started/blob/master/docs/BEST_PRACTICES.md
+    Pylint to improve [code quality](https://github.com/singer-io/getting-started/blob/master/docs/BEST_PRACTICES.md)
     ```bash
     > pylint tap_harvest -d missing-docstring -d logging-format-interpolation -d too-many-locals -d too-many-arguments
     ```
@@ -282,7 +283,7 @@ This tap:
     Your code has been rated at 9.67/10
     ```
 
-    To [check the tap](https://github.com/singer-io/singer-tools
+    To [check the tap](https://github.com/singer-io/singer-tools)
     ```bash
     > tap_harvest --config tap_config.json --catalog catalog.json | singer-check-tap > state.json
     > tail -1 state.json > state.json.tmp && mv state.json.tmp state.json
