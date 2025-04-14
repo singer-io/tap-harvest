@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name="tap-harvest",
@@ -20,7 +20,7 @@ setup(
           [console_scripts]
           tap-harvest=tap_harvest:main
       """,
-    packages=["tap_harvest"],
+    packages=find_packages(),
     package_data={
         "tap_harvest/schemas": [
             "clients.json",

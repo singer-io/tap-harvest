@@ -58,8 +58,7 @@ workflows:
           filters:
             branches:
               only:
-                - update/harvest-circle-config
-                #- master
+                - master
     jobs:
       - build:
           context: circleci-user
