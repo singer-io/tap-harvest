@@ -13,7 +13,6 @@ setup(
     install_requires=[
         "singer-python==6.1.0",
         "requests==2.32.3",
-        "pendulum==3.0.0",
         "backoff==2.2.1",
     ],
     entry_points="""

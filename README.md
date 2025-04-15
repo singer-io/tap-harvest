@@ -16,47 +16,44 @@ This tap:
 
     - [EstimateItemCategories](https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-item-categories/)
 
-    - [EstimateLineItems](https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/#the-estimate-line-item-object)
-
-    - [EstimateMessages](https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-messages/)
-
     - [Estimates](https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/)
+
+        - [EstimateLineItems](https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/#the-estimate-line-item-object)
+
+        - [EstimateMessages](https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-messages/)
 
     - [ExpenseCategories](https://help.getharvest.com/api-v2/expenses-api/expenses/expense-categories/)
 
     - [Expenses](https://help.getharvest.com/api-v2/expenses-api/expenses/expenses/)
 
-    - [ExternalReference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)
-
     - [InvoiceItemCategories](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-item-categories/)
 
-    - [InvoiceLineItems](https://help.getharvest.com/api-v2/invoices-api/invoices/invoices#the-invoice-line-item-object)
-
-    - [InvoiceMessages](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-messages/)
-
-    - [InvoicePayments](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-payments/)
-
     - [Invoices](https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/)
+
+        - [InvoiceLineItems](https://help.getharvest.com/api-v2/invoices-api/invoices/invoices#the-invoice-line-item-object)
+
+        - [InvoiceMessages](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-messages/)
+
+        - [InvoicePayments](https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-payments/)
 
     - [ProjectTasks](https://help.getharvest.com/api-v2/projects-api/projects/task-assignments/)
 
     - [ProjectUsers](https://help.getharvest.com/api-v2/projects-api/projects/user-assignments/)
 
     - [Roles](https://help.getharvest.com/api-v2/roles-api/roles/roles/)
+        - [UserRoles](https://help.getharvest.com/api-v2/roles-api/roles/roles/)
 
     - [Tasks](https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/)
 
     - [TimeEntries](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)
 
-    - [TimeEntryExternalReference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)
+        - [ExternalReference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)
 
-    - [UserProjectTasks](https://help.getharvest.com/api-v2/)
-
-    - [UserProjects](https://help.getharvest.com/api-v2/clients-api/clients/contacts/)
-
-    - [UserRoles](https://help.getharvest.com/api-v2/)
+        - [TimeEntryExternalReference](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/)
 
     - [Users](https://help.getharvest.com/api-v2/users-api/users/users/)
+        - [UserProjects](https://help.getharvest.com/api-v2/users-api/users/project-assignments/)
+            - [UserProjectTasks](https://help.getharvest.com/api-v2/users-api/users/project-assignments/)
 
 - Outputs the schema for each resource
 - Incrementally pulls data based on the input state

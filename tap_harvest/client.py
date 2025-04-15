@@ -2,7 +2,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 import backoff
 import requests
-import pendulum
+from datetime import datetime
 from requests import session
 from requests.exceptions import Timeout, ConnectionError, ChunkedEncodingError
 from singer import get_logger, metrics
@@ -68,7 +68,7 @@ class Client:
 
     def __enter__(self):
         self._refresh_access_token()
-        self.check_api_credentials()
+        self.check_active_account()
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -89,19 +89,19 @@ class Client:
         )
         self._access_token = resp_json["access_token"]
         expires_in_seconds = resp_json.get("expires_in", 17 * 60 * 60)
-        self._expires_at = pendulum.now().add(seconds=expires_in_seconds)
+        self._expires_at = datetime.now().add(seconds=expires_in_seconds)
         LOGGER.info("Got refreshed access token")
 
     def get_access_token(self) -> str:
         """Return access token if available or generate one."""
-        if self._access_token and self._expires_at > pendulum.now():
+        if self._access_token and self._expires_at > datetime.now():
             return self._access_token
 
         self._refresh_access_token()
         return self._access_token
 
-    def check_api_credentials(self) -> None:
-        """Check if the API credentials are valid."""
+    def check_active_account(self) -> None:
+        """Check active account."""
         resp_json = self.get(endpoint=REFRESH_URL + "/accounts")
 
         # Set account-id if any account is available in response

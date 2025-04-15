@@ -328,7 +328,7 @@
       "path": "user_project_tasks",
       "data_key": "user_project_tasks",
       "parent": "user_projects",
-      "doc_link": "https://help.getharvest.com/api-v2/"
+      "doc_link": "https://help.getharvest.com/api-v2/users-api/users/project-assignments/"
     },
     {
       "name": "user_projects",
@@ -345,7 +345,7 @@
         "user_project_tasks"
       ],
       "parent": "users",
-      "doc_link": "https://help.getharvest.com/api-v2/clients-api/clients/contacts/"
+      "doc_link": "https://help.getharvest.com/api-v2/users-api/users/project-assignments/"
     },
     {
       "name": "user_roles",
@@ -360,7 +360,7 @@
       "path": "user_roles",
       "data_key": "user_roles",
       "parent": "roles",
-      "doc_link": "https://help.getharvest.com/api-v2/"
+      "doc_link": "https://help.getharvest.com/api-v2/roles-api/roles/roles/"
     },
     {
       "name": "users",
