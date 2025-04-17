@@ -1,7 +1,9 @@
 # Changelog
 
 ## 3.0.0
-  * Complete tap refactoring [#64](https://github.com/singer-io/tap-harvest/pull/64)
+  * Add discovery support [#64](https://github.com/singer-io/tap-harvest/pull/64)
+  # Update bookmark logic for parent-child streams
+  * Complete refactoring using singer_template_config
 
 ## 2.1.3
   * Dependabot update [#58](https://github.com/singer-io/tap-harvest/pull/58)

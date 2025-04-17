@@ -2,7 +2,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 import backoff
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from requests import session
 from requests.exceptions import Timeout, ConnectionError, ChunkedEncodingError
 from singer import get_logger, metrics
@@ -89,7 +89,7 @@ class Client:
         )
         self._access_token = resp_json["access_token"]
         expires_in_seconds = resp_json.get("expires_in", 17 * 60 * 60)
-        self._expires_at = datetime.now().add(seconds=expires_in_seconds)
+        self._expires_at = datetime.now() + timedelta(seconds=expires_in_seconds)
         LOGGER.info("Got refreshed access token")
 
     def get_access_token(self) -> str:
