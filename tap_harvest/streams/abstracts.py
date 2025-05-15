@@ -203,6 +203,8 @@ class IncrementalStream(BaseStream):
 
                 record_timestamp = transformed_record[self.replication_keys[0]]
                 if record_timestamp >= bookmark_date:
+                    # If the parent is not selected but a child is selected, we sync the parent only for the child's data.
+                    # The below condition make sure that records are written only if the stream is selected.
                     if self.is_selected():
                         write_record(self.tap_stream_id, transformed_record)
                         counter.increment()

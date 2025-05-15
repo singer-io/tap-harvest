@@ -69,3 +69,15 @@ def get_schemas() -> Tuple[Dict, Dict]:
         field_metadata[stream_name] = mdata
 
     return schemas, field_metadata
+
+def write_schema(stream, client, streams_to_sync, catalog) -> None:
+    """Collect nested child streams to sync and write schema for selected
+    streams."""
+    if stream.is_selected():
+        stream.write_schema()
+
+    for child in stream.children:
+        child_obj = STREAMS[child](client, catalog.get_stream(child))
+        write_schema(child_obj, client, streams_to_sync, catalog)
+        if child in streams_to_sync:
+            stream.child_to_sync.append(child_obj)

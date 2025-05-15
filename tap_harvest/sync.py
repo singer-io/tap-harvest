@@ -2,6 +2,7 @@ import singer
 from typing import Dict
 from tap_harvest.streams import STREAMS
 from tap_harvest.client import Client
+from tap_harvest.schema import write_schema
 
 LOGGER = singer.get_logger()
 
@@ -13,19 +14,6 @@ def update_currently_syncing(state: Dict, stream_name: str) -> None:
     else:
         singer.set_currently_syncing(state, stream_name)
     singer.write_state(state)
-
-
-def write_schema(stream, client, streams_to_sync, catalog) -> None:
-    """Collect nested child streams to sync and write schema for selected
-    streams."""
-    if stream.is_selected():
-        stream.write_schema()
-
-    for child in stream.children:
-        child_obj = STREAMS[child](client, catalog.get_stream(child))
-        write_schema(child_obj, client, streams_to_sync, catalog)
-        if child in streams_to_sync:
-            stream.child_to_sync.append(child_obj)
 
 
 def sync(client: Client, config: Dict, catalog: singer.Catalog, state) -> None:
