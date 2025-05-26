@@ -25,6 +25,9 @@ class Users(ParentBaseStream):
         )
 
         parent_bookmark_key = f"{self.tap_stream_id}_{self.replication_keys[0]}"
+        if not self.child_to_sync:
+            return min_parent_bookmark
+
         user_project_obj = self.child_to_sync[0]
         user_projects_bookmark = (
             super().get_bookmark(
