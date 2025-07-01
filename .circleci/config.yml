@@ -16,7 +16,7 @@ jobs:
           name: 'Pylint'
           command: |
             source ~/.virtualenvs/tap-harvest/bin/activate
-            pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,redefined-variable-type,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals,consider-using-f-string,broad-exception-raised
+            pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals,consider-using-f-string,broad-exception-raised,too-many-positional-arguments
       - run:
           name: 'Unit Tests'
           command: |
