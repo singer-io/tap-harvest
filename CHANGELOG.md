@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.1.4
+  * Dependency upgrades [#66](https://github.com/singer-io/tap-harvest/pull/66)
+
 ## 2.1.3
   * Dependabot update [#58](https://github.com/singer-io/tap-harvest/pull/58)
 
