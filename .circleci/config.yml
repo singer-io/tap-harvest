@@ -20,9 +20,9 @@ jobs:
       - run:
           name: 'Unit Tests'
           command: |
-            source ~/.virtualenvs/tap-harvest/bin/activate
+            source /usr/local/share/virtualenvs/tap-harvest/bin/activate
             uv pip install pytest coverage
-            coverage un -m pytest tests/unittests
+            coverage run -m pytest tests/unittests
             coverage html
       - store_test_results:
           path: test_output/report.xml
