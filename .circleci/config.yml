@@ -2,16 +2,16 @@ version: 2
 jobs:
   build:
     docker:
-      - image: 218546966473.dkr.ecr.us-east-1.amazonaws.com/circle-ci:stitch-tap-tester
+      - image: 218546966473.dkr.ecr.us-east-1.amazonaws.com/circle-ci:stitch-tap-tester-uv
     steps:
       - checkout
       - run:
           name: 'Setup'
           command: |
-            virtualenv -p python3 ~/.virtualenvs/tap-harvest
-            source ~/.virtualenvs/tap-harvest/bin/activate
-            pip install .
-            pip install pylint
+            uv venv --python 3.9 /usr/local/share/virtualenvs/tap-harvest
+            source /usr/local/share/virtualenvs/tap-harvest/bin/activate
+            uv pip install .
+            uv pip install pylint
       - run:
           name: 'Pylint'
           command: |
@@ -21,8 +21,8 @@ jobs:
           name: 'Unit Tests'
           command: |
             source ~/.virtualenvs/tap-harvest/bin/activate
-            pip install nose coverage
-            nosetests --with-coverage --cover-erase --cover-package=tap_harvest --cover-html-dir=htmlcov tests/unittests
+            uv pip install pytest coverage
+            coverage un -m pytest tests/unittests
             coverage html
       - store_test_results:
           path: test_output/report.xml
@@ -33,9 +33,10 @@ jobs:
           name: 'Integration Tests'
           no_output_timeout: 30m
           command: |
+            source /usr/local/share/virtualenvs/tap-tester/bin/activate
+            uv pip install --upgrade awscli
             aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.sh
             source dev_env.sh
-            source /usr/local/share/virtualenvs/tap-tester/bin/activate
             run-test --tap=tap-harvest tests
 
 workflows:
