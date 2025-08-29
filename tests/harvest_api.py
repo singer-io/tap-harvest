@@ -243,7 +243,7 @@ def create_invoice_payment(invoice_id):
     amount = invoice.json()['amount']
     rand_month = random.randint(1,12)
     paid_date = date.today() - relativedelta(months=rand_month)
-    data = {"amount":random.randint(1,amount-1),"paid_at":str(paid_date),"notes":"Paid by phone"}
+    data = {"amount":random.uniform(1,amount-1),"paid_at":str(paid_date),"notes":"Paid by phone"}
     response = requests.post(url="https://api.harvestapp.com/v2/invoices/{}/payments".format(invoice_id), headers=HEADERS, json=data)
     if response.status_code >= 400:
         logging.warn("create_invoice_payment: {} {}".format(response.status_code, response.text))
