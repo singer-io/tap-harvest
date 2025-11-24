@@ -2,6 +2,7 @@
 
 from setuptools import setup, find_packages
 
+
 setup(
     name="tap-harvest",
     version="3.0.0",
@@ -11,8 +12,8 @@ setup(
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_harvest"],
     install_requires=[
-        "singer-python==6.1.0",
-        "requests==2.32.3",
+        "singer-python==6.1.1",
+        "requests==2.32.5",
         "backoff==2.2.1",
     ],
     entry_points="""
