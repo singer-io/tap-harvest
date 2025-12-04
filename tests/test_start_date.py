@@ -16,6 +16,7 @@ class HarvestStartDateTest(StartDateTest, HarvestBaseTest):
             "invoice_payments",
             "estimate_messages",
             "users",
+            "time_entries",
             "expenses",
         }.union(HarvestBaseTest.get_child_streams_with_no_replication_keys())
         return self.expected_stream_names().difference(streams_to_exclude)
@@ -26,4 +27,4 @@ class HarvestStartDateTest(StartDateTest, HarvestBaseTest):
 
     @property
     def start_date_2(self):
-        return "2025-03-25T00:00:00Z"
+        return "2025-10-04T00:00:00Z"

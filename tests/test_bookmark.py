@@ -46,24 +46,24 @@ class HarvestBookMarkTest(BookmarkTest, HarvestBaseTest):
         a bookmark that will sync 2 records in sync 2 (plus any necessary look
         back data)"""
         new_bookmarks = {
-            "projects": {"updated_at": "2025-04-08T06:00:00.000000Z"},
-            "time_entries": {"updated_at": "2025-04-08T06:00:00.000000Z"},
+            "projects": {"updated_at": "2025-10-05T06:00:00.000000Z"},
+            "time_entries": {"updated_at": "2025-12-04T09:06:51.000000Z"},
             "clients": {"updated_at": "2025-04-08T06:00:00.000000Z"},
             "contacts": {"updated_at": "2025-04-08T06:00:00.000000Z"},
             "estimate_item_categories": {"updated_at": "2025-04-08T06:00:00.000000Z"},
             "estimate_messages": {"updated_at": "2025-04-11T06:50:00.000000Z"},
             "estimates": {"updated_at": "2025-04-11T05:40:00.000000Z"},
             "expense_categories": {"updated_at": "2025-04-08T06:00:00.000000Z"},
-            "expenses": {"updated_at": "2025-04-11T05:40:00.000000Z"},
+            "expenses": {"updated_at": "2025-12-04T09:06:50.000000Z"},
             "invoice_item_categories": {"updated_at": "2025-04-08T06:00:00.000000Z"},
-            "invoice_messages": {"updated_at": "2025-04-11T06:40:00.000000Z"},
+            "invoice_messages": {"updated_at": "2025-12-04T09:06:51.000000Z"},
             "invoice_payments": {"updated_at": "2025-04-11T06:40:00.000000Z"},
             "invoices": {"updated_at": "2025-04-08T06:00:00.000000Z"},
-            "project_tasks": {"updated_at": "2025-04-08T06:00:00.000000Z"},
-            "project_users": {"updated_at": "2025-04-08T06:00:00.000000Z"},
+            "project_tasks": {"updated_at": "2025-10-05T06:00:00.000000Z"},
+            "project_users": {"updated_at": "2025-10-05T06:00:00.000000Z"},
             "roles": {"updated_at": "2025-04-08T06:00:00.000000Z"},
             "tasks": {"updated_at": "2025-04-08T06:00:00.000000Z"},
-            "user_projects": {"updated_at": "2025-04-11T05:00:00.000000Z"},
+            "user_projects": {"updated_at": "2025-10-05T05:00:00.000000Z"},
         }
 
         return new_bookmarks
