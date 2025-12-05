@@ -28,8 +28,8 @@ jobs:
           name: 'Unit Tests'
           command: |
             source /usr/local/share/virtualenvs/tap-harvest/bin/activate
-            uv pip install nose coverage
-            nosetests --with-coverage --cover-erase --cover-package=tap_harvest --cover-html-dir=htmlcov tests/unittests
+            uv pip install pytest coverage parameterized
+            coverage run -m pytest tests/unittests
             coverage html
       - store_test_results:
           path: test_output/report.xml
