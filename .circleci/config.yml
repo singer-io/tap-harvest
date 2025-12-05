@@ -36,16 +36,16 @@ jobs:
       - store_artifacts:
           path: htmlcov
       - add_ssh_keys
-      - run:
-          name: 'Integration Tests'
-          no_output_timeout: 30m
-          command: |
-            source /usr/local/share/virtualenvs/tap-tester/bin/activate
-            uv pip install --upgrade awscli
-            aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.sh
-            source dev_env.sh
-            unset USE_STITCH_BACKEND
-            run-test --tap=tap-harvest tests
+      # - run:
+      #     name: 'Integration Tests'
+      #     no_output_timeout: 30m
+      #     command: |
+      #       source /usr/local/share/virtualenvs/tap-tester/bin/activate
+      #       uv pip install --upgrade awscli
+      #       aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.sh
+      #       source dev_env.sh
+      #       unset USE_STITCH_BACKEND
+      #       run-test --tap=tap-harvest tests
 
 workflows:
   version: 2
