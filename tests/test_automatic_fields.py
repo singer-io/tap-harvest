@@ -8,7 +8,7 @@ class HarvestAutomaticFields(MinimumSelectionTest, HarvestBaseTest):
     """Test that with no fields selected for a stream automatic fields are
     still replicated."""
 
-    start_date = "2025-02-01T00:00:00Z"
+    start_date = "2025-11-01T00:00:00Z"
 
     @staticmethod
     def name():
