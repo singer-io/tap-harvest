@@ -1,0 +1,394 @@
+{
+  "tap_name": "Harvest",
+  "required_config_keys": [
+    "refresh_token",
+    "client_id",
+    "client_secret",
+    "start_date",
+    "user_agent"
+  ],
+  "page_size": 100,
+  "next_page_key": "next_page",
+  "pagination_key": "page",
+  "headers": {
+    "Accept": "application/json"
+  },
+  "params": {},
+  "auth_header_key": "Authorization",
+  "auth_config_key": "access_token",
+  "base_url": "https://api.harvestapp.com/v2/",
+  "streams": [
+    {
+      "name": "projects",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "projects",
+      "data_key": "projects",
+      "doc_link": "https://help.getharvest.com/api-v2/projects-api/projects/projects/"
+    },
+    {
+      "name": "clients",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "clients",
+      "data_key": "clients",
+      "doc_link": "https://help.getharvest.com/api-v2/clients-api/clients/clients/"
+    },
+    {
+      "name": "contacts",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "contacts",
+      "data_key": "contacts",
+      "doc_link": "https://help.getharvest.com/api-v2/clients-api/clients/contacts/"
+    },
+    {
+      "name": "estimate_item_categories",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "estimate_item_categories",
+      "data_key": "estimate_item_categories",
+      "doc_link": "https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-item-categories/"
+    },
+    {
+      "name": "estimate_line_items",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "estimate_line_items",
+      "data_key": "estimate_line_items",
+      "parent": "estimates",
+      "doc_link": "https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/#the-estimate-line-item-object"
+    },
+    {
+      "name": "estimate_messages",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "estimates/{}/messages",
+      "data_key": "estimate_messages",
+      "parent": "estimates",
+      "doc_link": "https://help.getharvest.com/api-v2/estimates-api/estimates/estimate-messages/"
+    },
+    {
+      "name": "estimates",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "estimates",
+      "data_key": "estimates",
+      "children": [
+        "estimate_messages",
+        "estimate_line_items"
+      ],
+      "doc_link": "https://help.getharvest.com/api-v2/estimates-api/estimates/estimates/"
+    },
+    {
+      "name": "expense_categories",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "expense_categories",
+      "data_key": "expense_categories",
+      "doc_link": "https://help.getharvest.com/api-v2/expenses-api/expenses/expense-categories/"
+    },
+    {
+      "name": "expenses",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "expenses",
+      "data_key": "expenses",
+      "doc_link": "https://help.getharvest.com/api-v2/expenses-api/expenses/expenses/"
+    },
+    {
+      "name": "external_reference",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "external_reference",
+      "data_key": "external_reference",
+      "parent": "time_entries",
+      "doc_link": "https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/"
+    },
+    {
+      "name": "invoice_item_categories",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "invoice_item_categories",
+      "data_key": "invoice_item_categories",
+      "doc_link": "https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-item-categories/"
+    },
+    {
+      "name": "invoice_line_items",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "invoice_line_items",
+      "data_key": "invoice_line_items",
+      "parent": "invoices",
+      "doc_link": "https://help.getharvest.com/api-v2/invoices-api/invoices/invoices#the-invoice-line-item-object"
+    },
+    {
+      "name": "invoice_messages",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "invoices/{}/messages",
+      "data_key": "invoice_messages",
+      "parent": "invoices",
+      "doc_link": "https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-messages/"
+    },
+    {
+      "name": "invoice_payments",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "invoices/{}/payments",
+      "data_key": "invoice_payments",
+      "parent": "invoices",
+      "doc_link": "https://help.getharvest.com/api-v2/invoices-api/invoices/invoice-payments/"
+    },
+    {
+      "name": "invoices",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "invoices",
+      "data_key": "invoices",
+      "children": [
+        "invoice_payments",
+        "invoice_messages",
+        "invoice_line_items"
+      ],
+      "doc_link": "https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/"
+    },
+    {
+      "name": "project_tasks",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "task_assignments",
+      "data_key": "task_assignments",
+      "doc_link": "https://help.getharvest.com/api-v2/projects-api/projects/task-assignments/"
+    },
+    {
+      "name": "project_users",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "user_assignments",
+      "data_key": "user_assignments",
+      "doc_link": "https://help.getharvest.com/api-v2/projects-api/projects/user-assignments/"
+    },
+    {
+      "name": "roles",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "roles",
+      "data_key": "roles",
+      "children": [
+        "user_roles"
+      ],
+      "doc_link": "https://help.getharvest.com/api-v2/roles-api/roles/roles/"
+    },
+    {
+      "name": "tasks",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "tasks",
+      "data_key": "tasks",
+      "doc_link": "https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/"
+    },
+    {
+      "name": "time_entries",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "time_entries",
+      "data_key": "time_entries",
+      "children": [
+        "external_reference",
+        "time_entry_external_reference"
+      ],
+      "doc_link": "https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/"
+    },
+    {
+      "name": "time_entry_external_reference",
+      "key_properties": [
+        "time_entry_id",
+        "external_reference_id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "time_entry_external_reference",
+      "data_key": "time_entry_external_reference",
+      "parent": "time_entries",
+      "doc_link": "https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/"
+    },
+    {
+      "name": "user_project_tasks",
+      "key_properties": [
+        "user_id",
+        "project_task_id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "user_project_tasks",
+      "data_key": "user_project_tasks",
+      "parent": "user_projects",
+      "doc_link": "https://help.getharvest.com/api-v2/users-api/users/project-assignments/"
+    },
+    {
+      "name": "user_projects",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "users/{}/project_assignments",
+      "data_key": "project_assignments",
+      "children": [
+        "user_project_tasks"
+      ],
+      "parent": "users",
+      "doc_link": "https://help.getharvest.com/api-v2/users-api/users/project-assignments/"
+    },
+    {
+      "name": "user_roles",
+      "key_properties": [
+        "role_id",
+        "user_id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "user_roles",
+      "data_key": "user_roles",
+      "parent": "roles",
+      "doc_link": "https://help.getharvest.com/api-v2/roles-api/roles/roles/"
+    },
+    {
+      "name": "users",
+      "key_properties": [
+        "id"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "updated_at"
+      ],
+      "path": "users",
+      "data_key": "users",
+      "children": [
+        "user_projects"
+      ],
+      "doc_link": "https://help.getharvest.com/api-v2/users-api/users/users/"
+    }
+  ],
+  "tap_tester_creds": {
+    "client_id": "TAP_HARVEST_CLIENT_ID",
+    "client_secret": "TAP_HARVEST_CLIENT_SECRET",
+    "refresh_token": "TAP_HARVEST_REFRESH_TOKEN"
+  },
+  "author": "Stitch",
+  "third_party_dependencies": [
+    "singer-python==5.12.1",
+    "requests==2.31.0",
+    "pendulum==1.2.0",
+    "backoff==1.8.0"
+  ]
+}

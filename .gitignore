@@ -97,3 +97,14 @@ env.sh
 config.json
 state.json
 .autoenv.zsh
+
+rsa-key
+tags
+singer-check-tap-data
+state.json
+
+catalog.json
+get_catalog.py
+persist/
+configs/
+current_state/

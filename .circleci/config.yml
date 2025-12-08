@@ -6,22 +6,29 @@ jobs:
     steps:
       - checkout
       - run:
-          name: 'Setup'
+          name: 'Setup virtual env'
           command: |
-            uv venv --python 3.9 /usr/local/share/virtualenvs/tap-harvest
+            uv venv --python 3.12 /usr/local/share/virtualenvs/tap-harvest
             source /usr/local/share/virtualenvs/tap-harvest/bin/activate
             uv pip install .
             uv pip install pylint
       - run:
-          name: 'Pylint'
+          name: 'JSON Validator'
+          command: |
+            source /usr/local/share/virtualenvs/tap-tester/bin/activate
+            stitch-validate-json tap_harvest/schemas/*.json
+      - run:
+          name: 'pylint'
           command: |
             source /usr/local/share/virtualenvs/tap-harvest/bin/activate
-            pylint tap_harvest --disable missing-docstring,logging-format-interpolation,no-member,broad-except,too-many-branches,too-few-public-methods,wrong-import-order,too-many-locals,consider-using-f-string,broad-exception-raised,too-many-positional-arguments
+            uv pip install pylint
+            pylint tap_harvest -d C,R,W
+      - add_ssh_keys
       - run:
           name: 'Unit Tests'
           command: |
             source /usr/local/share/virtualenvs/tap-harvest/bin/activate
-            uv pip install pytest coverage
+            uv pip install pytest coverage parameterized
             coverage run -m pytest tests/unittests
             coverage html
       - store_test_results:
@@ -37,6 +44,7 @@ jobs:
             uv pip install --upgrade awscli
             aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.sh
             source dev_env.sh
+            unset USE_STITCH_BACKEND
             run-test --tap=tap-harvest tests
 
 workflows:
@@ -52,8 +60,7 @@ workflows:
           filters:
             branches:
               only:
-                - update/harvest-circle-config
-                #- master
+                - master
     jobs:
       - build:
           context: circleci-user

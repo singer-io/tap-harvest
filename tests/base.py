@@ -1,210 +1,229 @@
-"""
-Setup expectations for test sub classes
-Run discovery for as a prerequisite for most tests
-"""
-import unittest
 import os
-from datetime import datetime as dt
-from datetime import timezone as tz
-
-from tap_tester import connections, menagerie, runner
-
-from spec import TapSpec
+from tap_tester.base_suite_tests.base_case import BaseCase
 
 
-class BaseTapTest(TapSpec, unittest.TestCase):
-    """
-    Setup expectations for test sub classes
-    Run discovery for as a prerequisite for most tests
+class HarvestBaseTest(BaseCase):
+    """Setup expectations for test sub classes.
+
+    Metadata describing streams. A bunch of shared methods that are used
+    in tap-tester tests. Shared tap-specific methods (as needed).
     """
 
-    @staticmethod
-    def name():
-        """The name of the test within the suite"""
-        return "tap_tester_{}".format(TapSpec.tap_name())
-
-    def environment_variables(self):
-        return {}
-        #({p for p in self.CONFIGURATION_ENVIRONMENT['properties'].values()})# |
-        # {c for c in self.CONFIGURATION_ENVIRONMENT['credentials'].values()})
-
-    def expected_streams(self):
-        """A set of expected stream names"""
-        return set(self.expected_metadata().keys())
-
-    def child_streams(self):
-        """
-        Return a set of streams that are child streams
-        based on having foreign key metadata
-        """
-        return {stream for stream, metadata in self.expected_metadata().items()
-                if metadata.get(self.FOREIGN_KEYS)}
-
-    def expected_primary_keys(self):
-        """
-        return a dictionary with key of table name
-        and value as a set of primary key fields
-        """
-        return {table: properties.get(self.PRIMARY_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
-
-    def expected_replication_keys(self):
-        """
-        return a dictionary with key of table name
-        and value as a set of replication key fields
-        """
-        return {table: properties.get(self.REPLICATION_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
-
-    def expected_foreign_keys(self):
-        """
-        return a dictionary with key of table name
-        and value as a set of foreign key fields
-        """
-        return {table: properties.get(self.FOREIGN_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
-
-    def expected_replication_method(self):
-        """return a dictionary with key of table name nd value of replication method"""
-        return {table: properties.get(self.REPLICATION_METHOD, None)
-                for table, properties
-                in self.expected_metadata().items()}
-
-    def setUp(self):
-        """Verify that you have set the prerequisites to run the tap (creds, etc.)"""
-        missing_envs = [x for x in self.environment_variables() if os.getenv(x) is None]
-        if missing_envs:
-            raise Exception("Missing test-required environment variables: {}".format(missing_envs))
-
-    def test_run(self):
-        """
-        Default Test Setup
-        Remove previous connections (with the same name)
-        Create a new connection (with the properties and credentials above)
-        Run discovery and ensure it completes successfully
-        """
-        self.do_test(self.create_connection())
-
-    def do_test(self, conn_id):
-        """A placeholder test to override in sub-class tests"""
-
-    #########################
-    #   Helper Methods      #
-    #########################
-
-    def create_connection(self, original_properties: bool = True):
-        """Create a new connection with the test name"""
-        # Create the connection
-        conn_id = connections.ensure_connection(self, original_properties)
-
-        # Run a check job using orchestrator (discovery)
-        check_job_name = runner.run_check_mode(self, conn_id)
-
-        # Assert that the check job succeeded
-        exit_status = menagerie.get_exit_status(conn_id, check_job_name)
-        menagerie.verify_check_exit_status(self, exit_status, check_job_name)
-        return conn_id
-
-    def run_sync(self, conn_id):
-        """
-        Run a sync job and make sure it exited properly.
-        Return a dictionary with keys of streams synced
-        and values of records synced for each stream
-        """
-        # Run a sync job using orchestrator
-        sync_job_name = runner.run_sync_mode(self, conn_id)
-
-        # Verify tap and target exit codes
-        exit_status = menagerie.get_exit_status(conn_id, sync_job_name)
-        exit_status["discovery_exit_status"] = 0
-        menagerie.verify_sync_exit_status(self, exit_status, sync_job_name)
-
-        # Verify actual rows were synced
-        sync_record_count = runner.examine_target_output_file(
-            self, conn_id, self.expected_streams(), self.expected_primary_keys())
-        return sync_record_count
+    start_date = "2017-01-01T00:00:00Z"
 
     @staticmethod
-    def local_to_utc(date: dt):
-        """Convert a datetime with timezone information to utc"""
-        utc = dt(date.year, date.month, date.day, date.hour, date.minute,
-                 date.second, date.microsecond, tz.utc)
-
-        if date.tzinfo and hasattr(date.tzinfo, "_offset"):
-            utc += date.tzinfo._offset
-
-        return utc
-
-    def max_bookmarks_by_stream(self, sync_records):
-        """
-        Return the maximum value for the replication key for each stream
-        which is the bookmark expected value.
-
-        Comparisons are based on the class of the bookmark value. Dates will be
-        string compared which works for ISO date-time strings
-        """
-        max_bookmarks = {}
-        for stream, batch in sync_records.items():
-
-            upsert_messages = [m for m in batch.get('messages') if m['action'] == 'upsert']
-            stream_bookmark_key = self.expected_replication_keys().get(stream, set())
-            assert len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
-            stream_bookmark_key = stream_bookmark_key.pop()
-
-            bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
-            max_bookmarks[stream] = {stream_bookmark_key: None}
-            for bk_value in bk_values:
-                if bk_value is None:
-                    continue
-
-                if max_bookmarks[stream][stream_bookmark_key] is None:
-                    max_bookmarks[stream][stream_bookmark_key] = bk_value
-
-                if bk_value > max_bookmarks[stream][stream_bookmark_key]:
-                    max_bookmarks[stream][stream_bookmark_key] = bk_value
-        return max_bookmarks
-
-    def min_bookmarks_by_stream(self, sync_records):
-        """Return the minimum value for the replication key for each stream"""
-        min_bookmarks = {}
-        for stream, batch in sync_records.items():
-
-            upsert_messages = [m for m in batch.get('messages') if m['action'] == 'upsert']
-            stream_bookmark_key = self.expected_replication_keys().get(stream, set())
-            assert len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
-            (stream_bookmark_key, ) = stream_bookmark_key
-
-            bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
-            min_bookmarks[stream] = {stream_bookmark_key: None}
-            for bk_value in bk_values:
-                if bk_value is None:
-                    continue
-
-                if min_bookmarks[stream][stream_bookmark_key] is None:
-                    min_bookmarks[stream][stream_bookmark_key] = bk_value
-
-                if bk_value < min_bookmarks[stream][stream_bookmark_key]:
-                    min_bookmarks[stream][stream_bookmark_key] = bk_value
-        return min_bookmarks
+    def tap_name():
+        """The name of the tap."""
+        return "tap-harvest"
 
     @staticmethod
-    def select_all_streams_and_fields(conn_id, catalogs, select_all_fields: bool = True):
-        """Select all streams and all fields within streams"""
-        for catalog in catalogs:
-            schema = menagerie.get_annotated_schema(conn_id, catalog['stream_id'])
+    def get_type():
+        """The name of the tap."""
+        return "platform.harvest"
 
-            non_selected_properties = []
-            if not select_all_fields:
-                # get a list of all properties so that none are selected
-                non_selected_properties = schema.get('annotated-schema', {}).get(
-                    'properties', {}).keys()
+    @classmethod
+    def expected_metadata(cls):
+        """The expected streams and metadata about the streams."""
+        return {
+            "projects": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 1,
+            },
+            "clients": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "contacts": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "estimate_item_categories": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "estimate_line_items": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "estimate_messages": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "estimates": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "expense_categories": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "expenses": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 2,
+            },
+            "external_reference": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "invoice_item_categories": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "invoice_line_items": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "invoice_messages": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "invoice_payments": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "invoices": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "project_tasks": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 5,
+            },
+            "project_users": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 1,
+            },
+            "roles": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "tasks": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "time_entries": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 5,
+            },
+            "time_entry_external_reference": {
+                cls.PRIMARY_KEYS: {"time_entry_id", "external_reference_id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "user_project_tasks": {
+                cls.PRIMARY_KEYS: {"user_id", "project_task_id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 5,
+            },
+            "user_projects": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 1,
+            },
+            "user_roles": {
+                cls.PRIMARY_KEYS: {"role_id", "user_id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+            "users": {
+                cls.PRIMARY_KEYS: {"id"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"updated_at"},
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 100,
+            },
+        }
 
-            connections.select_catalog_and_fields_via_metadata(
-                conn_id, catalog, schema, [], non_selected_properties)
+    @staticmethod
+    def get_child_streams_with_no_replication_keys():
+        return {
+            "user_roles",
+            "invoice_line_items",
+            "estimate_line_items",
+            "user_project_tasks",
+            "external_reference",
+            "time_entry_external_reference",
+        }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.start_date = self.get_properties().get("start_date")
+    @staticmethod
+    def get_credentials():
+        """Authentication information for the test account."""
+        credentials_dict = {}
+        creds = {
+            "client_id": "TAP_HARVEST_CLIENT_ID",
+            "client_secret": "TAP_HARVEST_CLIENT_SECRET",
+            "refresh_token": "TAP_HARVEST_REFRESH_TOKEN",
+        }
+
+        for cred in creds:
+            credentials_dict[cred] = os.getenv(creds[cred])
+
+        return credentials_dict
+
+    def get_properties(self, original: bool = True):
+        """Configuration of properties required for the tap."""
+        return_value = {"start_date": self.start_date, "account_name": "Stitch"}
+
+        return return_value
