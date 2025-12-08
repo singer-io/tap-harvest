@@ -17,6 +17,7 @@ class HarvestStartDateTest(StartDateTest, HarvestBaseTest):
             "estimate_messages",
             "users",
             "time_entries",
+            "projects",
             "expenses",
         }.union(HarvestBaseTest.get_child_streams_with_no_replication_keys())
         return self.expected_stream_names().difference(streams_to_exclude)
