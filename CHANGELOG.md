@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.1.0
+  * Upgrade `singer-python` from `6.1.1` to `6.8.0`
+  * Add unit tests for `sync`, `discover`, `schema`, `client`, and `streams` modules [#71](https://github.com/singer-io/tap-harvest/pull/71)
 
 ## 3.0.0
   * Add discovery support [#64](https://github.com/singer-io/tap-harvest/pull/64)
