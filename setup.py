@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="tap-harvest",
-    version="3.1.0",
+    version="3.1.1",
     description="Singer.io tap for extracting data from the Harvest api",
     author="Facet Interactive",
     url="http://singer.io",
@@ -13,7 +13,7 @@ setup(
     py_modules=["tap_harvest"],
     install_requires=[
         "singer-python==6.8.0",
-        "requests==2.32.5",
+        "requests==2.33.0",
         "backoff==2.2.1",
     ],
     entry_points="""
