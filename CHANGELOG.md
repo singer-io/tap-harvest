@@ -1,9 +1,17 @@
 # Changelog
 
+## 3.1.1
+  * Dependabot requests update [#72](https://github.com/singer-io/tap-harvest/pull/72)
+
+## 3.1.0
+  * Upgrade `singer-python` from `6.1.1` to `6.8.0`
+  * Add unit tests for `sync`, `discover`, `schema`, `client`, and `streams` modules [#71](https://github.com/singer-io/tap-harvest/pull/71)
+
 ## 3.0.0
   * Add discovery support [#64](https://github.com/singer-io/tap-harvest/pull/64)
   * Update bookmark logic for parent-child streams
   * Complete refactoring using singer_template_config
+  * Dependency upgrades [#66](https://github.com/singer-io/tap-harvest/pull/66)
 
 ## 2.1.3
   * Dependabot update [#58](https://github.com/singer-io/tap-harvest/pull/58)
