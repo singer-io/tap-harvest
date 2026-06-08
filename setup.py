@@ -11,8 +11,8 @@ setup(
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_harvest"],
     install_requires=[
-        "singer-python==6.1.0",
-        "requests==2.32.3",
+        "singer-python==6.8.0",
+        "requests==2.34.2",
         "backoff==2.2.1",
     ],
     entry_points="""
