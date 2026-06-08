@@ -28,4 +28,4 @@ class HarvestStartDateTest(StartDateTest, HarvestBaseTest):
 
     @property
     def start_date_2(self):
-        return "2025-10-04T00:00:00Z"
+        return "2025-03-25T00:00:00Z"
