@@ -2,17 +2,65 @@ import singer
 from singer import metadata
 from singer.catalog import Catalog, CatalogEntry, Schema
 from tap_harvest.schema import get_schemas
+from tap_harvest.streams import STREAMS
+from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError
 
 LOGGER = singer.get_logger()
 
 
-def discover() -> Catalog:
+def check_stream_access(client, stream_name, stream_class) -> bool:
+    """
+    Probes a top-level stream endpoint with per_page=1 to verify the
+    credentials have access.
+    Returns True if accessible, False on 401/403. Any other exception is re-raised.
+    Should only be called for top-level streams (those without '{}' in their path).
+    """
+    endpoint = f"{client.base_url}/{stream_class.path}"
+    try:
+        client.get(endpoint=endpoint, params={"per_page": 1})
+        return True
+    except (HarvestUnauthorizedError, HarvestForbiddenError):
+        return False
+
+
+def discover(client) -> Catalog:
     """Run the discovery mode, prepare the catalog file and return the
-    catalog."""
+    catalog. Probes each top-level stream endpoint to verify access; streams
+    that return 401/403 are excluded from the catalog. Child streams are
+    included only if their parent stream is accessible.
+    """
     schemas, field_metadata = get_schemas()
     catalog = Catalog([])
+    accessible_streams = set()
 
-    for stream_name, schema_dict in schemas.items():
+    # Two-pass approach: first probe all top-level streams, then process
+    # child streams — so parent accessibility is always known before children.
+    top_level = {name: cls for name, cls in STREAMS.items() if '{}' not in cls.path}
+    child = {name: cls for name, cls in STREAMS.items() if '{}' in cls.path}
+
+    for stream_name, stream_class in {**top_level, **child}.items():
+        if stream_name not in schemas:
+            continue
+
+        schema_dict = schemas[stream_name]
+
+        if '{}' in stream_class.path:
+            # Child stream: accessible only if its parent was accessible
+            if stream_class.parent not in accessible_streams:
+                LOGGER.warning(
+                    "Stream '%s' will be excluded from the catalog because its "
+                    "parent stream '%s' is not accessible.",
+                    stream_name,
+                    stream_class.parent,
+                )
+                continue
+        elif not check_stream_access(client, stream_name, stream_class):
+            LOGGER.warning(
+                "Stream '%s' will be excluded from the catalog due to insufficient permissions.",
+                stream_name,
+            )
+            continue
+
         try:
             schema = Schema.from_dict(schema_dict)
             mdata = field_metadata[stream_name]
@@ -23,6 +71,7 @@ def discover() -> Catalog:
             raise err
 
         key_properties = metadata.to_map(mdata).get((), {}).get("table-key-properties")
+        accessible_streams.add(stream_name)
 
         catalog.streams.append(
             CatalogEntry(
@@ -32,6 +81,12 @@ def discover() -> Catalog:
                 schema=schema,
                 metadata=mdata,
             )
+        )
+
+    if not catalog.streams:
+        raise Exception(
+            "No stream endpoints are accessible with the provided credentials. "
+            "Verify that the API credentials have the required permissions."
         )
 
     return catalog
