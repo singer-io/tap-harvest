@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from singer.catalog import Catalog
 
 from tap_harvest.discover import discover, check_stream_access
-from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError
+from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError, HarvestError
 from tap_harvest.streams import STREAMS
 
 
@@ -64,6 +64,13 @@ class TestCheckStreamAccess(unittest.TestCase):
         client.get.side_effect = ConnectionError("timeout")
         with self.assertRaises(ConnectionError):
             check_stream_access(client, "clients", STREAMS["clients"])
+
+    def test_returns_true_on_non_auth_harvest_error(self):
+        """Non-auth HarvestErrors (e.g. 400) mean auth is valid — stream assumed accessible."""
+        client = MagicMock()
+        client.get.side_effect = HarvestError("bad request")
+        result = check_stream_access(client, "clients", STREAMS["clients"])
+        self.assertTrue(result)
 
     def test_probe_uses_per_page_1(self):
         """Probe uses per_page=1 for minimal data fetch."""

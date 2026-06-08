@@ -3,7 +3,7 @@ from singer import metadata
 from singer.catalog import Catalog, CatalogEntry, Schema
 from tap_harvest.schema import get_schemas
 from tap_harvest.streams import STREAMS
-from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError
+from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError, HarvestError
 
 LOGGER = singer.get_logger()
 
@@ -12,7 +12,10 @@ def check_stream_access(client, stream_name, stream_class) -> bool:
     """
     Probes a top-level stream endpoint with per_page=1 to verify the
     credentials have access.
-    Returns True if accessible, False on 401/403/404. Any other exception is re-raised.
+    Returns False on 401/403/404 (auth denied or resource absent).
+    Returns True on success or any other non-auth API error — a non-auth
+    response means the server accepted the credentials, so the stream is
+    considered accessible.
     Should only be called for top-level streams (those whose parent attribute is empty).
     """
     endpoint = f"{client.base_url}/{stream_class.path}"
@@ -21,6 +24,12 @@ def check_stream_access(client, stream_name, stream_class) -> bool:
         return True
     except (HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError):
         return False
+    except HarvestError:
+        LOGGER.warning(
+            "Stream '%s' probe returned a non-auth API error; assuming accessible.",
+            stream_name,
+        )
+        return True
 
 
 def discover(client) -> Catalog:
