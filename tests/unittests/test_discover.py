@@ -157,6 +157,35 @@ class TestDiscover(unittest.TestCase):
 
     @patch("tap_harvest.discover.check_stream_access")
     @patch("tap_harvest.discover.get_schemas")
+    def test_virtual_child_stream_included_when_parent_accessible(self, mock_get_schemas, mock_check):
+        """Virtual child streams (flat path, parent set) are included when parent is accessible."""
+        # invoice_line_items has parent="invoices" but no '{}' in path
+        mock_get_schemas.return_value = _make_mock_schemas(["invoices", "invoice_line_items"])
+        mock_check.return_value = True  # invoices accessible
+
+        catalog = discover(MagicMock())
+        stream_ids = {s.tap_stream_id for s in catalog.streams}
+        self.assertIn("invoices", stream_ids)
+        self.assertIn("invoice_line_items", stream_ids)
+        # check_stream_access must NOT be called for the child (no API probe)
+        for call in mock_check.call_args_list:
+            self.assertNotEqual(call.args[1], "invoice_line_items")
+
+    @patch("tap_harvest.discover.check_stream_access")
+    @patch("tap_harvest.discover.get_schemas")
+    def test_virtual_child_stream_excluded_when_parent_inaccessible(self, mock_get_schemas, mock_check):
+        """Virtual child streams are excluded when their parent is inaccessible."""
+        mock_get_schemas.return_value = _make_mock_schemas(["invoices", "invoice_line_items", "clients"])
+        mock_check.side_effect = lambda client, name, cls: name != "invoices"
+
+        catalog = discover(MagicMock())
+        stream_ids = {s.tap_stream_id for s in catalog.streams}
+        self.assertNotIn("invoices", stream_ids)
+        self.assertNotIn("invoice_line_items", stream_ids)
+        self.assertIn("clients", stream_ids)
+
+    @patch("tap_harvest.discover.check_stream_access")
+    @patch("tap_harvest.discover.get_schemas")
     def test_all_inaccessible_raises_exception(self, mock_get_schemas, mock_check):
         """When all streams are inaccessible, discover() raises an exception."""
         mock_get_schemas.return_value = _make_mock_schemas(["clients", "projects"])

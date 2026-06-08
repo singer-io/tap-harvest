@@ -12,8 +12,8 @@ def check_stream_access(client, stream_name, stream_class) -> bool:
     """
     Probes a top-level stream endpoint with per_page=1 to verify the
     credentials have access.
-    Returns True if accessible, False on 401/403. Any other exception is re-raised.
-    Should only be called for top-level streams (those without '{}' in their path).
+    Returns True if accessible, False on 401/403/404. Any other exception is re-raised.
+    Should only be called for top-level streams (those whose parent attribute is empty).
     """
     endpoint = f"{client.base_url}/{stream_class.path}"
     try:
@@ -35,8 +35,10 @@ def discover(client) -> Catalog:
 
     # Two-pass approach: first probe all top-level streams, then process
     # child streams — so parent accessibility is always known before children.
-    top_level = {name: cls for name, cls in STREAMS.items() if '{}' not in cls.path}
-    child = {name: cls for name, cls in STREAMS.items() if '{}' in cls.path}
+    # A stream is a child if its `parent` attribute is set (non-empty string),
+    # regardless of whether '{}' appears in its path.
+    top_level = {name: cls for name, cls in STREAMS.items() if not cls.parent}
+    child = {name: cls for name, cls in STREAMS.items() if cls.parent}
 
     for stream_name, stream_class in {**top_level, **child}.items():
         if stream_name not in schemas:
@@ -44,7 +46,7 @@ def discover(client) -> Catalog:
 
         schema_dict = schemas[stream_name]
 
-        if '{}' in stream_class.path:
+        if stream_class.parent:
             # Child stream: accessible only if its parent was accessible
             if stream_class.parent not in accessible_streams:
                 LOGGER.warning(
