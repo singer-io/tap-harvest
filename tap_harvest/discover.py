@@ -3,7 +3,7 @@ from singer import metadata
 from singer.catalog import Catalog, CatalogEntry, Schema
 from tap_harvest.schema import get_schemas
 from tap_harvest.streams import STREAMS
-from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError
+from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError
 
 LOGGER = singer.get_logger()
 
@@ -19,7 +19,7 @@ def check_stream_access(client, stream_name, stream_class) -> bool:
     try:
         client.get(endpoint=endpoint, params={"per_page": 1})
         return True
-    except (HarvestUnauthorizedError, HarvestForbiddenError):
+    except (HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError):
         return False
 
 

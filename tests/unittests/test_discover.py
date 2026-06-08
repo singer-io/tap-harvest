@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from singer.catalog import Catalog
 
 from tap_harvest.discover import discover, check_stream_access
-from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError
+from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError
 from tap_harvest.streams import STREAMS
 
 
@@ -51,6 +51,12 @@ class TestCheckStreamAccess(unittest.TestCase):
         client = MagicMock()
         client.get.side_effect = HarvestForbiddenError("403")
         result = check_stream_access(client, "invoices", STREAMS["invoices"])
+        self.assertFalse(result)
+
+    def test_returns_false_on_404(self):
+        client = MagicMock()
+        client.get.side_effect = HarvestNotFoundError("404")
+        result = check_stream_access(client, "estimate_line_items", STREAMS["estimate_line_items"])
         self.assertFalse(result)
 
     def test_reraises_other_errors(self):
