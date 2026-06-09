@@ -9,14 +9,8 @@ LOGGER = singer.get_logger()
 
 
 def check_stream_access(client, stream_name, stream_class) -> bool:
-    """
-    Probes a top-level stream endpoint with per_page=1 to verify the
-    credentials have access.
-    Returns False on 401/403/404 (auth denied or resource absent).
-    Returns True on success or any other non-auth API error — a non-auth
-    response means the server accepted the credentials, so the stream is
-    considered accessible.
-    Should only be called for top-level streams (those whose parent attribute is empty).
+    """Probe a stream endpoint (per_page=1) and return whether it is accessible.
+    Returns False on 401/403/404; True on success or any other API error.
     """
     endpoint = f"{client.base_url}/{stream_class.path}"
     try:
@@ -25,10 +19,6 @@ def check_stream_access(client, stream_name, stream_class) -> bool:
     except (HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError):
         return False
     except HarvestError:
-        LOGGER.warning(
-            "Stream '%s' probe returned a non-auth API error; assuming accessible.",
-            stream_name,
-        )
         return True
 
 
@@ -55,16 +45,14 @@ def discover(client) -> Catalog:
 
         schema_dict = schemas[stream_name]
 
-        if stream_class.parent:
-            # Child stream: accessible only if its parent was accessible
-            if stream_class.parent not in accessible_streams:
-                LOGGER.warning(
-                    "Stream '%s' will be excluded from the catalog because its "
-                    "parent stream '%s' is not accessible.",
-                    stream_name,
-                    stream_class.parent,
-                )
-                continue
+        if stream_class.parent and stream_class.parent not in accessible_streams:
+            LOGGER.warning(
+                "Stream '%s' will be excluded from the catalog because its "
+                "parent stream '%s' is not accessible.",
+                stream_name,
+                stream_class.parent,
+            )
+            continue
         elif not check_stream_access(client, stream_name, stream_class):
             LOGGER.warning(
                 "Stream '%s' will be excluded from the catalog due to insufficient permissions.",
