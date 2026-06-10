@@ -45,20 +45,22 @@ def discover(client) -> Catalog:
 
         schema_dict = schemas[stream_name]
 
-        if stream_class.parent and stream_class.parent not in accessible_streams:
-            LOGGER.warning(
-                "Stream '%s' will be excluded from the catalog because its "
-                "parent stream '%s' is not accessible.",
-                stream_name,
-                stream_class.parent,
-            )
-            continue
-        elif not check_stream_access(client, stream_name, stream_class):
-            LOGGER.warning(
-                "Stream '%s' will be excluded from the catalog due to insufficient permissions.",
-                stream_name,
-            )
-            continue
+        if stream_class.parent:
+            if stream_class.parent not in accessible_streams:
+                LOGGER.warning(
+                    "Stream '%s' will be excluded from the catalog because its "
+                    "parent stream '%s' is not accessible.",
+                    stream_name,
+                    stream_class.parent,
+                )
+                continue
+        else:
+            if not check_stream_access(client, stream_name, stream_class):
+                LOGGER.warning(
+                    "Stream '%s' will be excluded from the catalog due to insufficient permissions.",
+                    stream_name,
+                )
+                continue
 
         try:
             schema = Schema.from_dict(schema_dict)
