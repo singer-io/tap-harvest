@@ -16,6 +16,29 @@ from tap_harvest.exceptions import (
 LOGGER = get_logger()
 REQUEST_TIMEOUT = 300
 REFRESH_URL = "https://id.getharvest.com/api/v2"
+MAX_RETRIES = 7
+
+
+def _on_backoff(details):
+    """Log when backing off due to retryable errors."""
+    exc = details.get("exception")
+    wait = details["wait"]
+    if exc and hasattr(exc, "response") and exc.response is not None:
+        retry_after = exc.response.headers.get("Retry-After")
+        if retry_after:
+            LOGGER.warning(
+                "Rate limited. Retry-After: %s seconds. Backing off %.1f seconds after %d tries.",
+                retry_after,
+                wait,
+                details["tries"],
+            )
+            return
+    LOGGER.warning(
+        "Backing off %.1f seconds after %d tries calling %s",
+        wait,
+        details["tries"],
+        details["target"].__name__,
+    )
 
 
 def raise_for_error(response: requests.Response) -> None:
@@ -160,10 +183,17 @@ class Client:
             ConnectionError,
             ChunkedEncodingError,
             Timeout,
-            HarvestBackoffError,
         ),
-        max_tries=5,
+        max_tries=MAX_RETRIES,
         factor=2,
+        on_backoff=_on_backoff,
+    )
+    @backoff.on_exception(
+        wait_gen=backoff.expo,
+        exception=HarvestBackoffError,
+        max_tries=MAX_RETRIES,
+        factor=15,
+        on_backoff=_on_backoff,
     )
     def __make_request(
         self, method: str, endpoint: str, **kwargs

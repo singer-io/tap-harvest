@@ -79,7 +79,7 @@ class TestMakeRequest(unittest.TestCase):
                 client.get(url, params, headers)
 
         # Ensure the request was retried up to the backoff limit
-        self.assertEqual(mocked_request.call_count, 5)
+        self.assertEqual(mocked_request.call_count, 7)
 
     @patch("time.sleep")
     @patch("requests.Session.request", side_effect=Timeout)
@@ -101,7 +101,7 @@ class TestMakeRequest(unittest.TestCase):
                 client.get(url, params, headers)
 
         # Ensure the request was retried up to the backoff limit
-        self.assertEqual(mocked_request.call_count, 5)
+        self.assertEqual(mocked_request.call_count, 7)
 
     @patch("time.sleep")
     @patch("requests.Session.request", side_effect=ChunkedEncodingError)
@@ -123,7 +123,7 @@ class TestMakeRequest(unittest.TestCase):
                 client.get(url, params, headers)
 
         # Ensure the request was retried up to the backoff limit
-        self.assertEqual(mocked_request.call_count, 5)
+        self.assertEqual(mocked_request.call_count, 7)
 
     @patch("time.sleep")
     @patch("requests.Session.request")
@@ -133,7 +133,7 @@ class TestMakeRequest(unittest.TestCase):
         """Test case for 429 Rate Limit error."""
         mocked_request.side_effect = [
             get_response(429, {}, True)
-        ] * 5  # Simulate 5 retries for 429 error
+        ] * 7  # Simulate 7 retries for 429 error
         url = "dummy_endpoint"
         params = {}
         headers = {"Authorization": "Bearer dummy_token"}
@@ -148,7 +148,32 @@ class TestMakeRequest(unittest.TestCase):
                 client.get(url, params, headers)
 
         # Ensure the request was retried up to the backoff limit
-        self.assertEqual(mocked_request.call_count, 5)
+        self.assertEqual(mocked_request.call_count, 7)
+
+    @patch("time.sleep")
+    @patch("requests.Session.request")
+    def test_harvest_rate_limit_recovers_after_retry(
+        self, mocked_request, mock_sleep, mock_refresh_token, mock_check_active_account
+    ):
+        """Test case for 429 Rate Limit error that recovers after retries."""
+        rate_limit_response = Mockresponse(429, {}, True, headers={"Retry-After": "15"})
+        success_response = get_response(200, {"result": []})
+        mocked_request.side_effect = [
+            rate_limit_response,
+            rate_limit_response,
+            success_response,
+        ]
+        url = "dummy_endpoint"
+        params = {}
+        headers = {"Authorization": "Bearer dummy_token"}
+
+        client_config = {"user_agent": "singer"}
+
+        with Client(client_config) as client:
+            result = client.get(url, params, headers)
+
+        self.assertEqual(result, {"result": []})
+        self.assertEqual(mocked_request.call_count, 3)
 
     @patch("time.sleep")
     @patch("requests.Session.request")
