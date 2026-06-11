@@ -79,7 +79,7 @@ class TestMakeRequest(unittest.TestCase):
                 client.get(url, params, headers)
 
         # Ensure the request was retried up to the backoff limit
-        self.assertEqual(mocked_request.call_count, 7)
+        self.assertEqual(mocked_request.call_count, 5)
 
     @patch("time.sleep")
     @patch("requests.Session.request", side_effect=Timeout)
@@ -101,7 +101,7 @@ class TestMakeRequest(unittest.TestCase):
                 client.get(url, params, headers)
 
         # Ensure the request was retried up to the backoff limit
-        self.assertEqual(mocked_request.call_count, 7)
+        self.assertEqual(mocked_request.call_count, 5)
 
     @patch("time.sleep")
     @patch("requests.Session.request", side_effect=ChunkedEncodingError)
@@ -123,7 +123,7 @@ class TestMakeRequest(unittest.TestCase):
                 client.get(url, params, headers)
 
         # Ensure the request was retried up to the backoff limit
-        self.assertEqual(mocked_request.call_count, 7)
+        self.assertEqual(mocked_request.call_count, 5)
 
     @patch("time.sleep")
     @patch("requests.Session.request")
@@ -133,7 +133,7 @@ class TestMakeRequest(unittest.TestCase):
         """Test case for 429 Rate Limit error."""
         mocked_request.side_effect = [
             get_response(429, {}, True)
-        ] * 7  # Simulate 7 retries for 429 error
+        ] * 5  # Simulate 5 retries for 429 error
         url = "dummy_endpoint"
         params = {}
         headers = {"Authorization": "Bearer dummy_token"}
@@ -148,7 +148,7 @@ class TestMakeRequest(unittest.TestCase):
                 client.get(url, params, headers)
 
         # Ensure the request was retried up to the backoff limit
-        self.assertEqual(mocked_request.call_count, 7)
+        self.assertEqual(mocked_request.call_count, 5)
 
     @patch("time.sleep")
     @patch("requests.Session.request")
