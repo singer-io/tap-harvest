@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.1.2
+  * Add 15s retry backoff for Harvest Backoff Error [#74](https://github.com/singer-io/tap-harvest/pull/74)
+
 ## 3.1.1
   * Dependabot requests update [#72](https://github.com/singer-io/tap-harvest/pull/72)
 
