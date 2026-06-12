@@ -53,7 +53,7 @@ def discover(client) -> Catalog:
                 stream_class.parent,
             )
             continue
-        elif not check_stream_access(client, stream_name, stream_class):
+        elif not stream_class.parent and not check_stream_access(client, stream_name, stream_class):
             LOGGER.warning(
                 "Stream '%s' will be excluded from the catalog due to insufficient permissions.",
                 stream_name,
