@@ -49,8 +49,8 @@ STREAMS = {
     "tasks": Tasks,
     "time_entries": TimeEntries,
     "time_entry_external_reference": TimeEntryExternalReference,
-    "user_project_tasks": UserProjectTasks,
     "user_projects": UserProjects,
+    "user_project_tasks": UserProjectTasks,
     "user_roles": UserRoles,
     "users": Users,
 }
