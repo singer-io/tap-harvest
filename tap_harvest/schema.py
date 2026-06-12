@@ -52,9 +52,9 @@ def get_schemas() -> Tuple[Dict, Dict]:
         mdata = metadata.new()
         mdata = metadata.get_standard_metadata(
             schema=schema,
-            key_properties=getattr(stream_obj, "key_properties"),
+            key_properties=getattr(stream_obj, "key_properties", None),
             valid_replication_keys=(getattr(stream_obj, "replication_keys") or []),
-            replication_method=getattr(stream_obj, "replication_method"),
+            replication_method=getattr(stream_obj, "replication_method", None),
         )
         mdata = metadata.to_map(mdata)
 
@@ -64,6 +64,11 @@ def get_schemas() -> Tuple[Dict, Dict]:
                 mdata = metadata.write(
                     mdata, ("properties", field_name), "inclusion", "automatic"
                 )
+
+        # Check if the stream has any parent attribute
+        parent_attribute = getattr(stream_obj, "parent", None)
+        if parent_attribute:
+            mdata = metadata.write(mdata, (), "parent-tap-stream-id", parent_attribute)
 
         mdata = metadata.to_list(mdata)
         field_metadata[stream_name] = mdata

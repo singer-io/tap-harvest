@@ -6,7 +6,7 @@ from tap_harvest.streams.abstracts import IncrementalStream
 class UserProjectTasks(IncrementalStream):
     tap_stream_id = "user_project_tasks"
     key_properties = ["user_id", "project_task_id"]
-    replication_method = "INCREMENTAL"
+    replication_method = "FULL_TABLE"
     replication_keys = None
     data_key = "user_project_tasks"
     path = "user_project_tasks"
