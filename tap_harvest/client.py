@@ -16,6 +16,7 @@ from tap_harvest.exceptions import (
 LOGGER = get_logger()
 REQUEST_TIMEOUT = 300
 REFRESH_URL = "https://id.getharvest.com/api/v2"
+MAX_RETRIES = 5
 
 
 def raise_for_error(response: requests.Response) -> None:
@@ -160,10 +161,15 @@ class Client:
             ConnectionError,
             ChunkedEncodingError,
             Timeout,
-            HarvestBackoffError,
         ),
-        max_tries=5,
+        max_tries=MAX_RETRIES,
         factor=2,
+    )
+    @backoff.on_exception(
+        wait_gen=backoff.expo,
+        exception=HarvestBackoffError,
+        max_tries=MAX_RETRIES,
+        factor=15,
     )
     def __make_request(
         self, method: str, endpoint: str, **kwargs
