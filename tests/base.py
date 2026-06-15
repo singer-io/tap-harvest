@@ -176,13 +176,6 @@ class HarvestBaseTest(BaseCase):
                 cls.API_LIMIT: 100,
                 cls.PARENT_TAP_STREAM_ID: "time_entries",
             },
-            "user_project_tasks": {
-                cls.PRIMARY_KEYS: {"user_id", "project_task_id"},
-                cls.REPLICATION_METHOD: cls.FULL_TABLE,
-                cls.OBEYS_START_DATE: True,
-                cls.API_LIMIT: 5,
-                cls.PARENT_TAP_STREAM_ID: "user_projects",
-            },
             "user_projects": {
                 cls.PRIMARY_KEYS: {"id"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
@@ -190,6 +183,13 @@ class HarvestBaseTest(BaseCase):
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 1,
                 cls.PARENT_TAP_STREAM_ID: "users",
+            },
+            "user_project_tasks": {
+                cls.PRIMARY_KEYS: {"user_id", "project_task_id"},
+                cls.REPLICATION_METHOD: cls.FULL_TABLE,
+                cls.OBEYS_START_DATE: True,
+                cls.API_LIMIT: 5,
+                cls.PARENT_TAP_STREAM_ID: "user_projects",
             },
             "user_roles": {
                 cls.PRIMARY_KEYS: {"role_id", "user_id"},
