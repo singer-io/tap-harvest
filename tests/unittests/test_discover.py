@@ -2,7 +2,12 @@ import unittest
 from unittest.mock import MagicMock, patch
 from singer.catalog import Catalog
 
-from tap_harvest.discover import discover, check_stream_access
+from tap_harvest.discover import (
+    _apply_access_checks,
+    _prune_inaccessible_children,
+    check_stream_access,
+    discover,
+)
 from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError, HarvestError
 from tap_harvest.streams import STREAMS
 
@@ -198,25 +203,48 @@ class TestDiscover(unittest.TestCase):
         mock_get_schemas.return_value = _make_mock_schemas(["clients", "projects"])
         mock_check.return_value = False
 
-        with self.assertRaises(Exception) as ctx:
+        with self.assertRaises(HarvestForbiddenError) as ctx:
             discover(MagicMock())
-        self.assertIn("No stream endpoints are accessible", str(ctx.exception))
+        self.assertIn("do not have 'read' access to any", str(ctx.exception))
 
     @patch("tap_harvest.discover.check_stream_access")
     @patch("tap_harvest.discover.get_schemas")
     def test_warning_logged_for_excluded_stream(self, mock_get_schemas, mock_check):
-        """A warning is logged for each excluded stream."""
+        """An aggregated warning is logged for excluded top-level streams."""
         mock_get_schemas.return_value = _make_mock_schemas(["clients", "projects"])
         mock_check.side_effect = lambda client, name, cls: name != "clients"
 
         with patch("tap_harvest.discover.LOGGER") as mock_logger:
             discover(MagicMock())
 
-        warned_streams = [
-            call.args[1] for call in mock_logger.warning.call_args_list
-        ]
+        warned_streams = [call.args[1] for call in mock_logger.warning.call_args_list if len(call.args) > 1]
         self.assertIn("clients", warned_streams)
-        self.assertNotIn("projects", warned_streams)
+
+
+class TestAccessCheckHelpers(unittest.TestCase):
+    """Tests helper functions used by discovery."""
+
+    @patch("tap_harvest.discover.LOGGER")
+    def test_prune_inaccessible_children_removes_child_streams(self, mock_logger):
+        schemas = {"invoice_payments": {}, "clients": {}}
+        field_metadata = {"invoice_payments": [], "clients": []}
+
+        _prune_inaccessible_children(schemas, field_metadata)
+
+        self.assertNotIn("invoice_payments", schemas)
+        self.assertNotIn("invoice_payments", field_metadata)
+        mock_logger.warning.assert_called_once()
+
+    @patch("tap_harvest.discover.check_stream_access")
+    def test_apply_access_checks_removes_inaccessible_top_level(self, mock_check):
+        mock_check.side_effect = lambda client, name, cls: name != "clients"
+        schemas = {"clients": {}, "projects": {}}
+        field_metadata = {"clients": [], "projects": []}
+
+        _apply_access_checks(MagicMock(), schemas, field_metadata)
+
+        self.assertNotIn("clients", schemas)
+        self.assertIn("projects", schemas)
 
 
 if __name__ == "__main__":
