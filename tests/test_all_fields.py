@@ -22,5 +22,6 @@ class HarvestAllFields(AllFieldsTest, HarvestBaseTest):
         return "tap_tester_harvest_all_fields_test"
 
     def streams_to_test(self):
-        streams_to_exclude = {"external_reference", "time_entry_external_reference"}
-        return self.expected_stream_names().difference(streams_to_exclude)
+        return self.expected_stream_names().difference(
+            self.get_child_streams_with_no_replication_keys()
+        )
