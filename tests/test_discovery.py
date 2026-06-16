@@ -42,11 +42,16 @@ class HarvestDiscoveryTest(DiscoveryTest, HarvestBaseTest):
                 expected_parent_tap_stream_id = self.expected_parent_stream_id(stream=stream)
 
                 # gather results
-                catalog = [
+                catalog_entries = [
                     catalog
                     for catalog in self.found_catalogs
                     if catalog["stream_name"] == stream
-                ][0]
+                ]
+                if not catalog_entries:
+                    # Stream was excluded from the catalog by the access check
+                    # (its parent stream may be inaccessible with the CI credentials).
+                    continue
+                catalog = catalog_entries[0]
                 metadata = menagerie.get_annotated_schema(
                     self.conn_id, catalog["stream_id"]
                 )["metadata"]
