@@ -16,5 +16,5 @@ class HarvestAutomaticFields(MinimumSelectionTest, HarvestBaseTest):
 
     def streams_to_test(self):
         return self.expected_stream_names().difference(
-            self.get_child_streams_with_no_replication_keys()
+            self.get_child_streams()
         )

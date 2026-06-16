@@ -207,6 +207,17 @@ class HarvestBaseTest(BaseCase):
             },
         }
 
+    @classmethod
+    def get_child_streams(cls):
+        """Return all streams that have a parent stream (child streams).
+        These streams may be absent from the catalog if their parent is
+        inaccessible, so they should be excluded from sync-based tests."""
+        return {
+            stream_name
+            for stream_name, props in cls.expected_metadata().items()
+            if props.get(cls.PARENT_TAP_STREAM_ID)
+        }
+
     @staticmethod
     def get_child_streams_with_no_replication_keys():
         return {
