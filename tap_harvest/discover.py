@@ -18,8 +18,6 @@ def check_stream_access(client, stream_name, stream_class) -> bool:
         return True
     except (HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError):
         return False
-    except HarvestError:
-        return True
 
 
 def _prune_inaccessible_children(schemas: dict, field_metadata: dict) -> None:

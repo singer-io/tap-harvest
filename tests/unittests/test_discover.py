@@ -70,12 +70,12 @@ class TestCheckStreamAccess(unittest.TestCase):
         with self.assertRaises(ConnectionError):
             check_stream_access(client, "clients", STREAMS["clients"])
 
-    def test_returns_true_on_non_auth_harvest_error(self):
-        """Non-auth HarvestErrors (e.g. 400) mean auth is valid — stream assumed accessible."""
+    def test_reraises_non_auth_harvest_error(self):
+        """Non-auth HarvestErrors (e.g. 400) are re-raised by check_stream_access."""
         client = MagicMock()
         client.get.side_effect = HarvestError("bad request")
-        result = check_stream_access(client, "clients", STREAMS["clients"])
-        self.assertTrue(result)
+        with self.assertRaises(HarvestError):
+            check_stream_access(client, "clients", STREAMS["clients"])
 
     def test_probe_uses_per_page_1(self):
         """Probe uses per_page=1 for minimal data fetch."""
