@@ -16,7 +16,12 @@ def check_stream_access(client, stream_name, stream_class) -> bool:
     try:
         client.get(endpoint=endpoint, params={"per_page": 1})
         return True
-    except (HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError):
+    except (HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError) as err:
+        LOGGER.warning(
+            "Excluding unauthorized stream '%s' from catalog. HTTP-Error-Message: '%s'",
+            stream_name,
+            str(err),
+        )
         return False
 
 
