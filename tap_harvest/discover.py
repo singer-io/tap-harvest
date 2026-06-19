@@ -52,19 +52,16 @@ def _apply_access_checks(client, schemas: dict, field_metadata: dict) -> None:
 
     _prune_inaccessible_children(schemas, field_metadata)
 
-    if inaccessible_streams:
-        accessible_parents = sum(
-            1 for stream_name, stream_class in STREAMS.items()
-            if stream_name in schemas and not stream_class.parent
+    accessible_streams = [s for s in STREAMS if s in schemas]
+
+    if not accessible_streams:
+        raise HarvestForbiddenError(
+            "HTTP-error-code: 403, Error: The credentials do not have "
+            "'read' access to any supported streams."
         )
-        if accessible_parents == 0:
-            raise HarvestForbiddenError(
-                "HTTP-error-code: 403, Error: The account credentials supplied do not have 'read' access to any "
-                "of the streams supported by the tap. Data collection cannot be initiated due to lack of permissions."
-            )
+    if inaccessible_streams:
         LOGGER.warning(
-            "The account credentials supplied do not have 'read' access to the following stream(s): %s. "
-            "These streams have been excluded from the catalog.",
+            "No 'read' access to stream(s): %s. Excluded from catalog.",
             ", ".join(inaccessible_streams),
         )
 
