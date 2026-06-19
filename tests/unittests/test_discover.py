@@ -58,11 +58,11 @@ class TestCheckStreamAccess(unittest.TestCase):
         result = check_stream_access(client, "invoices", STREAMS["invoices"])
         self.assertFalse(result)
 
-    def test_returns_false_on_404(self):
+    def test_reraises_on_404(self):
         client = MagicMock()
         client.get.side_effect = HarvestNotFoundError("404")
-        result = check_stream_access(client, "estimate_line_items", STREAMS["estimate_line_items"])
-        self.assertFalse(result)
+        with self.assertRaises(HarvestNotFoundError):
+            check_stream_access(client, "estimate_line_items", STREAMS["estimate_line_items"])
 
     def test_reraises_other_errors(self):
         client = MagicMock()

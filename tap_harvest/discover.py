@@ -16,7 +16,7 @@ def check_stream_access(client, stream_name, stream_class) -> bool:
     try:
         client.get(endpoint=endpoint, params={"per_page": 1})
         return True
-    except (HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError) as err:
+    except (HarvestUnauthorizedError, HarvestForbiddenError) as err:
         LOGGER.warning(
             "Excluding unauthorized stream '%s' from catalog. HTTP-Error-Message: '%s'",
             stream_name,
@@ -41,9 +41,11 @@ def _prune_inaccessible_children(schemas: dict, field_metadata: dict) -> None:
 def _apply_access_checks(client, schemas: dict, field_metadata: dict) -> None:
     """Remove inaccessible top-level streams and dependent children in place."""
     inaccessible_streams = [
-        stream_name
-        for stream_name, stream_class in STREAMS.items()
-        if stream_name in schemas and not stream_class.parent and not check_stream_access(client, stream_name, stream_class)
+        name
+        for name, stream in STREAMS.items()
+        if name in schemas
+        and not stream.parent
+        and not check_stream_access(client, name, stream)
     ]
 
     for stream_name in inaccessible_streams:
