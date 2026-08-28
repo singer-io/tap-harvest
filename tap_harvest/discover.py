@@ -25,8 +25,9 @@ def check_stream_access(client, stream_name, stream_class) -> bool:
         return False
 
 
-def _prune_inaccessible_children(schemas: dict, field_metadata: dict) -> None:
+def _prune_inaccessible_children(schemas: dict, field_metadata: dict) -> list:
     """Remove child streams from the catalog whose parent stream was excluded."""
+    pruned_children = []
     for stream_name, stream_class in list(STREAMS.items()):
         if stream_name in schemas and stream_class.parent and stream_class.parent not in schemas:
             LOGGER.warning(
@@ -36,6 +37,8 @@ def _prune_inaccessible_children(schemas: dict, field_metadata: dict) -> None:
             )
             schemas.pop(stream_name, None)
             field_metadata.pop(stream_name, None)
+            pruned_children.append(stream_name)
+    return pruned_children
 
 
 def _apply_access_checks(client, schemas: dict, field_metadata: dict) -> None:
@@ -52,7 +55,7 @@ def _apply_access_checks(client, schemas: dict, field_metadata: dict) -> None:
         schemas.pop(stream_name, None)
         field_metadata.pop(stream_name, None)
 
-    _prune_inaccessible_children(schemas, field_metadata)
+    inaccessible_children = _prune_inaccessible_children(schemas, field_metadata)
 
     accessible_streams = [s for s in STREAMS if s in schemas]
 
@@ -61,10 +64,11 @@ def _apply_access_checks(client, schemas: dict, field_metadata: dict) -> None:
             "HTTP-error-code: 403, Error: The credentials do not have "
             "'read' access to any supported streams."
         )
-    if inaccessible_streams:
+    excluded_streams = inaccessible_streams + inaccessible_children
+    if excluded_streams:
         LOGGER.warning(
             "Unauthorized streams excluded from catalog: %s",
-            ", ".join(inaccessible_streams),
+            ", ".join(excluded_streams),
         )
 
 

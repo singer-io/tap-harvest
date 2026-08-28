@@ -220,6 +220,19 @@ class TestDiscover(unittest.TestCase):
         warned_streams = [call.args[1] for call in mock_logger.warning.call_args_list if len(call.args) > 1]
         self.assertIn("clients", warned_streams)
 
+    @patch("tap_harvest.discover.check_stream_access", return_value=True)
+    @patch("tap_harvest.discover.get_schemas")
+    def test_discover_logs_and_raises_on_schema_error(self, mock_get_schemas, _mock_check):
+        """discover() logs context and raises when schema parsing fails."""
+        mock_get_schemas.return_value = ({"clients": {"bad": "schema"}}, {"clients": []})
+
+        with patch("tap_harvest.discover.Schema.from_dict", side_effect=ValueError("bad schema")):
+            with patch("tap_harvest.discover.LOGGER") as mock_logger:
+                with self.assertRaises(ValueError):
+                    discover(MagicMock())
+
+        self.assertTrue(mock_logger.error.called)
+
 
 class TestAccessCheckHelpers(unittest.TestCase):
     """Tests helper functions used by discovery."""
@@ -229,22 +242,32 @@ class TestAccessCheckHelpers(unittest.TestCase):
         schemas = {"invoice_payments": {}, "clients": {}}
         field_metadata = {"invoice_payments": [], "clients": []}
 
-        _prune_inaccessible_children(schemas, field_metadata)
+        pruned_children = _prune_inaccessible_children(schemas, field_metadata)
 
         self.assertNotIn("invoice_payments", schemas)
         self.assertNotIn("invoice_payments", field_metadata)
+        self.assertEqual(pruned_children, ["invoice_payments"])
         mock_logger.warning.assert_called_once()
 
     @patch("tap_harvest.discover.check_stream_access")
     def test_apply_access_checks_removes_inaccessible_top_level(self, mock_check):
         mock_check.side_effect = lambda client, name, cls: name != "clients"
-        schemas = {"clients": {}, "projects": {}}
-        field_metadata = {"clients": [], "projects": []}
+        schemas = {"clients": {}, "projects": {}, "invoice_payments": {}}
+        field_metadata = {"clients": [], "projects": [], "invoice_payments": []}
 
-        _apply_access_checks(MagicMock(), schemas, field_metadata)
+        with patch("tap_harvest.discover.LOGGER") as mock_logger:
+            _apply_access_checks(MagicMock(), schemas, field_metadata)
 
         self.assertNotIn("clients", schemas)
         self.assertIn("projects", schemas)
+        self.assertNotIn("invoice_payments", schemas)
+
+        warning_messages = [
+            call.args[1]
+            for call in mock_logger.warning.call_args_list
+            if len(call.args) > 1 and call.args[0] == "Unauthorized streams excluded from catalog: %s"
+        ]
+        self.assertIn("clients, invoice_payments", warning_messages)
 
 
 if __name__ == "__main__":
