@@ -1,3 +1,4 @@
+import types
 import unittest
 from unittest.mock import MagicMock, patch
 from singer.catalog import Catalog
@@ -49,8 +50,8 @@ class TestCheckStreamAccess(unittest.TestCase):
     def test_returns_false_on_401(self):
         client = MagicMock()
         client.get.side_effect = HarvestUnauthorizedError("401")
-        result = check_stream_access(client, "clients", STREAMS["clients"])
-        self.assertFalse(result)
+        with self.assertRaises(HarvestUnauthorizedError):
+            check_stream_access(client, "clients", STREAMS["clients"])
 
     def test_returns_false_on_403(self):
         client = MagicMock()
@@ -248,6 +249,22 @@ class TestAccessCheckHelpers(unittest.TestCase):
         self.assertNotIn("invoice_payments", field_metadata)
         self.assertEqual(pruned_children, ["invoice_payments"])
         mock_logger.warning.assert_called_once()
+
+    @patch("tap_harvest.discover.STREAMS")
+    def test_prune_inaccessible_children_handles_multi_level_chain_order_independent(self, mock_streams):
+        mock_streams.items.return_value = [
+            ("user_project_tasks", types.SimpleNamespace(parent="user_projects")),
+            ("user_projects", types.SimpleNamespace(parent="users")),
+            ("users", types.SimpleNamespace(parent="")),
+        ]
+        schemas = {"user_project_tasks": {}, "user_projects": {}}
+        field_metadata = {"user_project_tasks": [], "user_projects": []}
+
+        pruned_children = _prune_inaccessible_children(schemas, field_metadata)
+
+        self.assertNotIn("user_projects", schemas)
+        self.assertNotIn("user_project_tasks", schemas)
+        self.assertCountEqual(pruned_children, ["user_projects", "user_project_tasks"])
 
     @patch("tap_harvest.discover.check_stream_access")
     def test_apply_access_checks_removes_inaccessible_top_level(self, mock_check):

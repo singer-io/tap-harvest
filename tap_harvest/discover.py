@@ -10,13 +10,19 @@ LOGGER = singer.get_logger()
 
 def check_stream_access(client, stream_name, stream_class) -> bool:
     """Probe a stream endpoint (per_page=1) and return whether it is accessible.
-    Returns False on 401/403/404; True on success or any other API error.
+    Raises on 401 invalid credentials, returns False on 403 insufficient scope.
     """
-    endpoint = f"{client.base_url}/{stream_class.path}"
     try:
-        client.get(endpoint=endpoint, params={"per_page": 1})
+        client.get(path=stream_class.path, params={"per_page": 1})
         return True
-    except (HarvestUnauthorizedError, HarvestForbiddenError) as err:
+    except HarvestUnauthorizedError as err:
+        LOGGER.critical(
+            "Authentication failed while probing stream '%s'. HTTP-Error-Message: '%s'",
+            stream_name,
+            str(err),
+        )
+        raise
+    except HarvestForbiddenError as err:
         LOGGER.warning(
             "Excluding unauthorized stream '%s' from catalog. HTTP-Error-Message: '%s'",
             stream_name,
@@ -28,16 +34,20 @@ def check_stream_access(client, stream_name, stream_class) -> bool:
 def _prune_inaccessible_children(schemas: dict, field_metadata: dict) -> list:
     """Remove child streams from the catalog whose parent stream was excluded."""
     pruned_children = []
-    for stream_name, stream_class in list(STREAMS.items()):
-        if stream_name in schemas and stream_class.parent and stream_class.parent not in schemas:
-            LOGGER.warning(
-                "Stream '%s' excluded from catalog because its parent stream '%s' is not accessible.",
-                stream_name,
-                stream_class.parent,
-            )
-            schemas.pop(stream_name, None)
-            field_metadata.pop(stream_name, None)
-            pruned_children.append(stream_name)
+    did_prune = True
+    while did_prune:
+        did_prune = False
+        for stream_name, stream_class in list(STREAMS.items()):
+            if stream_name in schemas and stream_class.parent and stream_class.parent not in schemas:
+                LOGGER.warning(
+                    "Stream '%s' excluded from catalog because its parent stream '%s' is not accessible.",
+                    stream_name,
+                    stream_class.parent,
+                )
+                schemas.pop(stream_name, None)
+                field_metadata.pop(stream_name, None)
+                pruned_children.append(stream_name)
+                did_prune = True
     return pruned_children
 
 
