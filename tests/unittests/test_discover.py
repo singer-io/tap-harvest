@@ -286,6 +286,17 @@ class TestAccessCheckHelpers(unittest.TestCase):
         ]
         self.assertIn("clients, invoice_payments", warning_messages)
 
+    @patch("tap_harvest.discover.check_stream_access")
+    def test_apply_access_checks_all_top_level_unauthorized_raises_auth_error(self, mock_check):
+        mock_check.side_effect = HarvestUnauthorizedError("HTTP-error-code: 401")
+        schemas = {"clients": {}, "projects": {}, "invoice_payments": {}}
+        field_metadata = {"clients": [], "projects": [], "invoice_payments": []}
+
+        with self.assertRaises(HarvestUnauthorizedError) as ctx:
+            _apply_access_checks(MagicMock(), schemas, field_metadata)
+
+        self.assertIn("Invalid or expired credentials", str(ctx.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

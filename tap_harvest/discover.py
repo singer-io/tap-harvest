@@ -53,13 +53,22 @@ def _prune_inaccessible_children(schemas: dict, field_metadata: dict) -> list:
 
 def _apply_access_checks(client, schemas: dict, field_metadata: dict) -> None:
     """Remove inaccessible top-level streams and dependent children in place."""
-    inaccessible_streams = [
+    inaccessible_streams = []
+    unauthorized_streams = []
+    top_level_streams = [
         name
         for name, stream in STREAMS.items()
-        if name in schemas
-        and not stream.parent
-        and not check_stream_access(client, name, stream)
+        if name in schemas and not stream.parent
     ]
+
+    for stream_name in top_level_streams:
+        stream = STREAMS[stream_name]
+        try:
+            if not check_stream_access(client, stream_name, stream):
+                inaccessible_streams.append(stream_name)
+        except HarvestUnauthorizedError:
+            unauthorized_streams.append(stream_name)
+            inaccessible_streams.append(stream_name)
 
     for stream_name in inaccessible_streams:
         schemas.pop(stream_name, None)
@@ -68,6 +77,12 @@ def _apply_access_checks(client, schemas: dict, field_metadata: dict) -> None:
     inaccessible_children = _prune_inaccessible_children(schemas, field_metadata)
 
     accessible_streams = [s for s in STREAMS if s in schemas]
+
+    if top_level_streams and len(unauthorized_streams) == len(top_level_streams):
+        raise HarvestUnauthorizedError(
+            "HTTP-error-code: 401, Error: Invalid or expired credentials. "
+            "Unable to access any supported top-level streams."
+        )
 
     if not accessible_streams:
         raise HarvestForbiddenError(
