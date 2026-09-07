@@ -13,7 +13,7 @@ def check_stream_access(client, stream_name, stream_class) -> bool:
     Raises on 401 invalid credentials, returns False on 403 insufficient scope.
     """
     try:
-        client.get(path=stream_class.path, params={"per_page": 1})
+        client.get(endpoint=None, path=stream_class.path, params={"per_page": 1})
         return True
     except HarvestUnauthorizedError as err:
         LOGGER.critical(
