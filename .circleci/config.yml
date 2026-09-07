@@ -49,20 +49,6 @@ jobs:
             uv pip install --upgrade awscli
             aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.sh
             source dev_env.sh
-            unset RP_ENDPOINT
-            unset RP_PROJECT
-            unset RP_UUID
-            unset RP_API_KEY
-            unset RP_LAUNCH
-            unset RP_LAUNCH_NAME
-            unset RP_DESCRIPTION
-            unset RP_ATTRIBUTES
-            unset REPORT_PORTAL_ENDPOINT
-            unset REPORT_PORTAL_PROJECT
-            unset REPORT_PORTAL_UUID
-            unset REPORT_PORTAL_API_KEY
-            export RP_ENABLED=false
-            export REPORT_PORTAL_ENABLED=false
             unset USE_STITCH_BACKEND
             run-test --tap=tap-harvest tests
 
