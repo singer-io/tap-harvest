@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.2.0
+  * Streams the credentials cannot access (401/403) are now excluded from the catalog during discovery instead of raising an error [#73](https://github.com/singer-io/tap-harvest/pull/73)
+  * Added unit tests for stream access checks, access check application, and child stream pruning
+
 ## 3.1.3
   * Add `parent-tap-stream-id` in metadata [#70](https://github.com/singer-io/tap-harvest/pull/70)
 
