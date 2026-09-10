@@ -6,8 +6,8 @@ from tap_harvest.streams.abstracts import IncrementalStream
 class UserRoles(IncrementalStream):
     tap_stream_id = "user_roles"
     key_properties = ["role_id", "user_id"]
-    replication_method = "FULL_TABLE"
-    replication_keys = None
+    replication_method = "INCREMENTAL"
+    replication_keys = ["roles_updated_at"]
     data_key = "user_roles"
     parent = "roles"
     path = "user_roles"

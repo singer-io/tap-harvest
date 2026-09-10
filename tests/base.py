@@ -56,7 +56,8 @@ class HarvestBaseTest(BaseCase):
             },
             "estimate_line_items": {
                 cls.PRIMARY_KEYS: {"id"},
-                cls.REPLICATION_METHOD: cls.FULL_TABLE,
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"estimates_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
                 cls.PARENT_TAP_STREAM_ID: "estimates",
@@ -92,7 +93,8 @@ class HarvestBaseTest(BaseCase):
             },
             "external_reference": {
                 cls.PRIMARY_KEYS: {"id"},
-                cls.REPLICATION_METHOD: cls.FULL_TABLE,
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"time_entries_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
                 cls.PARENT_TAP_STREAM_ID: "time_entries",
@@ -106,7 +108,8 @@ class HarvestBaseTest(BaseCase):
             },
             "invoice_line_items": {
                 cls.PRIMARY_KEYS: {"id"},
-                cls.REPLICATION_METHOD: cls.FULL_TABLE,
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"invoices_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
                 cls.PARENT_TAP_STREAM_ID: "invoices",
@@ -171,14 +174,16 @@ class HarvestBaseTest(BaseCase):
             },
             "time_entry_external_reference": {
                 cls.PRIMARY_KEYS: {"time_entry_id", "external_reference_id"},
-                cls.REPLICATION_METHOD: cls.FULL_TABLE,
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"time_entries_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
                 cls.PARENT_TAP_STREAM_ID: "time_entries",
             },
             "user_project_tasks": {
                 cls.PRIMARY_KEYS: {"user_id", "project_task_id"},
-                cls.REPLICATION_METHOD: cls.FULL_TABLE,
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"user_projects_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 5,
                 cls.PARENT_TAP_STREAM_ID: "user_projects",
@@ -193,7 +198,8 @@ class HarvestBaseTest(BaseCase):
             },
             "user_roles": {
                 cls.PRIMARY_KEYS: {"role_id", "user_id"},
-                cls.REPLICATION_METHOD: cls.FULL_TABLE,
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"roles_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
                 cls.PARENT_TAP_STREAM_ID: "roles",
@@ -209,14 +215,7 @@ class HarvestBaseTest(BaseCase):
 
     @staticmethod
     def get_child_streams_with_no_replication_keys():
-        return {
-            "user_roles",
-            "invoice_line_items",
-            "estimate_line_items",
-            "user_project_tasks",
-            "external_reference",
-            "time_entry_external_reference",
-        }
+        return set()
 
     @staticmethod
     def get_credentials():

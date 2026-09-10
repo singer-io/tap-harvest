@@ -8,8 +8,8 @@ LOGGER = get_logger()
 class ExternalReference(IncrementalStream):
     tap_stream_id = "external_reference"
     key_properties = ["id"]
-    replication_method = "FULL_TABLE"
-    replication_keys = None
+    replication_method = "INCREMENTAL"
+    replication_keys = ["time_entries_updated_at"]
     data_key = "external_reference"
     path = "external_reference"
     parent = "time_entries"

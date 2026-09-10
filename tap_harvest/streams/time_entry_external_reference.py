@@ -6,8 +6,8 @@ from tap_harvest.streams.abstracts import IncrementalStream
 class TimeEntryExternalReference(IncrementalStream):
     tap_stream_id = "time_entry_external_reference"
     key_properties = ["time_entry_id", "external_reference_id"]
-    replication_method = "FULL_TABLE"
-    replication_keys = None
+    replication_method = "INCREMENTAL"
+    replication_keys = ["time_entries_updated_at"]
     data_key = "time_entry_external_reference"
     path = "time_entry_external_reference"
     parent = "time_entries"

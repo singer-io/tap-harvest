@@ -6,8 +6,8 @@ from tap_harvest.streams.abstracts import IncrementalStream
 class EstimateLineItems(IncrementalStream):
     tap_stream_id = "estimate_line_items"
     key_properties = ["id"]
-    replication_method = "FULL_TABLE"
-    replication_keys = None
+    replication_method = "INCREMENTAL"
+    replication_keys = ["estimates_updated_at"]
     data_key = "estimate_line_items"
     path = "estimate_line_items"
     parent = "estimates"
