@@ -23,6 +23,7 @@ class ExternalReference(IncrementalStream):
         """Abstract implementation for `type: Incremental` stream."""
         external_reference = parent_obj["external_reference"]
         if external_reference:
+            external_reference["time_entries_updated_at"] = parent_obj.get("updated_at")
             external_reference = transformer.transform(
                 external_reference, self.schema, self.metadata
             )

@@ -21,6 +21,7 @@ class InvoiceLineItems(IncrementalStream):
         """Abstract implementation for `type: Incremental` stream."""
         for line_item in parent_obj["line_items"]:
             line_item["invoice_id"] = parent_obj["id"]
+            line_item["invoices_updated_at"] = parent_obj.get("updated_at")
             if line_item["project"] is not None:
                 line_item["project_id"] = line_item["project"]["id"]
             else:

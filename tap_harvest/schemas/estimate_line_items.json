@@ -27,6 +27,10 @@
     },
     "taxed2": {
       "type": ["null", "boolean"]
+    },
+    "estimates_updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
     }
   }
 }

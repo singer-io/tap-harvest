@@ -215,7 +215,14 @@ class HarvestBaseTest(BaseCase):
 
     @staticmethod
     def get_child_streams_with_no_replication_keys():
-        return set()
+        return {
+            "user_roles",
+            "invoice_line_items",
+            "estimate_line_items",
+            "user_project_tasks",
+            "external_reference",
+            "time_entry_external_reference",
+        }
 
     @staticmethod
     def get_credentials():

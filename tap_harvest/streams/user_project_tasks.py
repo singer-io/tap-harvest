@@ -23,8 +23,10 @@ class UserProjectTasks(IncrementalStream):
             record = {
                 "user_id": parent_obj["user_id"],
                 "project_task_id": project_task["id"],
+                "user_projects_updated_at": parent_obj.get("updated_at"),
             }
-            write_record(self.tap_stream_id, record)
+            transformed_record = transformer.transform(record, self.schema, self.metadata)
+            write_record(self.tap_stream_id, transformed_record)
 
     def write_bookmark(
         self, state: dict, stream: str, key: Any = None, value: Any = None

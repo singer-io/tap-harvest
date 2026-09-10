@@ -1,5 +1,4 @@
 """Test tap discovery mode and metadata."""
-from typing import Dict
 from base import HarvestBaseTest
 from tap_tester.base_suite_tests.discovery_test import DiscoveryTest
 from tap_tester import menagerie
@@ -15,14 +14,15 @@ class HarvestDiscoveryTest(DiscoveryTest, HarvestBaseTest):
     def streams_to_test(self):
         return self.expected_stream_names()
 
-    def expected_parent_stream_id(self, stream: str = None) -> Dict:
-        """ Function to get the expected parent stream details if it exists in a stream
+    def expected_parent_stream_id(self, stream: str = None):
+        """Function to get expected parent stream details when they exist.
 
         Args:
             stream (str, optional): Stream name. Defaults to None.
 
         Returns:
-            Dict: A mapping of stream name and it's parent-tap-stream-id
+            dict or str: A mapping of stream name and its parent-tap-stream-id,
+                or a single parent-tap-stream-id when stream is provided.
         """
 
         parent_stream_keys = {
@@ -83,7 +83,7 @@ class HarvestDiscoveryTest(DiscoveryTest, HarvestBaseTest):
                     self.assertSetEqual(
                         expected_replication_keys,
                         actual_replication_keys,
-                        logging=f"verify {expected_replication_keys} "
+                        msg=f"verify {expected_replication_keys} "
                         f"is saved in metadata as a valid-replication-key",
                     )
 
@@ -92,7 +92,7 @@ class HarvestDiscoveryTest(DiscoveryTest, HarvestBaseTest):
                     self.assertEqual(
                         expected_replication_method,
                         actual_replication_method,
-                        logging=f"verify the replication method is "
+                        msg=f"verify the replication method is "
                         f"{expected_replication_method}",
                     )
 
@@ -101,7 +101,7 @@ class HarvestDiscoveryTest(DiscoveryTest, HarvestBaseTest):
                     self.assertEqual(
                         expected_parent_tap_stream_id,
                         actual_parent_tap_stream_id,
-                        logging=f"verify {expected_parent_tap_stream_id} is saved in metadata as parent-tap-stream-id"
+                        msg=f"verify {expected_parent_tap_stream_id} is saved in metadata as parent-tap-stream-id"
                     )
 
                 # verify that if there is a replication key we are doing INCREMENTAL otherwise FULL
@@ -111,7 +111,7 @@ class HarvestDiscoveryTest(DiscoveryTest, HarvestBaseTest):
                         self.assertEqual(
                             actual_replication_method,
                             self.INCREMENTAL,
-                            logging=f"verify the forced replication method is "
+                            msg=f"verify the forced replication method is "
                             f"{self.INCREMENTAL} since there is a "
                             f"replication-key",
                         )

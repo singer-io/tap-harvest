@@ -23,6 +23,7 @@ class TimeEntryExternalReference(IncrementalStream):
             time_entry_external_reference = {
                 "time_entry_id": parent_obj["id"],
                 "external_reference_id": parent_obj["external_reference"]["id"],
+                "time_entries_updated_at": parent_obj.get("updated_at"),
             }
             external_reference = transformer.transform(
                 time_entry_external_reference, self.schema, self.metadata

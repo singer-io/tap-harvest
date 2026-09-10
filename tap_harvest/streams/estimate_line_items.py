@@ -21,6 +21,7 @@ class EstimateLineItems(IncrementalStream):
         """Abstract implementation for `type: Incremental` stream."""
         for line_item in parent_obj["line_items"]:
             line_item["estimate_id"] = parent_obj["id"]
+            line_item["estimates_updated_at"] = parent_obj.get("updated_at")
             line_item = transformer.transform(line_item, self.schema, self.metadata)
             write_record(self.tap_stream_id, line_item)
 
