@@ -7,7 +7,7 @@ class InvoiceLineItems(IncrementalStream):
     tap_stream_id = "invoice_line_items"
     key_properties = ["id"]
     replication_method = "INCREMENTAL"
-    replication_keys = None
+    replication_keys = ["invoices_updated_at"]
     data_key = "invoice_line_items"
     path = "invoice_line_items"
     parent = "invoices"
@@ -21,6 +21,7 @@ class InvoiceLineItems(IncrementalStream):
         """Abstract implementation for `type: Incremental` stream."""
         for line_item in parent_obj["line_items"]:
             line_item["invoice_id"] = parent_obj["id"]
+            line_item["invoices_updated_at"] = parent_obj.get("updated_at")
             if line_item["project"] is not None:
                 line_item["project_id"] = line_item["project"]["id"]
             else:

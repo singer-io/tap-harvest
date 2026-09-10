@@ -7,7 +7,7 @@ class TimeEntryExternalReference(IncrementalStream):
     tap_stream_id = "time_entry_external_reference"
     key_properties = ["time_entry_id", "external_reference_id"]
     replication_method = "INCREMENTAL"
-    replication_keys = None
+    replication_keys = ["time_entries_updated_at"]
     data_key = "time_entry_external_reference"
     path = "time_entry_external_reference"
     parent = "time_entries"
@@ -23,6 +23,7 @@ class TimeEntryExternalReference(IncrementalStream):
             time_entry_external_reference = {
                 "time_entry_id": parent_obj["id"],
                 "external_reference_id": parent_obj["external_reference"]["id"],
+                "time_entries_updated_at": parent_obj.get("updated_at"),
             }
             external_reference = transformer.transform(
                 time_entry_external_reference, self.schema, self.metadata

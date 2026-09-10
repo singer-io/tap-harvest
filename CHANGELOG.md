@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.1.3
+  * Add `parent-tap-stream-id` in metadata [#70](https://github.com/singer-io/tap-harvest/pull/70)
+
 ## 3.1.2
   * Add retry backoff for Harvest Backoff Error [#74](https://github.com/singer-io/tap-harvest/pull/74)
 

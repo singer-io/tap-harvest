@@ -10,6 +10,7 @@ class HarvestBaseTest(BaseCase):
     """
 
     start_date = "2017-01-01T00:00:00Z"
+    PARENT_TAP_STREAM_ID = "parent-tap-stream-id"
 
     @staticmethod
     def tap_name():
@@ -56,8 +57,10 @@ class HarvestBaseTest(BaseCase):
             "estimate_line_items": {
                 cls.PRIMARY_KEYS: {"id"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"estimates_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
+                cls.PARENT_TAP_STREAM_ID: "estimates",
             },
             "estimate_messages": {
                 cls.PRIMARY_KEYS: {"id"},
@@ -65,6 +68,7 @@ class HarvestBaseTest(BaseCase):
                 cls.REPLICATION_KEYS: {"updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
+                cls.PARENT_TAP_STREAM_ID: "estimates",
             },
             "estimates": {
                 cls.PRIMARY_KEYS: {"id"},
@@ -90,8 +94,10 @@ class HarvestBaseTest(BaseCase):
             "external_reference": {
                 cls.PRIMARY_KEYS: {"id"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"time_entries_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
+                cls.PARENT_TAP_STREAM_ID: "time_entries",
             },
             "invoice_item_categories": {
                 cls.PRIMARY_KEYS: {"id"},
@@ -103,8 +109,10 @@ class HarvestBaseTest(BaseCase):
             "invoice_line_items": {
                 cls.PRIMARY_KEYS: {"id"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"invoices_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
+                cls.PARENT_TAP_STREAM_ID: "invoices",
             },
             "invoice_messages": {
                 cls.PRIMARY_KEYS: {"id"},
@@ -112,6 +120,7 @@ class HarvestBaseTest(BaseCase):
                 cls.REPLICATION_KEYS: {"updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
+                cls.PARENT_TAP_STREAM_ID: "invoices",
             },
             "invoice_payments": {
                 cls.PRIMARY_KEYS: {"id"},
@@ -119,6 +128,7 @@ class HarvestBaseTest(BaseCase):
                 cls.REPLICATION_KEYS: {"updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
+                cls.PARENT_TAP_STREAM_ID: "invoices",
             },
             "invoices": {
                 cls.PRIMARY_KEYS: {"id"},
@@ -165,14 +175,18 @@ class HarvestBaseTest(BaseCase):
             "time_entry_external_reference": {
                 cls.PRIMARY_KEYS: {"time_entry_id", "external_reference_id"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"time_entries_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
+                cls.PARENT_TAP_STREAM_ID: "time_entries",
             },
             "user_project_tasks": {
                 cls.PRIMARY_KEYS: {"user_id", "project_task_id"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"user_projects_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 5,
+                cls.PARENT_TAP_STREAM_ID: "user_projects",
             },
             "user_projects": {
                 cls.PRIMARY_KEYS: {"id"},
@@ -180,12 +194,15 @@ class HarvestBaseTest(BaseCase):
                 cls.REPLICATION_KEYS: {"updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 1,
+                cls.PARENT_TAP_STREAM_ID: "users",
             },
             "user_roles": {
                 cls.PRIMARY_KEYS: {"role_id", "user_id"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"roles_updated_at"},
                 cls.OBEYS_START_DATE: True,
                 cls.API_LIMIT: 100,
+                cls.PARENT_TAP_STREAM_ID: "roles",
             },
             "users": {
                 cls.PRIMARY_KEYS: {"id"},
