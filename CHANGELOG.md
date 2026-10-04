@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.1.3
+## 4.0.0
   * Add `parent-tap-stream-id` in metadata [#70](https://github.com/singer-io/tap-harvest/pull/70)
 
 ## 3.1.2
