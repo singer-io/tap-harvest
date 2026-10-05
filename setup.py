@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="tap-harvest",
-    version="4.0.0",
+    version="4.1.0",
     description="Singer.io tap for extracting data from the Harvest api",
     author="Facet Interactive",
     url="http://singer.io",

@@ -15,5 +15,6 @@ class HarvestAutomaticFields(MinimumSelectionTest, HarvestBaseTest):
         return "tap_tester_harvest_automatic_fields_test"
 
     def streams_to_test(self):
-        streams_to_exclude = {"external_reference", "time_entry_external_reference"}
-        return self.expected_stream_names().difference(streams_to_exclude)
+        return self.expected_stream_names().difference(
+            self.get_child_streams()
+        )

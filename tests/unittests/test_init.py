@@ -14,12 +14,13 @@ class TestDoDiscover(unittest.TestCase):
         mock_catalog = MagicMock()
         mock_catalog.to_dict.return_value = {"streams": []}
         mock_discover.return_value = mock_catalog
+        mock_client = MagicMock()
 
         captured = io.StringIO()
         with patch("sys.stdout", captured):
-            tap_harvest.do_discover()
+            tap_harvest.do_discover(mock_client)
 
-        mock_discover.assert_called_once()
+        mock_discover.assert_called_once_with(mock_client)
         mock_catalog.to_dict.assert_called_once()
         output = json.loads(captured.getvalue())
         self.assertEqual(output, {"streams": []})
@@ -30,10 +31,11 @@ class TestDoDiscover(unittest.TestCase):
         mock_catalog = MagicMock()
         mock_catalog.to_dict.return_value = {}
         mock_discover.return_value = mock_catalog
+        mock_client = MagicMock()
 
         with patch("tap_harvest.LOGGER") as mock_logger:
             with patch("sys.stdout", io.StringIO()):
-                tap_harvest.do_discover()
+                tap_harvest.do_discover(mock_client)
 
         self.assertTrue(mock_logger.info.called)
         calls = [str(c) for c in mock_logger.info.call_args_list]

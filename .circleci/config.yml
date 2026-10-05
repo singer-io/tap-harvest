@@ -29,7 +29,12 @@ jobs:
           command: |
             source /usr/local/share/virtualenvs/tap-harvest/bin/activate
             uv pip install pytest coverage parameterized
-            coverage run -m pytest tests/unittests
+            coverage run --source tap_harvest -m pytest tests/unittests
+      - run:
+          name: 'Coverage Report'
+          command: |
+            source /usr/local/share/virtualenvs/tap-harvest/bin/activate
+            coverage report -m --fail-under=100
             coverage html
       - store_test_results:
           path: test_output/report.xml
