@@ -3,14 +3,23 @@ from singer import metadata
 from singer.catalog import Catalog, CatalogEntry, Schema
 from tap_harvest.schema import get_schemas
 from tap_harvest.streams import STREAMS
-from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError, HarvestNotFoundError, HarvestError
+from tap_harvest.exceptions import HarvestUnauthorizedError, HarvestForbiddenError
 
 LOGGER = singer.get_logger()
 
 
 def check_stream_access(client, stream_name, stream_class) -> bool:
     """Probe a stream endpoint (per_page=1) and return whether it is accessible.
-    Raises on 401 invalid credentials, returns False on 403 insufficient scope.
+
+    - 401 invalid credentials: re-raised. Credentials are entirely invalid, so
+      there is no point probing further streams.
+    - 403 insufficient scope: returns False. The credentials are valid but
+      lack read access to this specific stream, so it is excluded.
+    - 404, other HarvestError subclasses, and non-HarvestError exceptions are
+      intentionally NOT caught here and propagate, aborting discovery. These
+      don't have a well-defined "exclude vs. include" interpretation (e.g. a
+      404 may indicate a genuinely broken/misconfigured endpoint rather than
+      a permissions issue), so failing fast is safer than guessing.
     """
     try:
         client.get(endpoint=None, path=stream_class.path, params={"per_page": 1})

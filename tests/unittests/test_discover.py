@@ -60,6 +60,9 @@ class TestCheckStreamAccess(unittest.TestCase):
         self.assertFalse(result)
 
     def test_reraises_on_404(self):
+        """404 from the probe is not a well-defined permissions signal (it may
+        indicate a broken/misconfigured endpoint), so it is intentionally not
+        caught here and aborts discovery rather than excluding the stream."""
         client = MagicMock()
         client.get.side_effect = HarvestNotFoundError("404")
         with self.assertRaises(HarvestNotFoundError):
@@ -72,7 +75,9 @@ class TestCheckStreamAccess(unittest.TestCase):
             check_stream_access(client, "clients", STREAMS["clients"])
 
     def test_reraises_non_auth_harvest_error(self):
-        """Non-auth HarvestErrors (e.g. 400) are re-raised by check_stream_access."""
+        """Non-auth HarvestErrors (e.g. 400) are intentionally re-raised by
+        check_stream_access rather than treated as accessible or excluded --
+        this is the designed fail-fast behavior, not a gap."""
         client = MagicMock()
         client.get.side_effect = HarvestError("bad request")
         with self.assertRaises(HarvestError):
