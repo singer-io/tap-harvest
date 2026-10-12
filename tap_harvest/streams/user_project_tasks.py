@@ -7,7 +7,7 @@ class UserProjectTasks(IncrementalStream):
     tap_stream_id = "user_project_tasks"
     key_properties = ["user_id", "project_task_id"]
     replication_method = "INCREMENTAL"
-    replication_keys = None
+    replication_keys = ["user_projects_updated_at"]
     data_key = "user_project_tasks"
     path = "user_project_tasks"
     parent = "user_projects"
@@ -23,8 +23,10 @@ class UserProjectTasks(IncrementalStream):
             record = {
                 "user_id": parent_obj["user_id"],
                 "project_task_id": project_task["id"],
+                "user_projects_updated_at": parent_obj.get("updated_at"),
             }
-            write_record(self.tap_stream_id, record)
+            transformed_record = transformer.transform(record, self.schema, self.metadata)
+            write_record(self.tap_stream_id, transformed_record)
 
     def write_bookmark(
         self, state: dict, stream: str, key: Any = None, value: Any = None

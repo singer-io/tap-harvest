@@ -7,7 +7,7 @@ class EstimateLineItems(IncrementalStream):
     tap_stream_id = "estimate_line_items"
     key_properties = ["id"]
     replication_method = "INCREMENTAL"
-    replication_keys = None
+    replication_keys = ["estimates_updated_at"]
     data_key = "estimate_line_items"
     path = "estimate_line_items"
     parent = "estimates"
@@ -21,6 +21,7 @@ class EstimateLineItems(IncrementalStream):
         """Abstract implementation for `type: Incremental` stream."""
         for line_item in parent_obj["line_items"]:
             line_item["estimate_id"] = parent_obj["id"]
+            line_item["estimates_updated_at"] = parent_obj.get("updated_at")
             line_item = transformer.transform(line_item, self.schema, self.metadata)
             write_record(self.tap_stream_id, line_item)
 
