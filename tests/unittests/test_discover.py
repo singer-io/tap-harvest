@@ -302,6 +302,46 @@ class TestAccessCheckHelpers(unittest.TestCase):
 
         self.assertIn("Invalid or expired credentials", str(ctx.exception))
 
+    @patch("tap_harvest.discover.check_stream_access")
+    def test_apply_access_checks_aborts_on_first_401_without_probing_remaining_streams(self, mock_check):
+        """Regression test: a 401 on the first top-level probe must abort
+        discovery immediately rather than probing every remaining top-level
+        stream before deciding credentials are entirely invalid. Invalid
+        credentials affect every stream identically, so continuing to probe
+        only wastes requests and risks returning a partial catalog."""
+        mock_check.side_effect = [
+            HarvestUnauthorizedError("HTTP-error-code: 401"),
+            True,
+            True,
+        ]
+        # Use the real STREAMS ordering so "projects" (first top-level stream)
+        # is the one probed first and fails with a 401.
+        schemas = {name: {} for name in STREAMS if not STREAMS[name].parent}
+        field_metadata = {name: [] for name in schemas}
+
+        with self.assertRaises(HarvestUnauthorizedError) as ctx:
+            _apply_access_checks(MagicMock(), schemas, field_metadata)
+
+        self.assertIn("Invalid or expired credentials", str(ctx.exception))
+        # Only the first top-level stream should have been probed.
+        self.assertEqual(1, mock_check.call_count)
+
+    @patch("tap_harvest.discover.get_schemas")
+    def test_discover_raises_immediately_on_401_and_returns_no_catalog(self, mock_get_schemas):
+        """Regression test: discover() must propagate the 401 failure and must
+        not return a partial catalog after unnecessary probes."""
+        mock_get_schemas.return_value = _make_mock_schemas(
+            [name for name in STREAMS if not STREAMS[name].parent]
+        )
+        client = MagicMock()
+        client.get.side_effect = HarvestUnauthorizedError("401")
+
+        with self.assertRaises(HarvestUnauthorizedError):
+            discover(client)
+
+        # Only the first top-level stream's probe should have reached the client.
+        self.assertEqual(1, client.get.call_count)
+
 
 if __name__ == "__main__":
     unittest.main()
