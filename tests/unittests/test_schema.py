@@ -61,6 +61,39 @@ class TestGetSchemas(unittest.TestCase):
         for stream_name, schema in schemas.items():
             self.assertIn("properties", schema, f"Schema for '{stream_name}' missing 'properties'")
 
+    def test_retained_child_streams_advertise_replication_key_metadata(self):
+        """Regression test for the six nested/virtual child streams that were
+        changed from FULL_TABLE (no replication key) to INCREMENTAL with a
+        parent-derived replication key. This is a discovered-catalog-shape
+        change that must not silently regress; see CHANGELOG.md 4.1.0."""
+        expected_replication_keys = {
+            "estimate_line_items": "estimates_updated_at",
+            "invoice_line_items": "invoices_updated_at",
+            "external_reference": "time_entries_updated_at",
+            "time_entry_external_reference": "time_entries_updated_at",
+            "user_project_tasks": "user_projects_updated_at",
+            "user_roles": "roles_updated_at",
+        }
+
+        _, field_metadata = get_schemas()
+
+        for stream_name, replication_key in expected_replication_keys.items():
+            root_metadata = next(
+                entry["metadata"]
+                for entry in field_metadata[stream_name]
+                if entry["breadcrumb"] == ()
+            )
+            self.assertEqual(
+                "INCREMENTAL",
+                root_metadata.get("forced-replication-method"),
+                f"{stream_name} should be forced-replication-method=INCREMENTAL",
+            )
+            self.assertEqual(
+                [replication_key],
+                root_metadata.get("valid-replication-keys"),
+                f"{stream_name} should advertise valid-replication-keys=['{replication_key}']",
+            )
+
 
 class TestWriteSchema(unittest.TestCase):
     """Tests for tap_harvest.schema.write_schema()."""
