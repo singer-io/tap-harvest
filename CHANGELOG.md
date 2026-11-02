@@ -1,5 +1,8 @@
 # Changelog
 
+## 4.0.1
+  * Bump singer-python 6.9.0 [#77](https://github.com/singer-io/tap-harvest/pull/77)
+
 ## 4.0.0
   * Add `parent-tap-stream-id` in metadata [#70](https://github.com/singer-io/tap-harvest/pull/70)
 
